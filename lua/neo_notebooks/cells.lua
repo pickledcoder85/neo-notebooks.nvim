@@ -48,7 +48,7 @@ function M.get_cells(bufnr)
     table.insert(cells, {
       start = 0,
       finish = #lines - 1,
-      type = "code",
+      type = "markdown",
     })
   end
 
