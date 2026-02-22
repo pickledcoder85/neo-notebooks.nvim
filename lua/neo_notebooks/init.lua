@@ -9,6 +9,7 @@ M.config = {
   auto_insert_first_cell = true,
   overlay_preview = false,
   suppress_completion_in_markdown = true,
+  auto_insert_on_jump = true,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",

@@ -35,6 +35,7 @@ require("neo_notebooks").setup({
   auto_insert_first_cell = true,
   overlay_preview = false,
   suppress_completion_in_markdown = true,
+  auto_insert_on_jump = true,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",
@@ -112,3 +113,7 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `]n` next cell
 - `[n` previous cell
 - `<leader>l` open cell list picker
+
+### Auto-insert on navigation
+
+When enabled, jumping to another cell (next/prev/list) enters insert mode automatically.

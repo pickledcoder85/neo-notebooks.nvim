@@ -61,6 +61,7 @@ This document summarizes implementation choices and the evolution of core featur
 
 - `NeoNotebookCellNext` / `NeoNotebookCellPrev` move between cell headers.
 - `NeoNotebookCellList` opens a picker to jump to a cell.
+- When `auto_insert_on_jump` is enabled, navigation enters insert mode.
 
 ## Auto-render and keymaps
 

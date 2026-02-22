@@ -1,4 +1,5 @@
 local cells = require("neo_notebooks.cells")
+local config = require("neo_notebooks").config
 
 local M = {}
 
@@ -14,6 +15,9 @@ function M.next_cell(bufnr)
     if cell.finish > line then
       local target = math.min(cell.finish, cell.start + 1)
       vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
+      if config.auto_insert_on_jump then
+        vim.cmd("startinsert")
+      end
       return
     end
   end
@@ -27,6 +31,9 @@ function M.prev_cell(bufnr)
     if list[i].start < line then
       local target = math.min(list[i].finish, list[i].start + 1)
       vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
+      if config.auto_insert_on_jump then
+        vim.cmd("startinsert")
+      end
       return
     end
   end
@@ -60,7 +67,11 @@ function M.cell_list(bufnr)
     end
     local cell = list[idx]
     if cell then
-      vim.api.nvim_win_set_cursor(0, { cell.start + 1, 0 })
+      local target = math.min(cell.finish, cell.start + 1)
+      vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
+      if config.auto_insert_on_jump then
+        vim.cmd("startinsert")
+      end
     end
   end)
 end
