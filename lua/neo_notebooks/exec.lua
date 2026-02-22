@@ -55,10 +55,10 @@ def _render_pandas_table(value, out_buf):
     max_cols = int(globals_dict.get("__neo_notebooks_rich_max_cols", 20))
 
     df_view = df.iloc[:max_rows, :max_cols]
-    table = Table(show_header=True, header_style="bold")
+    table = Table(show_header=True, header_style="bold cyan", title_style="bold magenta")
     table.add_column("")
     for col in df_view.columns:
-        table.add_column(str(col))
+        table.add_column(str(col), style="yellow")
 
     for idx, row in df_view.iterrows():
         cells = [str(idx)]
@@ -66,7 +66,7 @@ def _render_pandas_table(value, out_buf):
             cells.append(str(row[col]))
         table.add_row(*cells)
 
-    console = Console(file=out_buf, force_terminal=False, color_system=None)
+    console = Console(file=out_buf, force_terminal=True, color_system="standard")
     console.print(table)
     return True
 
@@ -95,7 +95,7 @@ def handle(obj):
                         if not rendered:
                             print(repr(value))
                     elif use_rich and RICH_AVAILABLE:
-                        console = Console(file=out_buf, force_terminal=False, color_system=None)
+                        console = Console(file=out_buf, force_terminal=True, color_system="standard")
                         console.print(value)
                     else:
                         if _is_pandas_obj(value):
