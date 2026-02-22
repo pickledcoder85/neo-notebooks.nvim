@@ -35,11 +35,13 @@ M.config = {
     move_down = "<leader>md",
     run_all = "<leader>ra",
     restart = "<leader>rs",
-    toggle_output = "<leader>to",
+    toggle_output = "<leader>tt",
     select_cell = "<leader>vs",
     stats = "<leader>ns",
     run_above = "<leader>rA",
     run_below = "<leader>rB",
+    toggle_auto_render = "<leader>tr",
+    toggle_overlay = "<leader>to",
   },
 }
 

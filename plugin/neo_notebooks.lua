@@ -176,6 +176,10 @@ vim.api.nvim_create_user_command("NeoNotebookCellOverlayToggle", function()
   overlay.toggle(0)
 end, {})
 
+vim.api.nvim_create_user_command("NeoNotebookAutoRenderToggle", function()
+  actions.toggle_auto_render()
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookCellNext", function()
   navigation.next_cell(0)
 end, {})
@@ -491,6 +495,18 @@ local function set_default_keymaps(bufnr)
   if maps.run_below then
     vim.keymap.set("n", maps.run_below, function()
       run_subset.run_below(0)
+    end, opts)
+  end
+
+  if maps.toggle_auto_render then
+    vim.keymap.set("n", maps.toggle_auto_render, function()
+      actions.toggle_auto_render()
+    end, opts)
+  end
+
+  if maps.toggle_overlay then
+    vim.keymap.set("n", maps.toggle_overlay, function()
+      overlay.toggle(0)
     end, opts)
   end
 end

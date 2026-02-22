@@ -92,6 +92,7 @@ This document summarizes implementation choices and the evolution of core featur
 - `NeoNotebookOutputToggle` switches between inline and floating output.
 - `NeoNotebookRunAbove` runs code cells above the cursor.
 - `NeoNotebookRunBelow` runs code cells below the cursor.
+- `NeoNotebookAutoRenderToggle` toggles auto-rendering.
 
 ## Cell labels
 

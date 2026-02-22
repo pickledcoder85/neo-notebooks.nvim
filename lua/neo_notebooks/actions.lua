@@ -137,6 +137,12 @@ function M.select_cell(bufnr, line)
   vim.api.nvim_win_set_cursor(0, { finish + 1, 0 })
 end
 
+function M.toggle_auto_render()
+  local nb = require("neo_notebooks")
+  nb.config.auto_render = not nb.config.auto_render
+  vim.notify(string.format("NeoNotebook: auto_render = %s", tostring(nb.config.auto_render)), vim.log.levels.INFO)
+end
+
 function M.fold_cell(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
