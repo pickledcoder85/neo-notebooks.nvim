@@ -54,6 +54,14 @@ function M.show_inline(bufnr, cell, lines)
     end
   end
 
+  if not cell.id then
+    local index = require("neo_notebooks.index")
+    local entry = index.find_cell(bufnr, cell.start)
+    if entry then
+      cell.id = entry.id
+    end
+  end
+
   if cell.id then
     local store = get_store(bufnr)
     if vim.deep_equal(store[cell.id], lines) then
@@ -62,15 +70,7 @@ function M.show_inline(bufnr, cell, lines)
     store[cell.id] = lines
   end
 
-  local state = get_state(bufnr)
-  if cell.id and state[cell.id] then
-    pcall(vim.api.nvim_buf_del_extmark, bufnr, M.ns, state[cell.id])
-    state[cell.id] = nil
-  end
-  local id = M.render_block(bufnr, cell, lines)
-  if cell.id and id then
-    state[cell.id] = id
-  end
+  M.render_outputs(bufnr)
 end
 
 function M.render_block(bufnr, cell, lines)
