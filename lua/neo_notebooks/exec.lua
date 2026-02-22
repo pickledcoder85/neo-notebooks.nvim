@@ -9,7 +9,10 @@ local sessions = {}
 local request_id = 0
 
 local PY_SERVER = [[
-import sys, json, traceback, io, contextlib, ast
+import sys, json, traceback, io, contextlib, ast, os
+
+os.environ.setdefault("FORCE_COLOR", "1")
+os.environ.setdefault("TTY_COMPATIBLE", "1")
 
 try:
     from rich.console import Console
