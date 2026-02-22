@@ -1,4 +1,5 @@
 local cells = require("neo_notebooks.cells")
+local config = require("neo_notebooks").config
 
 local M = {}
 
@@ -31,15 +32,17 @@ function M.render(bufnr)
     local bottom = cell_border(math.min(width, width), "+", "+")
     local label = string.format(" [%s] ", cell.type)
 
+    local hl = config.border_hl or "Comment"
+
     vim.api.nvim_buf_set_extmark(bufnr, M.ns, cell.start, 0, {
-      virt_lines = { { { top, "Comment" } } },
+      virt_lines = { { { top, hl } } },
       virt_lines_above = true,
       virt_text = { { label, "Identifier" } },
       virt_text_pos = "eol",
     })
 
     vim.api.nvim_buf_set_extmark(bufnr, M.ns, cell.finish, 0, {
-      virt_lines = { { { bottom, "Comment" } } },
+      virt_lines = { { { bottom, hl } } },
     })
 
     ::continue::

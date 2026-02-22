@@ -57,6 +57,11 @@ This document summarizes implementation choices and the evolution of core featur
 - When enabled, the plugin sets `vim.b.completion = false` inside markdown cells.
 - The previous buffer-local completion setting is restored when returning to code cells.
 
+## Cell border highlighting
+
+- Borders use `border_hl` (default `NeoNotebookBorder`).
+- The default highlight is defined in `plugin/neo_notebooks_colors.lua`.
+
 ## Navigation helpers
 
 - `NeoNotebookCellNext` / `NeoNotebookCellPrev` move between cell headers.

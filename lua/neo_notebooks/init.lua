@@ -10,6 +10,7 @@ M.config = {
   overlay_preview = false,
   suppress_completion_in_markdown = true,
   auto_insert_on_jump = true,
+  border_hl = "NeoNotebookBorder",
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",

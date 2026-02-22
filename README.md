@@ -36,6 +36,7 @@ require("neo_notebooks").setup({
   overlay_preview = false,
   suppress_completion_in_markdown = true,
   auto_insert_on_jump = true,
+  border_hl = "NeoNotebookBorder",
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",
@@ -113,6 +114,15 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `]n` next cell
 - `[n` previous cell
 - `<leader>l` open cell list picker
+
+### Cell border color
+
+By default, the plugin defines `NeoNotebookBorder` as green. You can override:
+
+```lua
+vim.api.nvim_set_hl(0, "NeoNotebookBorder", { fg = "#00ff00" })
+require("neo_notebooks").setup({ border_hl = "NeoNotebookBorder" })
+```
 
 ### Auto-insert on navigation
 
