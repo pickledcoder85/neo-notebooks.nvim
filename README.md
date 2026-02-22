@@ -76,8 +76,8 @@ require("neo_notebooks").setup({
     toggle = "<leader>m",
     preview = "<leader>p",
     run_and_next = "<S-CR>",
-    next_cell = "]n",
-    prev_cell = "[n",
+    next_cell = "<C-n>",
+    prev_cell = "<C-p>",
     cell_list = "<leader>l",
     duplicate_cell = "<leader>yd",
     split_cell = "<leader>xs",
@@ -199,8 +199,8 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `<leader>m` toggle cell type
 - `<leader>p` preview markdown cell
 - `<S-CR>` run cell and create new code cell
-- `]n` next cell
-- `[n` previous cell
+- `<C-n>` next cell
+- `<C-p>` previous cell
 - `<leader>l` open cell list picker
 - `<leader>yd` duplicate cell
 - `<leader>xs` split cell at cursor
