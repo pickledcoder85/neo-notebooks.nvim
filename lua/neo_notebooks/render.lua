@@ -133,13 +133,7 @@ function M.render(bufnr)
 
     local label_width = vim.fn.strdisplaywidth(label)
     local label_col = math.max(pad + 1, pad + width - label_width - 1)
-    if idx == 1 and cell.start == 0 then
-      vim.api.nvim_buf_set_extmark(bufnr, M.ns, 0, 0, {
-        virt_lines = { { { "", hl } } },
-        virt_lines_above = true,
-        priority = 90,
-      })
-    end
+    -- No extra top margin; keep the first cell aligned to the window edge.
     vim.api.nvim_buf_set_extmark(bufnr, M.ns, cell.start, 0, {
       virt_lines = { { { top, hl } } },
       virt_lines_above = true,
