@@ -217,6 +217,8 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `<M-j>` move cell down (accepts counts, e.g. `2<M-j>`)
 - `<leader>mG` move cell to top
 - `<leader>mgg` move cell to bottom
+
+Note: `<M-...>` means the Meta key (typically `Alt` on most keyboards).
 - `<leader>ra` run all code cells
 - `<leader>rs` restart python session
 - `<leader>tt` toggle output mode
