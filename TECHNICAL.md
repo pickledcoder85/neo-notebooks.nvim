@@ -99,6 +99,7 @@ This document summarizes implementation choices and the evolution of core featur
 
 - Outputs are stored in a per-buffer map keyed by `cell_id`.
 - Output is rendered as a virtual block below the cell with a purple border.
+- Output store tracks `lines` and `len` for alignment math.
 
 ## Rich rendering (optional)
 
@@ -140,6 +141,7 @@ This document summarizes implementation choices and the evolution of core featur
 - The cache is rebuilt on buffer changes.
 - Cache format: `list` (ordered) and `by_id` (O(1) lookup).
 - Each cell has a stable `cell_id` stored as an extmark on the marker line.
+- Each cell entry stores `body_len` for positioning math.
 
 ## Tests
 

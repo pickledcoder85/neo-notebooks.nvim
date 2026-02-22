@@ -27,6 +27,7 @@ local function build_index(bufnr)
       type = cell.type,
       start = cell.start,
       finish = cell.finish,
+      body_len = cell.finish - cell.start + 1,
     }
     table.insert(index.list, entry)
     index.by_id[entry.id] = entry

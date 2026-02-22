@@ -103,13 +103,15 @@ function M.show_inline(bufnr, cell, lines)
 
   if cell.id then
     local store = get_store(bufnr)
-    if vim.deep_equal(store[cell.id], lines) then
+    local existing = store[cell.id]
+    local existing_lines = existing and existing.lines or nil
+    if vim.deep_equal(existing_lines, lines) then
       if vim.g.neo_notebooks_debug_output then
         vim.notify("show_inline skipped (same output)", vim.log.levels.INFO)
       end
       return
     end
-    store[cell.id] = lines
+    store[cell.id] = { lines = lines, len = #lines }
     set_buf_var(bufnr, "neo_notebooks_output_store", store)
     if vim.g.neo_notebooks_debug_output then
       vim.notify("show_inline stored output for cell_id " .. tostring(cell.id), vim.log.levels.INFO)
@@ -182,9 +184,9 @@ function M.render_outputs(bufnr)
   end
 
   for _, cell in ipairs(state.list) do
-    local lines = store[cell.id]
-    if lines and #lines > 0 then
-      local id = M.render_block(bufnr, cell, lines)
+    local entry = store[cell.id]
+    if entry and entry.lines and #entry.lines > 0 then
+      local id = M.render_block(bufnr, cell, entry.lines)
       if cell.id and id then
         local state = get_state(bufnr)
         state[cell.id] = id
