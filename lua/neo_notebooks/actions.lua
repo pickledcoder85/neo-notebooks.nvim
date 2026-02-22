@@ -150,7 +150,9 @@ local function move_once(bufnr, direction)
   if id then
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
-  vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
+  local max_line = vim.api.nvim_buf_line_count(bufnr)
+  local target = math.min(insert_at + 2, max_line)
+  vim.api.nvim_win_set_cursor(0, { target, 0 })
   index.rebuild(bufnr)
 
   if id then
@@ -190,6 +192,8 @@ local function move_once(bufnr, direction)
       })
     end
   end
+
+  output.render_outputs(bufnr)
 end
 
 function M.move_cell_up(bufnr, line, count)
@@ -253,6 +257,7 @@ function M.move_cell_top(bufnr)
       cell_id = id,
     })
   end
+  output.render_outputs(bufnr)
 end
 
 function M.move_cell_bottom(bufnr)
@@ -300,6 +305,7 @@ function M.move_cell_bottom(bufnr)
       cell_id = id,
     })
   end
+  output.render_outputs(bufnr)
 end
 
 function M.toggle_output_mode()
