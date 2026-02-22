@@ -61,6 +61,43 @@ local function ensure_initial_markdown_cell(bufnr)
   vim.cmd("startinsert")
 end
 
+local function update_completion(bufnr)
+  if not nb.config.suppress_completion_in_markdown then
+    return
+  end
+  if not should_enable(bufnr) then
+    return
+  end
+  if bufnr ~= vim.api.nvim_get_current_buf() then
+    return
+  end
+
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cell = cells.get_cell_at_line(bufnr, line)
+  if not cell then
+    return
+  end
+
+  local b = vim.b[bufnr]
+  if cell.type == "markdown" then
+    if b.completion ~= false then
+      b.neo_notebooks_completion_prev = b.completion
+      b.completion = false
+      b.neo_notebooks_completion_forced = true
+    end
+  else
+    if b.neo_notebooks_completion_forced then
+      if b.neo_notebooks_completion_prev == nil then
+        b.completion = nil
+      else
+        b.completion = b.neo_notebooks_completion_prev
+      end
+      b.neo_notebooks_completion_prev = nil
+      b.neo_notebooks_completion_forced = nil
+    end
+  end
+end
+
 local function render_if_enabled(bufnr)
   bufnr = bufnr or 0
   if nb.config.auto_render and should_enable(bufnr) then
@@ -222,6 +259,13 @@ vim.api.nvim_create_autocmd({ "FileType" }, {
 vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "TextChanged", "TextChangedI" }, {
   callback = function(args)
     overlay.on_cursor_moved(args.buf)
+    update_completion(args.buf)
+  end,
+})
+
+vim.api.nvim_create_autocmd({ "InsertEnter" }, {
+  callback = function(args)
+    update_completion(args.buf)
   end,
 })
 

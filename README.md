@@ -34,6 +34,7 @@ require("neo_notebooks").setup({
   require_markers = false,
   auto_insert_first_cell = true,
   overlay_preview = false,
+  suppress_completion_in_markdown = true,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",
@@ -86,6 +87,16 @@ require("neo_notebooks").setup({ overlay_preview = true })
 ```
 
 You can toggle it on demand with `:NeoNotebookCellOverlayToggle`.
+
+### Completion suppression in markdown cells
+
+By default, completion popups are disabled while your cursor is inside a markdown cell:
+
+```lua
+require("neo_notebooks").setup({ suppress_completion_in_markdown = true })
+```
+
+This sets `vim.b.completion = false` when entering markdown cells and restores the previous value in code cells.
 
 ### Keymaps (defaults)
 

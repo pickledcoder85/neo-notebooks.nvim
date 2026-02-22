@@ -8,6 +8,7 @@ M.config = {
   require_markers = false,
   auto_insert_first_cell = true,
   overlay_preview = false,
+  suppress_completion_in_markdown = true,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",

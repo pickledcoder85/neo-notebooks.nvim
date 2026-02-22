@@ -52,6 +52,11 @@ This document summarizes implementation choices and the evolution of core featur
 - It is read-only and updates on cursor and text changes.
 - The overlay is optional and can be toggled per buffer.
 
+## Completion suppression in markdown cells
+
+- When enabled, the plugin sets `vim.b.completion = false` inside markdown cells.
+- The previous buffer-local completion setting is restored when returning to code cells.
+
 ## Auto-render and keymaps
 
 - Auto-render is gated by:
