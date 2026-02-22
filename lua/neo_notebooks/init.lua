@@ -37,6 +37,7 @@ M.config = {
     restart = "<leader>rs",
     toggle_output = "<leader>to",
     select_cell = "<leader>vs",
+    stats = "<leader>ns",
   },
 }
 

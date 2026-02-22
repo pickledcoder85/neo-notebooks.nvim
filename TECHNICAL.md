@@ -81,6 +81,10 @@ This document summarizes implementation choices and the evolution of core featur
 - Move up/down: swaps the current cell with the previous/next cell.
 - Select: enters visual line mode and selects the current cell body.
 
+## Stats
+
+- `NeoNotebookStats` reports the total cell count and a code/markdown breakdown.
+
 ## Run all and session control
 
 - `NeoNotebookRunAll` executes all code cells in order.

@@ -37,6 +37,7 @@ print("hello")
 - `:NeoNotebookRestart` restarts the Python session and clears outputs.
 - `:NeoNotebookOutputToggle` toggles output mode between inline and floating.
 - `:NeoNotebookCellSelect` selects the current cell body.
+- `:NeoNotebookStats` shows a cell count summary.
 - `:NeoNotebookImportIpynb {path}` imports a `.ipynb` file.
 - `:NeoNotebookOpenIpynb {path}` opens a `.ipynb` into a new buffer.
 - `:NeoNotebookExportIpynb {path}` exports the current buffer to `.ipynb`.
@@ -81,6 +82,7 @@ require("neo_notebooks").setup({
     restart = "<leader>rs",
     toggle_output = "<leader>to",
     select_cell = "<leader>vs",
+    stats = "<leader>ns",
   },
 })
 ```
@@ -163,6 +165,7 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `<leader>rs` restart python session
 - `<leader>to` toggle output mode
 - `<leader>vs` select current cell body
+- `<leader>ns` show cell stats
 
 ### .ipynb import/export (basic)
 

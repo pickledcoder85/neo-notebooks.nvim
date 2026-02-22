@@ -10,6 +10,7 @@ local actions = require("neo_notebooks.actions")
 local ipynb = require("neo_notebooks.ipynb")
 local run_all = require("neo_notebooks.run_all")
 local session = require("neo_notebooks.session")
+local stats = require("neo_notebooks.stats")
 
 local function has_filetype(bufnr)
   local allowed = nb.config.filetypes
@@ -246,6 +247,10 @@ vim.api.nvim_create_user_command("NeoNotebookCellSelect", function()
   actions.select_cell(0)
 end, {})
 
+vim.api.nvim_create_user_command("NeoNotebookStats", function()
+  stats.show(0)
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookImportIpynb", function(opts)
   local path = opts.args
   if path == "" then
@@ -459,6 +464,12 @@ local function set_default_keymaps(bufnr)
   if maps.select_cell then
     vim.keymap.set("n", maps.select_cell, function()
       actions.select_cell(0)
+    end, opts)
+  end
+
+  if maps.stats then
+    vim.keymap.set("n", maps.stats, function()
+      stats.show(0)
     end, opts)
   end
 end
