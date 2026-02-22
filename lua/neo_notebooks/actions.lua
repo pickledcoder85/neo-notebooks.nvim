@@ -105,10 +105,14 @@ function M.move_cell_up(bufnr, line)
 
   local current = list[idx]
   local prev = list[idx - 1]
+  local id = current.id
   local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
 
   vim.api.nvim_buf_set_lines(bufnr, current.start, current.finish + 1, false, {})
   vim.api.nvim_buf_set_lines(bufnr, prev.start, prev.start, false, current_lines)
+  if id then
+    vim.api.nvim_buf_set_extmark(bufnr, index.ns, prev.start, 0, { id = id })
+  end
   vim.api.nvim_win_set_cursor(0, { prev.start + 2, 0 })
   vim.cmd("startinsert")
 end
@@ -132,12 +136,16 @@ function M.move_cell_down(bufnr, line)
 
   local current = list[idx]
   local next = list[idx + 1]
+  local id = current.id
   local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
   local current_len = current.finish - current.start + 1
 
   vim.api.nvim_buf_set_lines(bufnr, current.start, current.finish + 1, false, {})
   local insert_at = next.finish - current_len + 1
   vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, current_lines)
+  if id then
+    vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
+  end
   vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
   vim.cmd("startinsert")
 end
