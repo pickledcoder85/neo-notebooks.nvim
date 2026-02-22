@@ -34,8 +34,8 @@ local function output_block(lines, width, pad, hl)
     return string.rep(" ", pad) .. cell_border(width, left, right)
   end
 
-  -- Output block top border: use downward corners to attach to cell bottom.
-  table.insert(block, { { border("╰", "╯"), hl } })
+  -- Output block top border: downward corners.
+  table.insert(block, { { border("╭", "╮"), hl } })
   local inner_width = math.max(0, width - 2)
   for _, line in ipairs(lines) do
     local clipped = pad_text(line, inner_width)
