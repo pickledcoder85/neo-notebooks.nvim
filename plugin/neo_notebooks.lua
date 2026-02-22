@@ -362,6 +362,33 @@ vim.api.nvim_create_autocmd({ "BufEnter", "TextChanged", "TextChangedI" }, {
   end,
 })
 
+vim.api.nvim_create_autocmd("BufReadPost", {
+  pattern = "*.ipynb",
+  callback = function(args)
+    if not nb.config.auto_open_ipynb then
+      return
+    end
+    if vim.b[args.buf].neo_notebooks_ipynb_opened then
+      return
+    end
+    local path = vim.api.nvim_buf_get_name(args.buf)
+    if path == "" then
+      return
+    end
+    vim.b[args.buf].neo_notebooks_ipynb_opened = true
+    vim.schedule(function()
+      local ok, err = ipynb.open_ipynb(path)
+      if not ok then
+        vim.notify(err or "Open failed", vim.log.levels.ERROR)
+        return
+      end
+      if vim.api.nvim_buf_is_valid(args.buf) then
+        vim.api.nvim_buf_delete(args.buf, { force = true })
+      end
+    end)
+  end,
+})
+
 local function set_default_keymaps(bufnr)
   if nb.config.keymaps == false then
     return

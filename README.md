@@ -58,7 +58,8 @@ require("neo_notebooks").setup({
   python_cmd = "python3",
   auto_render = true,
   output = "inline",
-  filetypes = { "python" },
+  filetypes = { "python", "neo_notebook", "ipynb" },
+  auto_open_ipynb = true,
   require_markers = false,
   auto_insert_first_cell = true,
   overlay_preview = false,
@@ -244,6 +245,12 @@ Export:
 Notes:
 - This is a best-effort conversion of cell sources only (no outputs or rich metadata).
 - Markdown and code cells are supported; other cell types are treated as code.
+
+### Filetypes
+
+- `*.nn` files are detected as `neo_notebook` and render cells normally.
+- `*.ipynb` files can be auto-opened into a scratch buffer (converted to marker format)
+  when `auto_open_ipynb = true`.
 
 ### Cell border color
 
