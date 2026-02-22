@@ -2,18 +2,25 @@ local M = {}
 
 M.ns = vim.api.nvim_create_namespace("neo_notebooks_output")
 
-local function get_store(bufnr)
-  if not vim.b[bufnr].neo_notebooks_output_store then
-    vim.b[bufnr].neo_notebooks_output_store = {}
+local function get_buf_var(bufnr, name, default)
+  local ok, value = pcall(vim.api.nvim_buf_get_var, bufnr, name)
+  if ok then
+    return value
   end
-  return vim.b[bufnr].neo_notebooks_output_store
+  vim.api.nvim_buf_set_var(bufnr, name, default)
+  return default
+end
+
+local function set_buf_var(bufnr, name, value)
+  vim.api.nvim_buf_set_var(bufnr, name, value)
+end
+
+local function get_store(bufnr)
+  return get_buf_var(bufnr, "neo_notebooks_output_store", {})
 end
 
 local function get_state(bufnr)
-  if not vim.b[bufnr].neo_notebooks_output then
-    vim.b[bufnr].neo_notebooks_output = {}
-  end
-  return vim.b[bufnr].neo_notebooks_output
+  return get_buf_var(bufnr, "neo_notebooks_output", {})
 end
 
 function M.clear_cell(bufnr, cell_start)
@@ -29,8 +36,8 @@ end
 function M.clear_all(bufnr)
   bufnr = bufnr or 0
   vim.api.nvim_buf_clear_namespace(bufnr, M.ns, 0, -1)
-  vim.b[bufnr].neo_notebooks_output = {}
-  vim.b[bufnr].neo_notebooks_output_store = {}
+  set_buf_var(bufnr, "neo_notebooks_output", {})
+  set_buf_var(bufnr, "neo_notebooks_output_store", {})
 end
 
 function M.show_inline(bufnr, cell, lines)
@@ -92,6 +99,7 @@ function M.show_inline(bufnr, cell, lines)
       return
     end
     store[cell.id] = lines
+    set_buf_var(bufnr, "neo_notebooks_output_store", store)
     if vim.g.neo_notebooks_debug_output then
       vim.notify("show_inline stored output for cell_id " .. tostring(cell.id), vim.log.levels.INFO)
     end
@@ -144,7 +152,7 @@ function M.render_outputs(bufnr)
   end
   local store = get_store(bufnr)
   vim.api.nvim_buf_clear_namespace(bufnr, M.ns, 0, -1)
-  vim.b[bufnr].neo_notebooks_output = {}
+  set_buf_var(bufnr, "neo_notebooks_output", {})
 
   local index = require("neo_notebooks.index")
   local state = index.rebuild(bufnr)
@@ -168,6 +176,7 @@ function M.render_outputs(bufnr)
       if cell.id and id then
         local state = get_state(bufnr)
         state[cell.id] = id
+        set_buf_var(bufnr, "neo_notebooks_output", state)
         if vim.g.neo_notebooks_debug_output then
           vim.notify("render_outputs extmark id " .. tostring(id), vim.log.levels.INFO)
         end
