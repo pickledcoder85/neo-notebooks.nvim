@@ -73,6 +73,7 @@ require("neo_notebooks").setup({
   cell_width_ratio = 0.9,
   cell_min_width = 60,
   cell_max_width = 140,
+  top_padding = 1,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",

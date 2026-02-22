@@ -134,8 +134,16 @@ function M.render(bufnr)
     local label_width = vim.fn.strdisplaywidth(label)
     local label_col = math.max(pad + 1, pad + width - label_width - 1)
     -- No extra top margin; keep the first cell aligned to the window edge.
+    local top_lines = { { { top, hl } } }
+    if idx == 1 and cell.start == 0 then
+      local pad_lines = config.top_padding or 0
+      for _ = 1, pad_lines do
+        table.insert(top_lines, 1, { { "", hl } })
+      end
+    end
+
     vim.api.nvim_buf_set_extmark(bufnr, M.ns, cell.start, 0, {
-      virt_lines = { { { top, hl } } },
+      virt_lines = top_lines,
       virt_lines_above = true,
       virt_text = { { label, "Identifier" } },
       virt_text_pos = "overlay",

@@ -131,6 +131,7 @@ This document summarizes implementation choices and the evolution of core featur
 
 - Code and markdown borders use separate highlight groups.
 - Width is centered and responsive based on `cell_width_ratio`, clamped by min/max.
+- `top_padding` inserts blank virtual lines above the first cell to keep the top border visible.
 
 ## Cell list enhancements
 
