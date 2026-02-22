@@ -71,6 +71,12 @@ function M.show_inline(bufnr, cell, lines)
     end
   end
 
+  if not cell.id then
+    -- Fallback: render directly using current range if no stable id found.
+    M.render_block(bufnr, cell, lines)
+    return
+  end
+
   if cell.id then
     local store = get_store(bufnr)
     if vim.deep_equal(store[cell.id], lines) then
