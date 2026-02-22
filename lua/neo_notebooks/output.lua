@@ -143,8 +143,6 @@ function M.render_block(bufnr, cell, lines)
   end
 
   local virt_lines = {}
-  local spacer = string.rep(" ", pad + width)
-  table.insert(virt_lines, { { spacer, "NeoNotebookOutput" } })
   table.insert(virt_lines, { { border("╭", "╮"), "NeoNotebookOutput" } })
   for _, line in ipairs(lines) do
     local padded = string.rep(" ", pad + 1) .. line
