@@ -7,19 +7,38 @@ local function get_sorted_cells(bufnr)
   return cells.get_cells(bufnr)
 end
 
+local function ensure_line_exists(bufnr, line)
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  if line + 1 > line_count then
+    vim.api.nvim_buf_set_lines(bufnr, line_count, line_count, false, { "" })
+  end
+end
+
+local function move_to_cell_start(bufnr, cell)
+  local target = cell.start + 1
+  ensure_line_exists(bufnr, target)
+  vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
+  if config.auto_insert_on_jump then
+    vim.cmd("startinsert")
+  end
+end
+
+local function current_cell_index(list, line)
+  for i, cell in ipairs(list) do
+    if line >= cell.start and line <= cell.finish then
+      return i
+    end
+  end
+  return nil
+end
+
 function M.next_cell(bufnr)
   bufnr = bufnr or 0
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local list = get_sorted_cells(bufnr)
-  for _, cell in ipairs(list) do
-    if cell.finish > line then
-      local target = math.min(cell.finish, cell.start + 1)
-      vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
-      if config.auto_insert_on_jump then
-        vim.cmd("startinsert")
-      end
-      return
-    end
+  local idx = current_cell_index(list, line)
+  if idx and list[idx + 1] then
+    move_to_cell_start(bufnr, list[idx + 1])
   end
 end
 
@@ -27,15 +46,9 @@ function M.prev_cell(bufnr)
   bufnr = bufnr or 0
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local list = get_sorted_cells(bufnr)
-  for i = #list, 1, -1 do
-    if list[i].start < line then
-      local target = math.min(list[i].finish, list[i].start + 1)
-      vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
-      if config.auto_insert_on_jump then
-        vim.cmd("startinsert")
-      end
-      return
-    end
+  local idx = current_cell_index(list, line)
+  if idx and list[idx - 1] then
+    move_to_cell_start(bufnr, list[idx - 1])
   end
 end
 
@@ -67,11 +80,7 @@ function M.cell_list(bufnr)
     end
     local cell = list[idx]
     if cell then
-      local target = math.min(cell.finish, cell.start + 1)
-      vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
-      if config.auto_insert_on_jump then
-        vim.cmd("startinsert")
-      end
+      move_to_cell_start(bufnr, cell)
     end
   end)
 end
