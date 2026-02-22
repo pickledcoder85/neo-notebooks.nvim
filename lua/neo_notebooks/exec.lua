@@ -25,6 +25,7 @@ globals_dict["__neo_notebooks_rich"] = True
 globals_dict["__neo_notebooks_rich_max_rows"] = 20
 globals_dict["__neo_notebooks_rich_max_cols"] = 20
 globals_dict["__neo_notebooks_rich_tip_shown"] = False
+globals_dict["__neo_notebooks_debug_ansi"] = False
 
 def neo_rich(enable=None):
     if enable is None:
@@ -33,6 +34,14 @@ def neo_rich(enable=None):
     return globals_dict["__neo_notebooks_rich"]
 
 globals_dict["neo_rich"] = neo_rich
+
+def neo_ansi_debug(enable=None):
+    if enable is None:
+        return globals_dict.get("__neo_notebooks_debug_ansi", False)
+    globals_dict["__neo_notebooks_debug_ansi"] = bool(enable)
+    return globals_dict["__neo_notebooks_debug_ansi"]
+
+globals_dict["neo_ansi_debug"] = neo_ansi_debug
 
 def _is_pandas_obj(value):
     mod = getattr(value.__class__, "__module__", "")
