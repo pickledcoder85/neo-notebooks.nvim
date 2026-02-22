@@ -113,18 +113,7 @@ local function is_job_alive(job_id)
   return status == -1
 end
 
-local function handle_response(session, resp)
-  if not resp or type(resp) ~= "table" then
-    return
-  end
-
-  local id = resp.id
-  local pending = session.pending[id]
-  if not pending then
-    return
-  end
-  session.pending[id] = nil
-
+local function format_output(resp)
   local output = {}
   local out = resp.out or ""
   local err = resp.err or ""
@@ -158,7 +147,26 @@ local function handle_response(session, resp)
     output = { "(no output)" }
   end
 
-  open_output_window(output)
+  return output
+end
+
+local function handle_response(session, resp)
+  if not resp or type(resp) ~= "table" then
+    return
+  end
+
+  local id = resp.id
+  local pending = session.pending[id]
+  if not pending then
+    return
+  end
+  session.pending[id] = nil
+  local output = format_output(resp)
+  if pending.on_output then
+    pending.on_output(output)
+  else
+    open_output_window(output)
+  end
 end
 
 local function ensure_session(bufnr)
@@ -235,9 +243,10 @@ function M.stop_session(bufnr)
   sessions[bufnr] = nil
 end
 
-function M.run_cell(bufnr, line)
+function M.run_cell(bufnr, line, opts)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+  opts = opts or {}
 
   local code, err = cells.get_cell_code(bufnr, line)
   if err then
@@ -257,7 +266,10 @@ function M.run_cell(bufnr, line)
 
   request_id = request_id + 1
   local payload = vim.fn.json_encode({ id = request_id, code = code })
-  session.pending[request_id] = { bufnr = bufnr }
+  session.pending[request_id] = {
+    bufnr = bufnr,
+    on_output = opts.on_output,
+  }
   vim.fn.chansend(session.job, payload .. "\n")
 end
 
