@@ -109,13 +109,15 @@ function M.open_ipynb(path)
     vim.api.nvim_buf_set_option(bufnr, "modifiable", true)
     vim.api.nvim_set_option_value("filetype", "neo_notebook", { buf = bufnr })
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {})
-    return M.import_ipynb(path, bufnr)
+    local ok, err = M.import_ipynb(path, bufnr)
+    return ok, err, bufnr
   end
   vim.cmd("enew")
   local bufnr = vim.api.nvim_get_current_buf()
   vim.api.nvim_buf_set_name(bufnr, path)
   vim.api.nvim_set_option_value("filetype", "neo_notebook", { buf = bufnr })
-  return M.import_ipynb(path, bufnr)
+  local ok, err = M.import_ipynb(path, bufnr)
+  return ok, err, bufnr
 end
 
 return M

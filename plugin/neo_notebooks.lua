@@ -377,12 +377,12 @@ vim.api.nvim_create_autocmd("BufReadPost", {
     end
     vim.b[args.buf].neo_notebooks_ipynb_opened = true
     vim.schedule(function()
-      local ok, err = ipynb.open_ipynb(path)
+      local ok, err, opened_buf = ipynb.open_ipynb(path)
       if not ok then
         vim.notify(err or "Open failed", vim.log.levels.ERROR)
         return
       end
-      if vim.api.nvim_buf_is_valid(args.buf) then
+      if opened_buf ~= args.buf and vim.api.nvim_buf_is_valid(args.buf) then
         vim.api.nvim_buf_delete(args.buf, { force = true })
       end
     end)
