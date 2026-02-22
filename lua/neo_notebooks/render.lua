@@ -131,10 +131,18 @@ function M.render(bufnr)
       hl = config.border_hl_markdown or hl
     end
 
+    local label_pad = string.rep(" ", pad)
+    if idx == 1 and cell.start == 0 then
+      vim.api.nvim_buf_set_extmark(bufnr, M.ns, 0, 0, {
+        virt_lines = { { { "", hl } } },
+        virt_lines_above = true,
+        priority = 90,
+      })
+    end
     vim.api.nvim_buf_set_extmark(bufnr, M.ns, cell.start, 0, {
       virt_lines = { { { top, hl } } },
       virt_lines_above = true,
-      virt_text = { { label, "Identifier" } },
+      virt_text = { { label_pad .. label, "Identifier" } },
       virt_text_pos = "right_align",
       priority = 100,
     })
@@ -156,7 +164,7 @@ function M.render(bufnr)
       priority = 100,
     }
     if cell.type == "code" then
-      bottom_opts.virt_text = { { "Python", "Identifier" } }
+      bottom_opts.virt_text = { { label_pad .. "Python", "Identifier" } }
       bottom_opts.virt_text_pos = "right_align"
     end
     vim.api.nvim_buf_set_extmark(bufnr, M.ns, finish_line, 0, bottom_opts)
