@@ -64,6 +64,55 @@ function M.render(bufnr)
   local pad = math.max(0, math.floor((win_width - width) / 2))
   local index = cells.get_cells_indexed(bufnr)
   local cells_list = index.list or {}
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+
+  local function get_buf_var(name, default)
+    local ok, value = pcall(vim.api.nvim_buf_get_var, bufnr, name)
+    if ok then
+      return value
+    end
+    return default
+  end
+
+  local function set_buf_var(name, value)
+    vim.api.nvim_buf_set_var(bufnr, name, value)
+  end
+
+  local function clear_tail_pad()
+    local pad = get_buf_var("neo_notebooks_tail_pad", 0)
+    if pad <= 0 then
+      return
+    end
+    local current = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    local total = #current
+    local can_remove = true
+    for i = total - pad + 1, total do
+      local line = current[i]
+      if line ~= "" then
+        can_remove = false
+        break
+      end
+    end
+    if can_remove then
+      vim.api.nvim_buf_set_lines(bufnr, total - pad, total, false, {})
+    end
+    set_buf_var("neo_notebooks_tail_pad", 0)
+    line_count = vim.api.nvim_buf_line_count(bufnr)
+  end
+
+  local function ensure_tail_pad(lines)
+    clear_tail_pad()
+    if lines <= 0 then
+      return
+    end
+    local blanks = {}
+    for _ = 1, lines do
+      table.insert(blanks, "")
+    end
+    vim.api.nvim_buf_set_lines(bufnr, line_count, line_count, false, blanks)
+    set_buf_var("neo_notebooks_tail_pad", lines)
+    line_count = vim.api.nvim_buf_line_count(bufnr)
+  end
 
   for idx, cell in ipairs(cells_list) do
     if cell.finish < cell.start then
@@ -101,7 +150,6 @@ function M.render(bufnr)
       end
     end
 
-    local line_count = vim.api.nvim_buf_line_count(bufnr)
     local finish_line = math.min(math.max(cell.finish, 0), math.max(line_count - 1, 0))
     vim.api.nvim_buf_set_extmark(bufnr, M.ns, finish_line, 0, {
       virt_lines = bottom_lines,
@@ -137,6 +185,22 @@ function M.render(bufnr)
     end
 
     ::continue::
+  end
+
+  -- Add trailing padding so the last cell output is scrollable.
+  local tail_pad = 0
+  local last = cells_list[#cells_list]
+  if last and last.type == "code" then
+    local out_lines = output.get_lines(bufnr, last.id)
+    if out_lines and #out_lines > 0 then
+      -- top border + content + bottom border
+      tail_pad = #out_lines + 2
+    end
+  end
+  if tail_pad > 0 then
+    ensure_tail_pad(tail_pad)
+  else
+    clear_tail_pad()
   end
 end
 
