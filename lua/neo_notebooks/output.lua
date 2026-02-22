@@ -43,6 +43,17 @@ function M.show_inline(bufnr, cell, lines)
     return
   end
 
+  if not cell.id then
+    local index = require("neo_notebooks.index")
+    local state = index.rebuild(bufnr)
+    for _, entry in ipairs(state.list) do
+      if entry.start == cell.start then
+        cell.id = entry.id
+        break
+      end
+    end
+  end
+
   if cell.id then
     local store = get_store(bufnr)
     store[cell.id] = lines
