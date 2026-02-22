@@ -38,6 +38,7 @@ local cells = require("neo_notebooks.cells")
 local actions = require("neo_notebooks.actions")
 local output = require("neo_notebooks.output")
 local index_mod = require("neo_notebooks.index")
+local ipynb = require("neo_notebooks.ipynb")
 
 -- Test: index build
 with_buf({
@@ -123,6 +124,26 @@ with_buf({
   local state = index.rebuild(buf)
   eq(#state.list, 2, "split adds a cell")
   ok(state.list[1].id ~= state.list[2].id, "ids are unique")
+end)
+
+-- Test: ipynb round-trip (export then import)
+with_buf({
+  "# %% [code]",
+  "print(1)",
+  "",
+  "# %% [markdown]",
+  "# Title",
+}, function(buf)
+  local path = vim.fn.tempname() .. ".ipynb"
+  local ok_export, err_export = ipynb.export_ipynb(path, buf)
+  ok(ok_export, err_export or "export failed")
+
+  local buf2 = vim.api.nvim_create_buf(false, true)
+  local ok_import, err_import = ipynb.import_ipynb(path, buf2)
+  ok(ok_import, err_import or "import failed")
+  local state = index.rebuild(buf2)
+  eq(#state.list, 2, "round-trip cell count")
+  vim.api.nvim_buf_delete(buf2, { force = true })
 end)
 
 print("All tests passed")

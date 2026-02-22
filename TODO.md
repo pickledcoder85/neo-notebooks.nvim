@@ -4,7 +4,6 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Now
 
-- Decide whether the cell-index-cache branch should be merged into `main`.
 - Verify inline output behavior for `<leader>r` and `<S-CR>` after branch merge.
 - Add `.ipynb` round-trip tests (export then import) and document limitations.
 - Reconcile floating UI experiments vs. mainline behavior (keep experimental or drop).
@@ -26,6 +25,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Done (recent)
 
+- Merged cell-index-cache into `main`.
 - Stable cell IDs via extmarks.
 - Cell index cache with list + by_id.
 - Output placement tied to cell IDs.
