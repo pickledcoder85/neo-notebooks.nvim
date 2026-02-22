@@ -113,6 +113,28 @@ local function update_completion(bufnr)
   end
 end
 
+local function ensure_top_padding(bufnr)
+  local pad = nb.config.top_padding or 0
+  if pad <= 0 then
+    return
+  end
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, pad, false)
+  local missing = 0
+  for i = 1, pad do
+    if lines[i] ~= "" then
+      missing = pad - (i - 1)
+      break
+    end
+  end
+  if missing > 0 then
+    local blanks = {}
+    for _ = 1, missing do
+      table.insert(blanks, "")
+    end
+    vim.api.nvim_buf_set_lines(bufnr, 0, 0, false, blanks)
+  end
+end
+
 local function render_if_enabled(bufnr)
   bufnr = bufnr or 0
   if nb.config.auto_render and should_enable(bufnr) then
@@ -395,6 +417,7 @@ vim.api.nvim_create_autocmd("BufReadPost", {
         vim.notify(err or "Import failed", vim.log.levels.ERROR)
         return
       end
+      ensure_top_padding(args.buf)
       set_default_keymaps(args.buf)
       index.rebuild(args.buf)
       render_if_enabled(args.buf)
@@ -686,6 +709,7 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
   callback = function(args)
     set_default_keymaps(args.buf)
     if should_enable(args.buf) then
+      ensure_top_padding(args.buf)
       index.rebuild(args.buf)
       local line = vim.api.nvim_win_get_cursor(0)[1] - 1
       local cell = cells.get_cell_at_line(args.buf, line)
