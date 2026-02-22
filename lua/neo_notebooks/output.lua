@@ -56,10 +56,21 @@ function M.show_inline(bufnr, cell, lines)
 
   if cell.id then
     local store = get_store(bufnr)
+    if vim.deep_equal(store[cell.id], lines) then
+      return
+    end
     store[cell.id] = lines
   end
 
-  M.render_block(bufnr, cell, lines)
+  local state = get_state(bufnr)
+  if cell.id and state[cell.id] then
+    pcall(vim.api.nvim_buf_del_extmark, bufnr, M.ns, state[cell.id])
+    state[cell.id] = nil
+  end
+  local id = M.render_block(bufnr, cell, lines)
+  if cell.id and id then
+    state[cell.id] = id
+  end
 end
 
 function M.render_block(bufnr, cell, lines)
@@ -90,9 +101,10 @@ function M.render_block(bufnr, cell, lines)
 
   local line_count = vim.api.nvim_buf_line_count(bufnr)
   local target = math.min(math.max(0, cell.finish), line_count - 1)
-  vim.api.nvim_buf_set_extmark(bufnr, M.ns, target, 0, {
+  local id = vim.api.nvim_buf_set_extmark(bufnr, M.ns, target, 0, {
     virt_lines = virt_lines,
   })
+  return id
 end
 
 function M.render_outputs(bufnr)
@@ -111,7 +123,11 @@ function M.render_outputs(bufnr)
   for _, cell in ipairs(state.list) do
     local lines = store[cell.id]
     if lines and #lines > 0 then
-      M.render_block(bufnr, cell, lines)
+      local id = M.render_block(bufnr, cell, lines)
+      if cell.id and id then
+        local state = get_state(bufnr)
+        state[cell.id] = id
+      end
     end
   end
 end
