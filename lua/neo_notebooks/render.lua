@@ -52,10 +52,12 @@ function M.render(bufnr)
       virt_lines_above = true,
       virt_text = { { label, "Identifier" } },
       virt_text_pos = "eol",
+      priority = 100,
     })
 
     vim.api.nvim_buf_set_extmark(bufnr, M.ns, cell.finish, 0, {
       virt_lines = { { { bottom, hl } } },
+      priority = 100,
     })
 
     if config.vertical_borders then

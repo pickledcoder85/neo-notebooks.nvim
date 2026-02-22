@@ -152,6 +152,7 @@ function M.render_block(bufnr, cell, lines)
   local target = math.min(math.max(0, cell.finish), line_count - 1)
   local id = vim.api.nvim_buf_set_extmark(bufnr, M.ns, target, 0, {
     virt_lines = virt_lines,
+    priority = 200,
   })
   return id
 end
