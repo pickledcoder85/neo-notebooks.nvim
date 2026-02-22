@@ -9,7 +9,7 @@ local function cell_border(width, left, right)
   if width < 2 then
     return left .. right
   end
-  return left .. string.rep("-", width - 2) .. right
+  return left .. string.rep("─", width - 2) .. right
 end
 
 function M.clear(bufnr)
@@ -28,8 +28,8 @@ function M.render(bufnr)
       goto continue
     end
 
-    local top = cell_border(math.min(width, width), "+", "+")
-    local bottom = cell_border(math.min(width, width), "+", "+")
+    local top = cell_border(math.min(width, width), "╭", "╮")
+    local bottom = cell_border(math.min(width, width), "╰", "╯")
     local label = string.format(" [%s] ", cell.type)
     if config.show_cell_index then
       label = string.format(" [%d %s] ", idx, cell.type)
@@ -50,16 +50,10 @@ function M.render(bufnr)
 
     if config.vertical_borders then
       for line = cell.start, cell.finish do
-        local left = "|"
-        local right = "|"
-        if line == cell.start or line == cell.finish then
-          left = "+"
-          right = "+"
-        end
         vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
-          sign_text = left,
+          sign_text = "│",
           sign_hl_group = hl,
-          virt_text = { { right, hl } },
+          virt_text = { { "│", hl } },
           virt_text_pos = "right_align",
         })
       end
