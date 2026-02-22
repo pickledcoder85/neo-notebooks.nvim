@@ -683,6 +683,12 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
     set_default_keymaps(args.buf)
     if should_enable(args.buf) then
       index.rebuild(args.buf)
+      local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+      local cell = cells.get_cell_at_line(args.buf, line)
+      if cell and line == cell.start then
+        local target = math.min(cell.start + 1, cell.finish)
+        vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
+      end
     end
   end,
 })
