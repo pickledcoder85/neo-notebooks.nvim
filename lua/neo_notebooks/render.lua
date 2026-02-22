@@ -121,9 +121,9 @@ function M.render(bufnr)
 
     local top = string.rep(" ", pad) .. cell_border(width, "╭", "╮")
     local bottom = string.rep(" ", pad) .. cell_border(width, "╰", "╯")
-    local label = string.format(" [%s] ", cell.type)
+    local label = string.format("[%s]", cell.type)
     if config.show_cell_index then
-      label = string.format(" [%d %s] ", idx, cell.type)
+      label = string.format("[%d %s]", idx, cell.type)
     end
 
     local hl = config.border_hl_code or "Comment"
@@ -135,7 +135,7 @@ function M.render(bufnr)
       virt_lines = { { { top, hl } } },
       virt_lines_above = true,
       virt_text = { { label, "Identifier" } },
-      virt_text_pos = "eol",
+      virt_text_pos = "right_align",
       priority = 100,
     })
 
@@ -151,10 +151,15 @@ function M.render(bufnr)
     end
 
     local finish_line = math.min(math.max(cell.finish, 0), math.max(line_count - 1, 0))
-    vim.api.nvim_buf_set_extmark(bufnr, M.ns, finish_line, 0, {
+    local bottom_opts = {
       virt_lines = bottom_lines,
       priority = 100,
-    })
+    }
+    if cell.type == "code" then
+      bottom_opts.virt_text = { { "Python", "Identifier" } }
+      bottom_opts.virt_text_pos = "right_align"
+    end
+    vim.api.nvim_buf_set_extmark(bufnr, M.ns, finish_line, 0, bottom_opts)
 
     if config.vertical_borders then
       local left_col = pad
