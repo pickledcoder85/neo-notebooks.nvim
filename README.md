@@ -120,6 +120,14 @@ The plugin maintains a per-buffer cell index cache and rebuilds it on buffer cha
 The cache stores both an ordered list and an ID map for O(1) access.
 Each cell has a stable `cell_id` stored as an extmark on the marker line.
 
+### Tests
+
+Run tests in headless Neovim:
+
+```
+nvim --headless -u NONE -c \"lua dofile('tests/run.lua')\"
+```
+
 ### Automatic first cell
 
 When opening an empty `python` buffer, the plugin inserts a starter markdown cell:
