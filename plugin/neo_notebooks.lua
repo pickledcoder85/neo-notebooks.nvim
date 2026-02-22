@@ -213,7 +213,7 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
 vim.api.nvim_create_autocmd({ "FileType" }, {
   callback = function(args)
     ensure_initial_markdown_cell(args.buf)
-    if nb.config.overlay_preview then
+    if nb.config.overlay_preview and should_enable(args.buf) then
       overlay.enable(args.buf)
     end
   end,

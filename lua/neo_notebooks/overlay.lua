@@ -93,6 +93,9 @@ function M.enable(bufnr)
   if state.win and vim.api.nvim_win_is_valid(state.win) then
     return
   end
+  if vim.api.nvim_get_option_value("buftype", { buf = bufnr }) ~= "" then
+    return
+  end
   update_overlay(bufnr, state)
 end
 
