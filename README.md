@@ -37,6 +37,7 @@ print("hello")
 - `:NeoNotebookRestart` restarts the Python session and clears outputs.
 - `:NeoNotebookOutputToggle` toggles output mode between inline and floating.
 - `:NeoNotebookImportIpynb {path}` imports a `.ipynb` file.
+- `:NeoNotebookOpenIpynb {path}` opens a `.ipynb` into a new buffer.
 - `:NeoNotebookExportIpynb {path}` exports the current buffer to `.ipynb`.
 
 ## Configuration

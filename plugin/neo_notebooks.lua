@@ -256,6 +256,18 @@ vim.api.nvim_create_user_command("NeoNotebookImportIpynb", function(opts)
   render_if_enabled(0)
 end, { nargs = 1, complete = "file" })
 
+vim.api.nvim_create_user_command("NeoNotebookOpenIpynb", function(opts)
+  local path = opts.args
+  if path == "" then
+    vim.notify("Provide a .ipynb path", vim.log.levels.WARN)
+    return
+  end
+  local ok, err = ipynb.open_ipynb(path)
+  if not ok then
+    vim.notify(err or "Open failed", vim.log.levels.ERROR)
+  end
+end, { nargs = 1, complete = "file" })
+
 vim.api.nvim_create_user_command("NeoNotebookExportIpynb", function(opts)
   local path = opts.args
   if path == "" then

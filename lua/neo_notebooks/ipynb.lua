@@ -100,4 +100,13 @@ function M.export_ipynb(path, bufnr)
   return write_file(path, json)
 end
 
+function M.open_ipynb(path)
+  vim.cmd("enew")
+  local bufnr = vim.api.nvim_get_current_buf()
+  local name = path:gsub("%.ipynb$", ".py")
+  vim.api.nvim_buf_set_name(bufnr, name)
+  vim.api.nvim_set_option_value("filetype", "python", { buf = bufnr })
+  return M.import_ipynb(path, bufnr)
+end
+
 return M

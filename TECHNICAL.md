@@ -99,6 +99,7 @@ This document summarizes implementation choices and the evolution of core featur
 
 - Import reads `.ipynb` JSON and converts cells to marker format.
 - Export writes a minimal `.ipynb` with cell sources (no outputs).
+- Open creates a new buffer, sets `filetype=python`, and imports content.
 
 ## Auto-render and keymaps
 
