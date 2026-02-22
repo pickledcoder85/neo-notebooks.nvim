@@ -1,6 +1,6 @@
 local M = {}
 
-local MARKER_PATTERN = "^# %%%% %[(%w+)%]"
+local MARKER_PATTERN = "^# %%%% %[(%w+)%]%s*$"
 
 local function normalize_cell_type(cell_type)
   if cell_type == nil or cell_type == "" then
