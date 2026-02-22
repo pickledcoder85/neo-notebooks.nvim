@@ -22,6 +22,7 @@ globals_dict = {"__name__": "__main__"}
 globals_dict["__neo_notebooks_rich"] = True
 globals_dict["__neo_notebooks_rich_max_rows"] = 20
 globals_dict["__neo_notebooks_rich_max_cols"] = 20
+globals_dict["__neo_notebooks_rich_tip_shown"] = False
 
 def neo_rich(enable=None):
     if enable is None:
@@ -84,8 +85,9 @@ def handle(obj):
                 value = eval(compile(ast.Expression(last_expr.value), "<cell>", "eval"), globals_dict)
                 if value is not None:
                     use_rich = globals_dict.get("__neo_notebooks_rich", True)
-                    if use_rich and not RICH_AVAILABLE:
+                    if use_rich and not RICH_AVAILABLE and not globals_dict.get("__neo_notebooks_rich_tip_shown", False):
                         out_buf.write("[neo_notebooks] Tip: install 'rich' for nicer output\n")
+                        globals_dict["__neo_notebooks_rich_tip_shown"] = True
                     if use_rich and RICH_AVAILABLE and _is_pandas_obj(value):
                         rendered = _render_pandas_table(value, out_buf)
                         if not rendered:
