@@ -160,21 +160,39 @@ end, {})
 vim.api.nvim_create_user_command("NeoNotebookCellRunAndNext", function()
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local cell = cells.get_cell_at_line(0, line)
+  local list = cells.get_cells(0)
+  local next_cell = nil
+  for i, item in ipairs(list) do
+    if item.start == cell.start then
+      next_cell = list[i + 1]
+      break
+    end
+  end
 
   if cell.type == "markdown" then
-    local insert_line = cells.insert_cell_below(0, cell.finish, "code")
-    vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
-    render_if_enabled(0)
-    vim.cmd("startinsert")
+    if next_cell then
+      vim.api.nvim_win_set_cursor(0, { next_cell.start + 2, 0 })
+      vim.cmd("startinsert")
+    else
+      local insert_line = cells.insert_cell_below(0, cell.finish, "code")
+      vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
+      render_if_enabled(0)
+      vim.cmd("startinsert")
+    end
     return
   end
 
   run_cell_with_output(line, cell)
 
-  local insert_line = cells.insert_cell_below(0, cell.finish, "code")
-  vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
-  render_if_enabled(0)
-  vim.cmd("startinsert")
+  if next_cell then
+    vim.api.nvim_win_set_cursor(0, { next_cell.start + 2, 0 })
+    vim.cmd("startinsert")
+  else
+    local insert_line = cells.insert_cell_below(0, cell.finish, "code")
+    vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
+    render_if_enabled(0)
+    vim.cmd("startinsert")
+  end
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookMarkdownPreview", function()
