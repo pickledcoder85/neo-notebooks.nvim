@@ -13,6 +13,7 @@ local session = require("neo_notebooks.session")
 local stats = require("neo_notebooks.stats")
 local run_subset = require("neo_notebooks.run_subset")
 local help = require("neo_notebooks.help")
+local editor = require("neo_notebooks.editor")
 
 local function has_filetype(bufnr)
   local allowed = nb.config.filetypes
@@ -269,6 +270,18 @@ vim.api.nvim_create_user_command("NeoNotebookHelp", function()
   help.show()
 end, {})
 
+vim.api.nvim_create_user_command("NeoNotebookCellEdit", function()
+  editor.edit_cell(0)
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookCellSave", function()
+  editor.save_current()
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookCellRunFromEditor", function()
+  editor.run_from_editor()
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookImportIpynb", function(opts)
   local path = opts.args
   if path == "" then
@@ -518,6 +531,24 @@ local function set_default_keymaps(bufnr)
   if maps.help then
     vim.keymap.set("n", maps.help, function()
       help.show()
+    end, opts)
+  end
+
+  if maps.edit_cell then
+    vim.keymap.set("n", maps.edit_cell, function()
+      editor.edit_cell(0)
+    end, opts)
+  end
+
+  if maps.save_cell then
+    vim.keymap.set("n", maps.save_cell, function()
+      editor.save_current()
+    end, opts)
+  end
+
+  if maps.run_cell then
+    vim.keymap.set("n", maps.run_cell, function()
+      editor.run_from_editor()
     end, opts)
   end
 end

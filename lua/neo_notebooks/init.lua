@@ -48,6 +48,9 @@ M.config = {
     toggle_auto_render = "<leader>tr",
     toggle_overlay = "<leader>to",
     help = "<leader>nh",
+    edit_cell = "<leader>ee",
+    save_cell = "<leader>es",
+    run_cell = "<leader>er",
   },
 }
 

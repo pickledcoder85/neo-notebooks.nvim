@@ -98,6 +98,12 @@ This document summarizes implementation choices and the evolution of core featur
 
 - `NeoNotebookHelp` opens a floating help summary built from current keymaps.
 
+## Floating cell editor
+
+- `NeoNotebookCellEdit` opens the current cell in a scratch floating buffer.
+- `NeoNotebookCellSave` writes the editor buffer back to the source cell.
+- `NeoNotebookCellRunFromEditor` saves and executes the edited cell (code only).
+
 ## Cell labels
 
 - Borders can include a numeric cell index when `show_cell_index = true`.
