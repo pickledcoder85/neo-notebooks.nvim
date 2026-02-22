@@ -79,6 +79,7 @@ This document summarizes implementation choices and the evolution of core featur
 - Clear all output: removes inline output for all cells.
 - Yank: copies the current cell to the default register.
 - Move up/down: swaps the current cell with the previous/next cell.
+- Select: enters visual line mode and selects the current cell body.
 
 ## Run all and session control
 

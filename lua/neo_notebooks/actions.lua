@@ -126,6 +126,17 @@ function M.toggle_output_mode()
   end
 end
 
+function M.select_cell(bufnr, line)
+  bufnr = bufnr or 0
+  line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cell = cells.get_cell_at_line(bufnr, line)
+  local start = math.min(cell.finish, cell.start + 1)
+  local finish = math.max(start, cell.finish)
+  vim.api.nvim_win_set_cursor(0, { start + 1, 0 })
+  vim.cmd("normal! V")
+  vim.api.nvim_win_set_cursor(0, { finish + 1, 0 })
+end
+
 function M.fold_cell(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1

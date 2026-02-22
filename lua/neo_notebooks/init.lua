@@ -36,6 +36,7 @@ M.config = {
     run_all = "<leader>ra",
     restart = "<leader>rs",
     toggle_output = "<leader>to",
+    select_cell = "<leader>vs",
   },
 }
 
