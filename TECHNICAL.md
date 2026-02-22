@@ -92,7 +92,7 @@ This document summarizes implementation choices and the evolution of core featur
 
 ## Cell list enhancements
 
-- Cell list entries include line numbers.
+- Cell list entries include line numbers and a short snippet from the cell body.
 - Selecting a cell centers the view.
 
 ## .ipynb import/export

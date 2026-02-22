@@ -58,17 +58,20 @@ function M.cell_list(bufnr)
   local items = {}
 
   for idx, cell in ipairs(list) do
-    local header = vim.api.nvim_buf_get_lines(bufnr, cell.start, cell.start + 1, false)[1] or ""
-    local title = header
-    if cell.type == "markdown" then
-      local lines = vim.api.nvim_buf_get_lines(bufnr, cell.start + 1, cell.finish + 1, false)
-      for _, line in ipairs(lines) do
-        local trimmed = line:gsub("^%s+", "")
-        if trimmed ~= "" then
-          title = trimmed
-          break
-        end
+    local title = ""
+    local body_lines = vim.api.nvim_buf_get_lines(bufnr, cell.start + 1, cell.finish + 1, false)
+    for _, line in ipairs(body_lines) do
+      local trimmed = line:gsub("^%s+", "")
+      if trimmed ~= "" then
+        title = trimmed
+        break
       end
+    end
+    if title == "" then
+      title = vim.api.nvim_buf_get_lines(bufnr, cell.start, cell.start + 1, false)[1] or ""
+    end
+    if #title > 60 then
+      title = title:sub(1, 57) .. "..."
     end
 
     table.insert(items, string.format("%02d [%s] L%03d %s", idx, cell.type, cell.start + 1, title))
