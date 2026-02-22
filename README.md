@@ -38,6 +38,8 @@ print("hello")
 - `:NeoNotebookOutputToggle` toggles output mode between inline and floating.
 - `:NeoNotebookCellSelect` selects the current cell body.
 - `:NeoNotebookStats` shows a cell count summary.
+- `:NeoNotebookRunAbove` runs all code cells above the cursor.
+- `:NeoNotebookRunBelow` runs all code cells below the cursor.
 - `:NeoNotebookImportIpynb {path}` imports a `.ipynb` file.
 - `:NeoNotebookOpenIpynb {path}` opens a `.ipynb` into a new buffer.
 - `:NeoNotebookExportIpynb {path}` exports the current buffer to `.ipynb`.
@@ -83,6 +85,8 @@ require("neo_notebooks").setup({
     toggle_output = "<leader>to",
     select_cell = "<leader>vs",
     stats = "<leader>ns",
+    run_above = "<leader>rA",
+    run_below = "<leader>rB",
   },
 })
 ```
@@ -166,6 +170,8 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `<leader>to` toggle output mode
 - `<leader>vs` select current cell body
 - `<leader>ns` show cell stats
+- `<leader>rA` run all code cells above
+- `<leader>rB` run all code cells below
 
 ### .ipynb import/export (basic)
 

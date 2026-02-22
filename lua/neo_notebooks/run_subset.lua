@@ -1,0 +1,43 @@
+local cells = require("neo_notebooks.cells")
+local exec = require("neo_notebooks.exec")
+local output = require("neo_notebooks.output")
+local config = require("neo_notebooks").config
+
+local M = {}
+
+local function run_cell(bufnr, cell)
+  local line = cell.start + 1
+  if config.output == "inline" then
+    exec.run_cell(bufnr, line, {
+      on_output = function(lines)
+        output.show_inline(bufnr, cell, lines)
+      end,
+    })
+  else
+    exec.run_cell(bufnr, line)
+  end
+end
+
+function M.run_above(bufnr, line)
+  bufnr = bufnr or 0
+  line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+  local list = cells.get_cells(bufnr)
+  for _, cell in ipairs(list) do
+    if cell.type == "code" and cell.finish < line then
+      run_cell(bufnr, cell)
+    end
+  end
+end
+
+function M.run_below(bufnr, line)
+  bufnr = bufnr or 0
+  line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+  local list = cells.get_cells(bufnr)
+  for _, cell in ipairs(list) do
+    if cell.type == "code" and cell.start > line then
+      run_cell(bufnr, cell)
+    end
+  end
+end
+
+return M

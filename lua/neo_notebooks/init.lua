@@ -38,6 +38,8 @@ M.config = {
     toggle_output = "<leader>to",
     select_cell = "<leader>vs",
     stats = "<leader>ns",
+    run_above = "<leader>rA",
+    run_below = "<leader>rB",
   },
 }
 
