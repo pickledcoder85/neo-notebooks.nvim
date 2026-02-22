@@ -11,8 +11,9 @@ function M.next_cell(bufnr)
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local list = get_sorted_cells(bufnr)
   for _, cell in ipairs(list) do
-    if cell.start > line then
-      vim.api.nvim_win_set_cursor(0, { cell.start + 1, 0 })
+    if cell.finish > line then
+      local target = math.min(cell.finish, cell.start + 1)
+      vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
       return
     end
   end
@@ -24,7 +25,8 @@ function M.prev_cell(bufnr)
   local list = get_sorted_cells(bufnr)
   for i = #list, 1, -1 do
     if list[i].start < line then
-      vim.api.nvim_win_set_cursor(0, { list[i].start + 1, 0 })
+      local target = math.min(list[i].finish, list[i].start + 1)
+      vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
       return
     end
   end
