@@ -37,6 +37,13 @@ function M.clear_output(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
   local cell = cells.get_cell_at_line(bufnr, line)
+  if cell.id then
+    local index = require("neo_notebooks.index")
+    local entry = index.get_by_id(bufnr, cell.id)
+    if entry then
+      cell.start = entry.start
+    end
+  end
   output.clear_cell(bufnr, cell.start)
 end
 
@@ -49,6 +56,14 @@ function M.delete_cell(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
   local cell = cells.get_cell_at_line(bufnr, line)
+  if cell.id then
+    local index = require("neo_notebooks.index")
+    local entry = index.get_by_id(bufnr, cell.id)
+    if entry then
+      cell.start = entry.start
+      cell.finish = entry.finish
+    end
+  end
   vim.api.nvim_buf_set_lines(bufnr, cell.start, cell.finish + 1, false, {})
   vim.api.nvim_win_set_cursor(0, { math.max(1, cell.start + 1), 0 })
   vim.cmd("startinsert")
@@ -58,6 +73,14 @@ function M.yank_cell(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
   local cell = cells.get_cell_at_line(bufnr, line)
+  if cell.id then
+    local index = require("neo_notebooks.index")
+    local entry = index.get_by_id(bufnr, cell.id)
+    if entry then
+      cell.start = entry.start
+      cell.finish = entry.finish
+    end
+  end
   local lines = vim.api.nvim_buf_get_lines(bufnr, cell.start, cell.finish + 1, false)
   vim.fn.setreg("\"", lines)
   vim.notify("NeoNotebook: cell yanked", vim.log.levels.INFO)
@@ -66,7 +89,9 @@ end
 function M.move_cell_up(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
-  local list = cells.get_cells(bufnr)
+  local index = require("neo_notebooks.index")
+  local state = index.get(bufnr)
+  local list = state.list
   local idx = nil
   for i, cell in ipairs(list) do
     if line >= cell.start and line <= cell.finish then
@@ -91,7 +116,9 @@ end
 function M.move_cell_down(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
-  local list = cells.get_cells(bufnr)
+  local index = require("neo_notebooks.index")
+  local state = index.get(bufnr)
+  local list = state.list
   local idx = nil
   for i, cell in ipairs(list) do
     if line >= cell.start and line <= cell.finish then

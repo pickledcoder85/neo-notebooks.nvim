@@ -4,7 +4,9 @@ local config = require("neo_notebooks").config
 local M = {}
 
 local function get_sorted_cells(bufnr)
-  return cells.get_cells(bufnr)
+  local index = require("neo_notebooks.index")
+  local state = index.get(bufnr)
+  return state.list
 end
 
 local function ensure_line_exists(bufnr, line)
