@@ -139,6 +139,8 @@ local function move_once(bufnr, direction)
   local swap = list[idx + direction]
   local id = current.id
   local cell_type = current.type
+  local swap_id = swap.id
+  local swap_type = swap.type
   local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
   local current_len = current.finish - current.start + 1
 
@@ -150,8 +152,15 @@ local function move_once(bufnr, direction)
   end
   vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
   index.rebuild(bufnr)
-  if id and cell_type == "code" then
+
+  if id then
     output.clear_by_id(bufnr, id)
+  end
+  if swap_id then
+    output.clear_by_id(bufnr, swap_id)
+  end
+
+  if id and cell_type == "code" then
     exec.run_cell(bufnr, insert_at + 1, {
       on_output = function(lines, cell_id)
         output.show_inline(bufnr, {
@@ -163,6 +172,23 @@ local function move_once(bufnr, direction)
       end,
       cell_id = id,
     })
+  end
+
+  if swap_id and swap_type == "code" then
+    local swap_entry = index.get_by_id(bufnr, swap_id)
+    if swap_entry then
+      exec.run_cell(bufnr, swap_entry.start + 1, {
+        on_output = function(lines, cell_id)
+          output.show_inline(bufnr, {
+            id = cell_id or swap_id,
+            start = swap_entry.start,
+            finish = swap_entry.finish,
+            type = swap_type,
+          }, lines)
+        end,
+        cell_id = swap_id,
+      })
+    end
   end
 end
 
