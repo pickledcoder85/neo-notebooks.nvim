@@ -1,5 +1,6 @@
 local cells = require("neo_notebooks.cells")
 local output = require("neo_notebooks.output")
+local exec = require("neo_notebooks.exec")
 
 local M = {}
 
@@ -137,6 +138,7 @@ local function move_once(bufnr, direction)
   local current = list[idx]
   local swap = list[idx + direction]
   local id = current.id
+  local cell_type = current.type
   local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
   local current_len = current.finish - current.start + 1
 
@@ -147,7 +149,21 @@ local function move_once(bufnr, direction)
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
   vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
-  output.render_outputs(bufnr)
+  index.rebuild(bufnr)
+  if id and cell_type == "code" then
+    output.clear_by_id(bufnr, id)
+    exec.run_cell(bufnr, insert_at + 1, {
+      on_output = function(lines, cell_id)
+        output.show_inline(bufnr, {
+          id = cell_id or id,
+          start = insert_at,
+          finish = insert_at + current_len - 1,
+          type = cell_type,
+        }, lines)
+      end,
+      cell_id = id,
+    })
+  end
 end
 
 function M.move_cell_up(bufnr, line, count)
@@ -187,6 +203,7 @@ function M.move_cell_top(bufnr)
   end
   local current = list[idx]
   local id = current.id
+  local cell_type = current.type
   local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
   vim.api.nvim_buf_set_lines(bufnr, current.start, current.finish + 1, false, {})
   local insert_at = list[1].start
@@ -195,7 +212,21 @@ function M.move_cell_top(bufnr)
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
   vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
-  output.render_outputs(bufnr)
+  index.rebuild(bufnr)
+  if id and cell_type == "code" then
+    output.clear_by_id(bufnr, id)
+    exec.run_cell(bufnr, insert_at + 1, {
+      on_output = function(lines, cell_id)
+        output.show_inline(bufnr, {
+          id = cell_id or id,
+          start = insert_at,
+          finish = insert_at + #current_lines - 1,
+          type = cell_type,
+        }, lines)
+      end,
+      cell_id = id,
+    })
+  end
 end
 
 function M.move_cell_bottom(bufnr)
@@ -219,6 +250,7 @@ function M.move_cell_bottom(bufnr)
   end
   local current = list[idx]
   local id = current.id
+  local cell_type = current.type
   local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
   vim.api.nvim_buf_set_lines(bufnr, current.start, current.finish + 1, false, {})
   local insert_at = list[#list].finish + 1
@@ -227,7 +259,21 @@ function M.move_cell_bottom(bufnr)
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
   vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
-  output.render_outputs(bufnr)
+  index.rebuild(bufnr)
+  if id and cell_type == "code" then
+    output.clear_by_id(bufnr, id)
+    exec.run_cell(bufnr, insert_at + 1, {
+      on_output = function(lines, cell_id)
+        output.show_inline(bufnr, {
+          id = cell_id or id,
+          start = insert_at,
+          finish = insert_at + #current_lines - 1,
+          type = cell_type,
+        }, lines)
+      end,
+      cell_id = id,
+    })
+  end
 end
 
 function M.toggle_output_mode()
