@@ -76,11 +76,16 @@ This document summarizes implementation choices and the evolution of core featur
 - Toggle fold: opens or closes the current cell fold depending on state.
 - Clear output: removes inline output extmarks for the current cell.
 - Delete: removes the current cell from the buffer.
+- Clear all output: removes inline output for all cells.
 
 ## Run all and session control
 
 - `NeoNotebookRunAll` executes all code cells in order.
 - `NeoNotebookRestart` stops the Python session and clears outputs.
+
+## Cell labels
+
+- Borders can include a numeric cell index when `show_cell_index = true`.
 
 ## Cell list enhancements
 

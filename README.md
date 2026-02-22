@@ -28,6 +28,7 @@ print("hello")
 - `:NeoNotebookCellUnfold` unfolds the current cell.
 - `:NeoNotebookCellFoldToggle` toggles fold for the current cell.
 - `:NeoNotebookOutputClear` clears inline output for the current cell.
+- `:NeoNotebookOutputClearAll` clears inline output for all cells.
 - `:NeoNotebookCellDelete` deletes the current cell.
 - `:NeoNotebookRunAll` runs all code cells.
 - `:NeoNotebookRestart` restarts the Python session and clears outputs.
@@ -48,6 +49,7 @@ require("neo_notebooks").setup({
   suppress_completion_in_markdown = true,
   auto_insert_on_jump = true,
   border_hl = "NeoNotebookBorder",
+  show_cell_index = true,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",
@@ -64,6 +66,7 @@ require("neo_notebooks").setup({
     unfold_cell = "<leader>zu",
     toggle_fold = "<leader>zz",
     clear_output = "<leader>co",
+    clear_all_output = "<leader>cO",
     delete_cell = "<leader>dd",
     run_all = "<leader>ra",
     restart = "<leader>rs",
@@ -140,6 +143,7 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `<leader>zu` unfold current cell
 - `<leader>zz` toggle fold for current cell
 - `<leader>co` clear output for current cell
+- `<leader>cO` clear output for all cells
 - `<leader>dd` delete current cell
 - `<leader>ra` run all code cells
 - `<leader>rs` restart python session
@@ -170,6 +174,10 @@ By default, the plugin defines `NeoNotebookBorder` as green. You can override:
 vim.api.nvim_set_hl(0, "NeoNotebookBorder", { fg = "#00ff00" })
 require("neo_notebooks").setup({ border_hl = "NeoNotebookBorder" })
 ```
+
+### Cell index labels
+
+Set `show_cell_index = false` to remove numeric labels from cell borders.
 
 ### Auto-insert on navigation
 

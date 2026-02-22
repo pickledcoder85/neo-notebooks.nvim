@@ -40,6 +40,11 @@ function M.clear_output(bufnr, line)
   output.clear_cell(bufnr, cell.start)
 end
 
+function M.clear_all_output(bufnr)
+  bufnr = bufnr or 0
+  output.clear_all(bufnr)
+end
+
 function M.delete_cell(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1

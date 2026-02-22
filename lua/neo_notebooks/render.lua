@@ -23,7 +23,7 @@ function M.render(bufnr)
   local width = math.max(10, vim.api.nvim_win_get_width(0) - 2)
   local cells_list = cells.get_cells(bufnr)
 
-  for _, cell in ipairs(cells_list) do
+  for idx, cell in ipairs(cells_list) do
     if cell.finish < cell.start then
       goto continue
     end
@@ -31,6 +31,9 @@ function M.render(bufnr)
     local top = cell_border(math.min(width, width), "+", "+")
     local bottom = cell_border(math.min(width, width), "+", "+")
     local label = string.format(" [%s] ", cell.type)
+    if config.show_cell_index then
+      label = string.format(" [%d %s] ", idx, cell.type)
+    end
 
     local hl = config.border_hl or "Comment"
 
