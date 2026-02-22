@@ -148,6 +148,14 @@ function M.render_outputs(bufnr)
 
   local index = require("neo_notebooks.index")
   local state = index.rebuild(bufnr)
+  if vim.g.neo_notebooks_debug_output then
+    local keys = {}
+    for k, _ in pairs(store) do
+      table.insert(keys, tostring(k))
+    end
+    vim.notify("render_outputs store keys: " .. table.concat(keys, ","), vim.log.levels.INFO)
+    vim.notify("render_outputs cell count: " .. tostring(#state.list), vim.log.levels.INFO)
+  end
   local line_count = vim.api.nvim_buf_line_count(bufnr)
   if line_count == 0 then
     return
@@ -160,6 +168,9 @@ function M.render_outputs(bufnr)
       if cell.id and id then
         local state = get_state(bufnr)
         state[cell.id] = id
+        if vim.g.neo_notebooks_debug_output then
+          vim.notify("render_outputs extmark id " .. tostring(id), vim.log.levels.INFO)
+        end
       end
     end
   end
