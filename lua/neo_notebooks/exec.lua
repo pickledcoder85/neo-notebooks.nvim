@@ -12,7 +12,10 @@ local PY_SERVER = [[
 import sys, json, traceback, io, contextlib, ast, os
 
 os.environ.setdefault("FORCE_COLOR", "1")
+os.environ.setdefault("RICH_FORCE_COLOR", "1")
 os.environ.setdefault("TTY_COMPATIBLE", "1")
+os.environ.setdefault("TERM", "xterm-256color")
+os.environ.pop("NO_COLOR", None)
 
 try:
     from rich.console import Console
@@ -28,6 +31,7 @@ globals_dict["__neo_notebooks_rich"] = True
 globals_dict["__neo_notebooks_rich_max_rows"] = 20
 globals_dict["__neo_notebooks_rich_max_cols"] = 20
 globals_dict["__neo_notebooks_rich_tip_shown"] = False
+globals_dict["__neo_notebooks_debug_ansi"] = False
 
 def neo_rich(enable=None):
     if enable is None:
@@ -36,6 +40,14 @@ def neo_rich(enable=None):
     return globals_dict["__neo_notebooks_rich"]
 
 globals_dict["neo_rich"] = neo_rich
+
+def neo_ansi_debug(enable=None):
+    if enable is None:
+        return globals_dict.get("__neo_notebooks_debug_ansi", False)
+    globals_dict["__neo_notebooks_debug_ansi"] = bool(enable)
+    return globals_dict["__neo_notebooks_debug_ansi"]
+
+globals_dict["neo_ansi_debug"] = neo_ansi_debug
 
 def _is_pandas_obj(value):
     mod = getattr(value.__class__, "__module__", "")
@@ -72,6 +84,8 @@ def _render_pandas_table(value, out_buf):
     console = Console(record=True, force_terminal=True, color_system="truecolor", no_color=False)
     console.print(table)
     out_buf.write(console.export_text(styles=True))
+    if globals_dict.get("__neo_notebooks_debug_ansi", False):
+        out_buf.write("\\n[neo_notebooks] ANSI DEBUG: " + repr(console.export_text(styles=True)))
     return True
 
 def handle(obj):
@@ -102,6 +116,8 @@ def handle(obj):
                         console = Console(record=True, force_terminal=True, color_system="truecolor", no_color=False)
                         console.print(value)
                         out_buf.write(console.export_text(styles=True))
+                        if globals_dict.get("__neo_notebooks_debug_ansi", False):
+                            out_buf.write("\\n[neo_notebooks] ANSI DEBUG: " + repr(console.export_text(styles=True)))
                     else:
                         if _is_pandas_obj(value):
                             try:
