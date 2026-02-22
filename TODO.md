@@ -56,6 +56,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
 ## Later
 
 - Full `.ipynb` metadata + outputs support.
+- Kernel-backed execution (minimal Jupyter client with text/plain only), with optional kitty image output.
 - Optional inline image rendering via kitty protocol.
 - True floating-cell UI mode (editable floats synced to hidden buffer).
 - Improved markdown rendering (headings, emphasis).
