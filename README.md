@@ -201,11 +201,9 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `<leader>am` new markdown cell below
 - `<leader>r` run current cell
 - `<leader>tc` toggle cell type
-- `<leader>p` preview markdown cell
 - `<S-CR>` run cell and create new code cell
 - `<C-n>` next cell
 - `<C-p>` previous cell
-- `<leader>l` open cell list picker
 - `<leader>yd` duplicate cell
 - `<leader>xs` split cell at cursor
 - `<leader>zf` fold current cell
@@ -228,11 +226,6 @@ Note: `<M-...>` means the Meta key (typically `Alt` on most keyboards).
 - `<leader>rA` run all code cells above
 - `<leader>rB` run all code cells below
 - `<leader>tr` toggle auto-render
-- `<leader>to` toggle overlay preview
-- `<leader>nh` open help
-- `<leader>ee` edit current cell in a floating window
-- `<leader>es` save floating editor to buffer
-- `<leader>er` run edited cell (save + execute)
 
 ### .ipynb import/export (basic)
 
