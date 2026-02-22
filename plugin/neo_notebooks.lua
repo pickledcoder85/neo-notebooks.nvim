@@ -390,7 +390,7 @@ local function set_default_keymaps(bufnr)
 
   if maps.run then
     vim.keymap.set("n", maps.run, function()
-      exec.run_cell(0)
+      vim.cmd("NeoNotebookCellRun")
     end, opts)
   end
 
