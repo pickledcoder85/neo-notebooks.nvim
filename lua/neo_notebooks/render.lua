@@ -111,13 +111,14 @@ function M.render(bufnr)
       local right_col = math.max(pad, pad + width - 1)
       local text_pad = string.rep(" ", pad + 1)
       local start_line = cell.start + 1
-      local end_line = cell.finish - 1
+      local end_line = cell.finish
       if start_line <= end_line then
         for line = start_line, end_line do
           vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
             virt_text = { { text_pad, hl } },
             virt_text_pos = "inline",
             right_gravity = false,
+            priority = 120,
           })
           vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
             virt_text = { { "│", hl } },
