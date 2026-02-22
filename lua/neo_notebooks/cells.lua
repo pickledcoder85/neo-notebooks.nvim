@@ -28,6 +28,7 @@ function M.get_cells(bufnr)
           start = 0,
           finish = start_line - 1,
           type = current_type,
+          border = false,
         })
       end
 
@@ -40,6 +41,7 @@ function M.get_cells(bufnr)
         start = start_line,
         finish = #lines - 1,
         type = current_type,
+        border = true,
       })
     end
   end
@@ -49,6 +51,7 @@ function M.get_cells(bufnr)
       start = 0,
       finish = #lines - 1,
       type = "markdown",
+      border = true,
     })
   end
 

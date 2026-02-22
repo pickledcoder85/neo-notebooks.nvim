@@ -115,7 +115,7 @@ function M.render(bufnr)
   end
 
   for idx, cell in ipairs(cells_list) do
-    if cell.finish < cell.start then
+    if cell.finish < cell.start or cell.border == false then
       goto continue
     end
 
