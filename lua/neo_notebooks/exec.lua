@@ -85,9 +85,16 @@ def _render_pandas_table(value, out_buf):
     console.print(table)
     out_buf.write(console.export_text(styles=True))
     if globals_dict.get("__neo_notebooks_debug_ansi", False):
+        try:
+            import importlib.metadata as _md
+            _rich_ver = _md.version("rich")
+        except Exception:
+            _rich_ver = "unknown"
+        _record = getattr(console, "_record", None)
+        _record_len = len(_record) if isinstance(_record, list) else "n/a"
         out_buf.write(
             "\\n[neo_notebooks] ANSI DEBUG: " + repr(console.export_text(styles=True)) +
-            f" | color_system={console.color_system} is_terminal={console.is_terminal} no_color={console.no_color}" +
+            f" | color_system={console.color_system} is_terminal={console.is_terminal} no_color={console.no_color} rich={_rich_ver} record={getattr(console,'record',None)} record_len={_record_len}" +
             "\\n[neo_notebooks] STDOUT DEBUG: " + repr(out_buf.getvalue())
         )
     return True
@@ -121,9 +128,16 @@ def handle(obj):
                         console.print(value)
                         out_buf.write(console.export_text(styles=True))
                         if globals_dict.get("__neo_notebooks_debug_ansi", False):
+                            try:
+                                import importlib.metadata as _md
+                                _rich_ver = _md.version("rich")
+                            except Exception:
+                                _rich_ver = "unknown"
+                            _record = getattr(console, "_record", None)
+                            _record_len = len(_record) if isinstance(_record, list) else "n/a"
                             out_buf.write(
                                 "\\n[neo_notebooks] ANSI DEBUG: " + repr(console.export_text(styles=True)) +
-                                f" | color_system={console.color_system} is_terminal={console.is_terminal} no_color={console.no_color}" +
+                                f" | color_system={console.color_system} is_terminal={console.is_terminal} no_color={console.no_color} rich={_rich_ver} record={getattr(console,'record',None)} record_len={_record_len}" +
                                 "\\n[neo_notebooks] STDOUT DEBUG: " + repr(out_buf.getvalue())
                             )
                     else:
