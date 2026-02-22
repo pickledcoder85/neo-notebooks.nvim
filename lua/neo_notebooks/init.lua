@@ -19,6 +19,7 @@ M.config = {
   cell_min_width = 60,
   cell_max_width = 140,
   top_padding = 1,
+  ansi_output = true,
   keymaps = {
     new_code = "<leader><leader>ac",
     new_markdown = "<leader><leader>am",

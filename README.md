@@ -74,6 +74,7 @@ require("neo_notebooks").setup({
   cell_min_width = 60,
   cell_max_width = 140,
   top_padding = 1,
+  ansi_output = true,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",
@@ -256,6 +257,7 @@ Notes:
 - Saving (`:w`) in an `.ipynb` buffer exports the current cells back to the `.ipynb` file.
 
 Note: `top_padding` inserts real blank lines at the top of the buffer on first open to keep the top border visible.
+Note: `ansi_output` enables basic ANSI color parsing in output blocks (used by rich).
 
 ### Cell border color
 
