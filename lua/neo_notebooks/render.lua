@@ -50,10 +50,16 @@ function M.render(bufnr)
 
     if config.vertical_borders then
       for line = cell.start, cell.finish do
+        local left = "|"
+        local right = "|"
+        if line == cell.start or line == cell.finish then
+          left = "+"
+          right = "+"
+        end
         vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
-          sign_text = "|",
+          sign_text = left,
           sign_hl_group = hl,
-          virt_text = { { "|", hl } },
+          virt_text = { { right, hl } },
           virt_text_pos = "right_align",
         })
       end
