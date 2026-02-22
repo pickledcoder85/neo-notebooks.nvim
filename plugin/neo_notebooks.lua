@@ -115,6 +115,7 @@ vim.api.nvim_create_user_command("NeoNotebookCellNew", function(opts)
   local insert_line = cells.insert_cell_below(0, line, opts.args)
   vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
   render_if_enabled(0)
+  vim.cmd("startinsert")
 end, { nargs = "?", complete = function() return { "code", "markdown" } end })
 
 vim.api.nvim_create_user_command("NeoNotebookCellToggleType", function()
@@ -210,6 +211,7 @@ local function set_default_keymaps(bufnr)
       local insert_line = cells.insert_cell_below(0, line, "code")
       vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
       render_if_enabled(0)
+      vim.cmd("startinsert")
     end, opts)
   end
 
@@ -219,6 +221,7 @@ local function set_default_keymaps(bufnr)
       local insert_line = cells.insert_cell_below(0, line, "markdown")
       vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
       render_if_enabled(0)
+      vim.cmd("startinsert")
     end, opts)
   end
 

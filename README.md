@@ -117,3 +117,4 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 ### Auto-insert on navigation
 
 When enabled, jumping to another cell (next/prev/list) enters insert mode automatically.
+Creating a new cell also enters insert mode by default.
