@@ -66,8 +66,9 @@ def _render_pandas_table(value, out_buf):
             cells.append(str(row[col]))
         table.add_row(*cells)
 
-    console = Console(file=out_buf, force_terminal=True, color_system="standard")
+    console = Console(record=True, force_terminal=True, color_system="standard")
     console.print(table)
+    out_buf.write(console.export_text(styles=True))
     return True
 
 def handle(obj):
@@ -95,8 +96,9 @@ def handle(obj):
                         if not rendered:
                             print(repr(value))
                     elif use_rich and RICH_AVAILABLE:
-                        console = Console(file=out_buf, force_terminal=True, color_system="standard")
+                        console = Console(record=True, force_terminal=True, color_system="standard")
                         console.print(value)
+                        out_buf.write(console.export_text(styles=True))
                     else:
                         if _is_pandas_obj(value):
                             try:
