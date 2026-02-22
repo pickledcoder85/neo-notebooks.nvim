@@ -197,10 +197,10 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 
 ### Keymaps (defaults)
 
-- `]c` new code cell below
-- `]m` new markdown cell below
+- `<leader>ac` new code cell below
+- `<leader>am` new markdown cell below
 - `<leader>r` run current cell
-- `<leader>m` toggle cell type
+- `<leader>tc` toggle cell type
 - `<leader>p` preview markdown cell
 - `<S-CR>` run cell and create new code cell
 - `<C-n>` next cell
