@@ -496,13 +496,25 @@ local function set_default_keymaps(bufnr)
 
   if maps.move_up then
     vim.keymap.set("n", maps.move_up, function()
-      actions.move_cell_up(0)
+      actions.move_cell_up(0, nil, vim.v.count1)
     end, opts)
   end
 
   if maps.move_down then
     vim.keymap.set("n", maps.move_down, function()
-      actions.move_cell_down(0)
+      actions.move_cell_down(0, nil, vim.v.count1)
+    end, opts)
+  end
+
+  if maps.move_top then
+    vim.keymap.set("n", maps.move_top, function()
+      actions.move_cell_top(0)
+    end, opts)
+  end
+
+  if maps.move_bottom then
+    vim.keymap.set("n", maps.move_bottom, function()
+      actions.move_cell_bottom(0)
     end, opts)
   end
 

@@ -40,6 +40,17 @@ function M.clear_all(bufnr)
   set_buf_var(bufnr, "neo_notebooks_output_store", {})
 end
 
+function M.clear_by_id(bufnr, cell_id)
+  bufnr = bufnr or 0
+  if not cell_id then
+    return
+  end
+  local store = get_store(bufnr)
+  store[cell_id] = nil
+  set_buf_var(bufnr, "neo_notebooks_output_store", store)
+  M.render_outputs(bufnr)
+end
+
 function M.show_inline(bufnr, cell, lines)
   if vim.g.neo_notebooks_debug_output then
     vim.notify("show_inline called: " .. tostring(#lines) .. " lines (buf " .. tostring(bufnr) .. ")", vim.log.levels.INFO)

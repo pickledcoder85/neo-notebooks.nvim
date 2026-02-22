@@ -88,8 +88,10 @@ require("neo_notebooks").setup({
     clear_all_output = "<leader>cO",
     delete_cell = "<leader>dd",
     yank_cell = "<leader>yy",
-    move_up = "<leader>mu",
-    move_down = "<leader>md",
+    move_up = "<M-k>",
+    move_down = "<M-j>",
+    move_top = "<leader>mG",
+    move_bottom = "<leader>mgg",
     run_all = "<leader>ra",
     restart = "<leader>rs",
     toggle_output = "<leader>tt",
@@ -211,8 +213,10 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `<leader>cO` clear output for all cells
 - `<leader>dd` delete current cell
 - `<leader>yy` yank current cell
-- `<leader>mu` move cell up
-- `<leader>md` move cell down
+- `<M-k>` move cell up (accepts counts, e.g. `3<M-k>`)
+- `<M-j>` move cell down (accepts counts, e.g. `2<M-j>`)
+- `<leader>mG` move cell to top
+- `<leader>mgg` move cell to bottom
 - `<leader>ra` run all code cells
 - `<leader>rs` restart python session
 - `<leader>tt` toggle output mode

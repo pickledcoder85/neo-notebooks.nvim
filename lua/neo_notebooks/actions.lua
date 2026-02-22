@@ -47,6 +47,9 @@ function M.split_cell(bufnr, line)
 
   local marker = "# %% [" .. cell.type .. "]"
   vim.api.nvim_buf_set_lines(bufnr, line, line, false, { marker })
+  if cell.id then
+    output.clear_by_id(bufnr, cell.id)
+  end
   local index = require("neo_notebooks.index")
   index.rebuild(bufnr)
   vim.api.nvim_win_set_cursor(0, { line + 2, 0 })
@@ -108,12 +111,69 @@ function M.yank_cell(bufnr, line)
   vim.notify("NeoNotebook: cell yanked", vim.log.levels.INFO)
 end
 
-function M.move_cell_up(bufnr, line)
-  bufnr = bufnr or 0
-  line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+local function move_once(bufnr, direction)
   local index = require("neo_notebooks.index")
-  local state = index.get(bufnr)
+  local state = index.rebuild(bufnr)
   local list = state.list
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local idx = nil
+  for i, cell in ipairs(list) do
+    if line >= cell.start and line <= cell.finish then
+      idx = i
+      break
+    end
+  end
+  if not idx then
+    return
+  end
+
+  if direction < 0 and idx == 1 then
+    return
+  end
+  if direction > 0 and idx == #list then
+    return
+  end
+
+  local current = list[idx]
+  local swap = list[idx + direction]
+  local id = current.id
+  local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
+  local current_len = current.finish - current.start + 1
+
+  vim.api.nvim_buf_set_lines(bufnr, current.start, current.finish + 1, false, {})
+  local insert_at = direction < 0 and swap.start or (swap.finish - current_len + 1)
+  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, current_lines)
+  if id then
+    vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
+  end
+  vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
+end
+
+function M.move_cell_up(bufnr, line, count)
+  bufnr = bufnr or 0
+  count = count or vim.v.count1
+  for _ = 1, count do
+    move_once(bufnr, -1)
+  end
+end
+
+function M.move_cell_down(bufnr, line, count)
+  bufnr = bufnr or 0
+  count = count or vim.v.count1
+  for _ = 1, count do
+    move_once(bufnr, 1)
+  end
+end
+
+function M.move_cell_top(bufnr)
+  bufnr = bufnr or 0
+  local index = require("neo_notebooks.index")
+  local state = index.rebuild(bufnr)
+  local list = state.list
+  if #list == 0 then
+    return
+  end
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local idx = nil
   for i, cell in ipairs(list) do
     if line >= cell.start and line <= cell.finish then
@@ -124,27 +184,27 @@ function M.move_cell_up(bufnr, line)
   if not idx or idx == 1 then
     return
   end
-
   local current = list[idx]
-  local prev = list[idx - 1]
   local id = current.id
   local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
-
   vim.api.nvim_buf_set_lines(bufnr, current.start, current.finish + 1, false, {})
-  vim.api.nvim_buf_set_lines(bufnr, prev.start, prev.start, false, current_lines)
+  local insert_at = list[1].start
+  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, current_lines)
   if id then
-    vim.api.nvim_buf_set_extmark(bufnr, index.ns, prev.start, 0, { id = id })
+    vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
-  vim.api.nvim_win_set_cursor(0, { prev.start + 2, 0 })
-  vim.cmd("startinsert")
+  vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
 end
 
-function M.move_cell_down(bufnr, line)
+function M.move_cell_bottom(bufnr)
   bufnr = bufnr or 0
-  line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
   local index = require("neo_notebooks.index")
-  local state = index.get(bufnr)
+  local state = index.rebuild(bufnr)
   local list = state.list
+  if #list == 0 then
+    return
+  end
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local idx = nil
   for i, cell in ipairs(list) do
     if line >= cell.start and line <= cell.finish then
@@ -155,21 +215,16 @@ function M.move_cell_down(bufnr, line)
   if not idx or idx == #list then
     return
   end
-
   local current = list[idx]
-  local next = list[idx + 1]
   local id = current.id
   local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
-  local current_len = current.finish - current.start + 1
-
   vim.api.nvim_buf_set_lines(bufnr, current.start, current.finish + 1, false, {})
-  local insert_at = next.finish - current_len + 1
+  local insert_at = list[#list].finish + 1
   vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, current_lines)
   if id then
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
   vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
-  vim.cmd("startinsert")
 end
 
 function M.toggle_output_mode()
