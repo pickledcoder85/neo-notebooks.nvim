@@ -8,6 +8,10 @@ This file tracks project scope and the order of work. Items can be moved as prio
 - Add `.ipynb` round-trip tests (export then import) and document limitations.
 - Reconcile floating UI experiments vs. mainline behavior (keep experimental or drop).
 - Evaluate output-cell-as-virtual-block approach (render attached output blocks in purple).
+- Option B: `.ipynb` native workflow (new feature/test branch only):
+  - Add `ftdetect` for `*.ipynb`.
+  - Auto-import on open, auto-export on save.
+  - Set default filetypes to `{ "ipynb" }` once stabilized.
 - Manual validation checklist (main, `new_notebook.py`):
   - Setup:
     1. `git checkout main`
