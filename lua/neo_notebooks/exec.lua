@@ -238,7 +238,9 @@ local function handle_response(session, resp)
   session.pending[id] = nil
   local output = format_output(resp)
   if pending.on_output then
-    pending.on_output(output, pending.cell_id)
+    vim.schedule(function()
+      pending.on_output(output, pending.cell_id)
+    end)
   else
     open_output_window(output)
   end
