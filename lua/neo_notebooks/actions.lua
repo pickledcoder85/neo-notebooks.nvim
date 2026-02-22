@@ -90,7 +90,10 @@ function M.delete_cell(bufnr, line)
   vim.api.nvim_buf_set_lines(bufnr, cell.start, cell.finish + 1, false, {})
   local index = require("neo_notebooks.index")
   index.rebuild(bufnr)
-  vim.api.nvim_win_set_cursor(0, { math.max(1, cell.start + 1), 0 })
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  local target = math.max(1, cell.start + 1)
+  target = math.min(target, math.max(1, line_count))
+  vim.api.nvim_win_set_cursor(0, { target, 0 })
   vim.cmd("startinsert")
 end
 
