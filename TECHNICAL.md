@@ -75,6 +75,12 @@ This document summarizes implementation choices and the evolution of core featur
 - Fold/Unfold: uses manual folds for the current cell range.
 - Toggle fold: opens or closes the current cell fold depending on state.
 - Clear output: removes inline output extmarks for the current cell.
+- Delete: removes the current cell from the buffer.
+
+## Run all and session control
+
+- `NeoNotebookRunAll` executes all code cells in order.
+- `NeoNotebookRestart` stops the Python session and clears outputs.
 
 ## Cell list enhancements
 

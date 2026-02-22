@@ -28,6 +28,9 @@ print("hello")
 - `:NeoNotebookCellUnfold` unfolds the current cell.
 - `:NeoNotebookCellFoldToggle` toggles fold for the current cell.
 - `:NeoNotebookOutputClear` clears inline output for the current cell.
+- `:NeoNotebookCellDelete` deletes the current cell.
+- `:NeoNotebookRunAll` runs all code cells.
+- `:NeoNotebookRestart` restarts the Python session and clears outputs.
 - `:NeoNotebookImportIpynb {path}` imports a `.ipynb` file.
 - `:NeoNotebookExportIpynb {path}` exports the current buffer to `.ipynb`.
 
@@ -61,6 +64,9 @@ require("neo_notebooks").setup({
     unfold_cell = "<leader>zu",
     toggle_fold = "<leader>zz",
     clear_output = "<leader>co",
+    delete_cell = "<leader>dd",
+    run_all = "<leader>ra",
+    restart = "<leader>rs",
   },
 })
 ```
@@ -134,6 +140,9 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `<leader>zu` unfold current cell
 - `<leader>zz` toggle fold for current cell
 - `<leader>co` clear output for current cell
+- `<leader>dd` delete current cell
+- `<leader>ra` run all code cells
+- `<leader>rs` restart python session
 
 ### .ipynb import/export (basic)
 

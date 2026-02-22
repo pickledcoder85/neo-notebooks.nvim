@@ -8,6 +8,8 @@ local overlay = require("neo_notebooks.overlay")
 local navigation = require("neo_notebooks.navigation")
 local actions = require("neo_notebooks.actions")
 local ipynb = require("neo_notebooks.ipynb")
+local run_all = require("neo_notebooks.run_all")
+local session = require("neo_notebooks.session")
 
 local function has_filetype(bufnr)
   local allowed = nb.config.filetypes
@@ -208,6 +210,18 @@ vim.api.nvim_create_user_command("NeoNotebookOutputClear", function()
   actions.clear_output(0)
 end, {})
 
+vim.api.nvim_create_user_command("NeoNotebookCellDelete", function()
+  actions.delete_cell(0)
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookRunAll", function()
+  run_all.run_all(0)
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookRestart", function()
+  session.restart(0)
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookImportIpynb", function(opts)
   local path = opts.args
   if path == "" then
@@ -355,6 +369,24 @@ local function set_default_keymaps(bufnr)
   if maps.clear_output then
     vim.keymap.set("n", maps.clear_output, function()
       actions.clear_output(0)
+    end, opts)
+  end
+
+  if maps.delete_cell then
+    vim.keymap.set("n", maps.delete_cell, function()
+      actions.delete_cell(0)
+    end, opts)
+  end
+
+  if maps.run_all then
+    vim.keymap.set("n", maps.run_all, function()
+      run_all.run_all(0)
+    end, opts)
+  end
+
+  if maps.restart then
+    vim.keymap.set("n", maps.restart, function()
+      session.restart(0)
     end, opts)
   end
 end

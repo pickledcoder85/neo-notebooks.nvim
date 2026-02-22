@@ -27,6 +27,9 @@ M.config = {
     unfold_cell = "<leader>zu",
     toggle_fold = "<leader>zz",
     clear_output = "<leader>co",
+    delete_cell = "<leader>dd",
+    run_all = "<leader>ra",
+    restart = "<leader>rs",
   },
 }
 
