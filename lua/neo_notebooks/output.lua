@@ -56,9 +56,18 @@ function M.show_inline(bufnr, cell, lines)
 
   if not cell.id then
     local index = require("neo_notebooks.index")
-    local entry = index.find_cell(bufnr, cell.start)
-    if entry then
-      cell.id = entry.id
+    local state = index.rebuild(bufnr)
+    for _, entry in ipairs(state.list) do
+      if entry.start == cell.start and entry.finish == cell.finish then
+        cell.id = entry.id
+        break
+      end
+    end
+    if not cell.id then
+      local entry = index.find_cell(bufnr, cell.start)
+      if entry then
+        cell.id = entry.id
+      end
     end
   end
 
@@ -114,7 +123,7 @@ function M.render_outputs(bufnr)
   vim.b[bufnr].neo_notebooks_output = {}
 
   local index = require("neo_notebooks.index")
-  local state = index.get(bufnr)
+  local state = index.rebuild(bufnr)
   local line_count = vim.api.nvim_buf_line_count(bufnr)
   if line_count == 0 then
     return
