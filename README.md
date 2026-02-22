@@ -114,6 +114,10 @@ require("neo_notebooks").setup({
 - The last expression in a code cell is printed automatically (Jupyter-like).
 - This is a minimal experimental baseline and intended to be expanded.
 
+### Cell index cache
+
+The plugin maintains a per-buffer cell index cache and rebuilds it on buffer changes to speed up lookups.
+
 ### Automatic first cell
 
 When opening an empty `python` buffer, the plugin inserts a starter markdown cell:

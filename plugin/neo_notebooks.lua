@@ -14,6 +14,7 @@ local stats = require("neo_notebooks.stats")
 local run_subset = require("neo_notebooks.run_subset")
 local help = require("neo_notebooks.help")
 local editor = require("neo_notebooks.editor")
+local index = require("neo_notebooks.index")
 
 local function has_filetype(bufnr)
   local allowed = nb.config.filetypes
@@ -557,12 +558,6 @@ nb._on_setup = function()
   set_default_keymaps(0)
 end
 
-vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
-  callback = function(args)
-    set_default_keymaps(args.buf)
-  end,
-})
-
 vim.api.nvim_create_autocmd({ "FileType" }, {
   callback = function(args)
     ensure_initial_markdown_cell(args.buf)
@@ -579,6 +574,22 @@ vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "TextChanged", "Tex
   end,
 })
 
+vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
+  callback = function(args)
+    if should_enable(args.buf) then
+      index.rebuild(args.buf)
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
+  callback = function(args)
+    set_default_keymaps(args.buf)
+    if should_enable(args.buf) then
+      index.rebuild(args.buf)
+    end
+  end,
+})
 vim.api.nvim_create_autocmd({ "InsertEnter" }, {
   callback = function(args)
     update_completion(args.buf)

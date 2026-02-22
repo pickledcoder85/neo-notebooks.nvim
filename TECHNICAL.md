@@ -122,6 +122,11 @@ This document summarizes implementation choices and the evolution of core featur
 - Cell list entries include line numbers and a short snippet from the cell body.
 - Selecting a cell centers the view.
 
+## Cell index cache
+
+- The plugin stores a per-buffer cache of cell ranges to avoid repeated parsing.
+- The cache is rebuilt on buffer changes.
+
 ## .ipynb import/export
 
 - Import reads `.ipynb` JSON and converts cells to marker format.
