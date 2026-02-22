@@ -389,6 +389,7 @@ vim.api.nvim_create_autocmd("BufReadPost", {
         vim.notify(err or "Import failed", vim.log.levels.ERROR)
         return
       end
+      set_default_keymaps(args.buf)
       index.rebuild(args.buf)
       render_if_enabled(args.buf)
     end)
@@ -663,6 +664,15 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
     set_default_keymaps(args.buf)
     if should_enable(args.buf) then
       index.rebuild(args.buf)
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+  pattern = "*.nn",
+  callback = function(args)
+    if vim.api.nvim_get_option_value("filetype", { buf = args.buf }) == "" then
+      vim.api.nvim_set_option_value("filetype", "neo_notebook", { buf = args.buf })
     end
   end,
 })
