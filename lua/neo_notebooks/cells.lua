@@ -55,14 +55,29 @@ function M.get_cells(bufnr)
   return cells
 end
 
+function M.get_cells_indexed(bufnr)
+  local index = require("neo_notebooks.index")
+  return index.get(bufnr)
+end
+
 function M.get_cell_at_line(bufnr, line)
-  local cells = M.get_cells(bufnr)
-  for _, cell in ipairs(cells) do
+  local index = vim.b[bufnr] and vim.b[bufnr].neo_notebooks_index
+  if index then
+    for _, cell in ipairs(index.list) do
+      if line >= cell.start and line <= cell.finish then
+        return cell
+      end
+    end
+    return index.list[#index.list]
+  end
+
+  local list = M.get_cells(bufnr)
+  for _, cell in ipairs(list) do
     if line >= cell.start and line <= cell.finish then
       return cell
     end
   end
-  return cells[#cells]
+  return list[#list]
 end
 
 function M.insert_cell_below(bufnr, line, cell_type)
@@ -70,6 +85,8 @@ function M.insert_cell_below(bufnr, line, cell_type)
   local marker = "# %% [" .. normalize_cell_type(cell_type) .. "]"
   local insert_line = line + 1
   vim.api.nvim_buf_set_lines(bufnr, insert_line, insert_line, false, { marker, "" })
+  local index = require("neo_notebooks.index")
+  index.rebuild(bufnr)
   return insert_line
 end
 

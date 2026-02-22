@@ -30,6 +30,19 @@ function M.show_inline(bufnr, cell, lines)
   if not lines or #lines == 0 then
     return
   end
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  if line_count == 0 then
+    return
+  end
+
+  if cell.id then
+    local index = require("neo_notebooks.index")
+    local entry = index.get_by_id(bufnr, cell.id)
+    if entry then
+      cell.start = entry.start
+      cell.finish = entry.finish
+    end
+  end
 
   M.clear_cell(bufnr, cell.start)
 
@@ -38,7 +51,8 @@ function M.show_inline(bufnr, cell, lines)
     table.insert(virt_lines, { { line, "Comment" } })
   end
 
-  local id = vim.api.nvim_buf_set_extmark(bufnr, M.ns, cell.finish, 0, {
+  local target = math.min(math.max(0, cell.finish), line_count - 1)
+  local id = vim.api.nvim_buf_set_extmark(bufnr, M.ns, target, 0, {
     virt_lines = virt_lines,
   })
 

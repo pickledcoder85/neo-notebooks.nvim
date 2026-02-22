@@ -13,9 +13,15 @@ function M.run_all(bufnr)
       local line = cell.start + 1
       if config.output == "inline" then
         exec.run_cell(bufnr, line, {
-          on_output = function(lines)
-            output.show_inline(bufnr, cell, lines)
+          on_output = function(lines, cell_id)
+            output.show_inline(bufnr, {
+              id = cell_id or cell.id,
+              start = cell.start,
+              finish = cell.finish,
+              type = cell.type,
+            }, lines)
           end,
+          cell_id = cell.id,
         })
       else
         exec.run_cell(bufnr, line)

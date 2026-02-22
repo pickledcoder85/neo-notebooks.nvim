@@ -14,6 +14,7 @@ local stats = require("neo_notebooks.stats")
 local run_subset = require("neo_notebooks.run_subset")
 local help = require("neo_notebooks.help")
 local editor = require("neo_notebooks.editor")
+local index = require("neo_notebooks.index")
 
 local function has_filetype(bufnr)
   local allowed = nb.config.filetypes
@@ -135,9 +136,15 @@ end, {})
 local function run_cell_with_output(line, cell)
   if nb.config.output == "inline" then
     exec.run_cell(0, line, {
-      on_output = function(lines)
-        output.show_inline(0, cell, lines)
+      on_output = function(lines, cell_id)
+        output.show_inline(0, {
+          id = cell_id or cell.id,
+          start = cell.start,
+          finish = cell.finish,
+          type = cell.type,
+        }, lines)
       end,
+      cell_id = cell.id,
     })
   else
     exec.run_cell(0, line)
@@ -153,21 +160,39 @@ end, {})
 vim.api.nvim_create_user_command("NeoNotebookCellRunAndNext", function()
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local cell = cells.get_cell_at_line(0, line)
+  local list = cells.get_cells(0)
+  local next_cell = nil
+  for i, item in ipairs(list) do
+    if item.start == cell.start then
+      next_cell = list[i + 1]
+      break
+    end
+  end
 
   if cell.type == "markdown" then
-    local insert_line = cells.insert_cell_below(0, cell.finish, "code")
-    vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
-    render_if_enabled(0)
-    vim.cmd("startinsert")
+    if next_cell then
+      vim.api.nvim_win_set_cursor(0, { next_cell.start + 2, 0 })
+      vim.cmd("startinsert")
+    else
+      local insert_line = cells.insert_cell_below(0, cell.finish, "code")
+      vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
+      render_if_enabled(0)
+      vim.cmd("startinsert")
+    end
     return
   end
 
   run_cell_with_output(line, cell)
 
-  local insert_line = cells.insert_cell_below(0, cell.finish, "code")
-  vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
-  render_if_enabled(0)
-  vim.cmd("startinsert")
+  if next_cell then
+    vim.api.nvim_win_set_cursor(0, { next_cell.start + 2, 0 })
+    vim.cmd("startinsert")
+  else
+    local insert_line = cells.insert_cell_below(0, cell.finish, "code")
+    vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
+    render_if_enabled(0)
+    vim.cmd("startinsert")
+  end
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookMarkdownPreview", function()
@@ -365,7 +390,7 @@ local function set_default_keymaps(bufnr)
 
   if maps.run then
     vim.keymap.set("n", maps.run, function()
-      exec.run_cell(0)
+      vim.cmd("NeoNotebookCellRun")
     end, opts)
   end
 
@@ -557,12 +582,6 @@ nb._on_setup = function()
   set_default_keymaps(0)
 end
 
-vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
-  callback = function(args)
-    set_default_keymaps(args.buf)
-  end,
-})
-
 vim.api.nvim_create_autocmd({ "FileType" }, {
   callback = function(args)
     ensure_initial_markdown_cell(args.buf)
@@ -579,6 +598,22 @@ vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "TextChanged", "Tex
   end,
 })
 
+vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
+  callback = function(args)
+    if should_enable(args.buf) then
+      index.rebuild(args.buf)
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
+  callback = function(args)
+    set_default_keymaps(args.buf)
+    if should_enable(args.buf) then
+      index.rebuild(args.buf)
+    end
+  end,
+})
 vim.api.nvim_create_autocmd({ "InsertEnter" }, {
   callback = function(args)
     update_completion(args.buf)

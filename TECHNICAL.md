@@ -122,6 +122,17 @@ This document summarizes implementation choices and the evolution of core featur
 - Cell list entries include line numbers and a short snippet from the cell body.
 - Selecting a cell centers the view.
 
+## Cell index cache
+
+- The plugin stores a per-buffer cache of cell ranges to avoid repeated parsing.
+- The cache is rebuilt on buffer changes.
+- Cache format: `list` (ordered) and `by_id` (O(1) lookup).
+- Each cell has a stable `cell_id` stored as an extmark on the marker line.
+
+## Tests
+
+- Headless tests live in `tests/run.lua`.
+
 ## .ipynb import/export
 
 - Import reads `.ipynb` JSON and converts cells to marker format.
