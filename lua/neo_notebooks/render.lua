@@ -20,7 +20,8 @@ end
 function M.render(bufnr)
   bufnr = bufnr or 0
   M.clear(bufnr)
-  local width = math.max(10, vim.api.nvim_win_get_width(0) - 2)
+  local win_width = vim.api.nvim_win_get_width(0)
+  local width = math.max(10, win_width - 1)
   local cells_list = cells.get_cells(bufnr)
 
   for idx, cell in ipairs(cells_list) do
