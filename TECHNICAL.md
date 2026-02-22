@@ -40,6 +40,7 @@ This document summarizes implementation choices and the evolution of core featur
 - Floating output is still available by setting `output = "float"`.
 - Floating output buffers are `nofile` and `bufhidden=wipe` and close on `q` or `<Esc>`.
 - While a cell is executing, a spinner is rendered in the sign column.
+- While a cell runs, the output area shows a placeholder line.
 
 ## Markdown preview
 

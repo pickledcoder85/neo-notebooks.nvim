@@ -37,6 +37,7 @@ print("hello")
 - `:NeoNotebookRestart` restarts the Python session and clears outputs.
 - `:NeoNotebookOutputToggle` toggles output mode between inline and floating.
 - A spinner appears in the sign column while a cell is executing.
+- While a cell runs, an inline placeholder output shows `cell executing...`.
 - Moving cells clears all outputs (re-run cells to regenerate output).
 - `:NeoNotebookCellSelect` selects the current cell body.
 - `:NeoNotebookStats` shows a cell count summary.

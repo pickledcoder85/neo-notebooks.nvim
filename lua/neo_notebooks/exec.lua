@@ -1,6 +1,7 @@
 local cells = require("neo_notebooks.cells")
 local config = require("neo_notebooks").config
 local spinner = require("neo_notebooks.spinner")
+local output = require("neo_notebooks.output")
 
 local M = {}
 
@@ -356,6 +357,18 @@ function M.run_cell(bufnr, line, opts)
     local cell = index.find_cell(bufnr, line)
     if cell then
       cell_id = cell.id
+    end
+  end
+  if cell_id and opts.on_output then
+    local index = require("neo_notebooks.index")
+    local cell = index.get_by_id(bufnr, cell_id) or index.find_cell(bufnr, line)
+    if cell then
+      output.show_inline(bufnr, {
+        id = cell.id,
+        start = cell.start,
+        finish = cell.finish,
+        type = cell.type,
+      }, { "cell executing..." })
     end
   end
   local payload = vim.fn.json_encode({ id = request_id, code = code })
