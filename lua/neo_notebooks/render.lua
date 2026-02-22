@@ -110,7 +110,7 @@ function M.render(bufnr)
       local left_col = pad
       local right_col = math.max(pad, pad + width - 1)
       local text_pad = string.rep(" ", pad + 1)
-      local start_line = cell.start + 1
+      local start_line = cell.start
       local end_line = cell.finish
       if start_line <= end_line then
         for line = start_line, end_line do

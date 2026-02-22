@@ -1,5 +1,6 @@
 local cells = require("neo_notebooks.cells")
 local config = require("neo_notebooks").config
+local spinner = require("neo_notebooks.spinner")
 
 local M = {}
 
@@ -235,6 +236,7 @@ local function handle_response(session, resp)
   if not pending then
     return
   end
+  spinner.stop(pending.bufnr, pending.cell_id)
   session.pending[id] = nil
   local output = format_output(resp)
   if pending.on_output then
@@ -319,6 +321,7 @@ function M.stop_session(bufnr)
   if not session then
     return
   end
+  spinner.stop_all(bufnr)
   if is_job_alive(session.job) then
     vim.fn.jobstop(session.job)
   end
@@ -347,12 +350,23 @@ function M.run_cell(bufnr, line, opts)
   end
 
   request_id = request_id + 1
+  local cell_id = opts.cell_id
+  if not cell_id then
+    local index = require("neo_notebooks.index")
+    local cell = index.find_cell(bufnr, line)
+    if cell then
+      cell_id = cell.id
+    end
+  end
   local payload = vim.fn.json_encode({ id = request_id, code = code })
   session.pending[request_id] = {
     bufnr = bufnr,
     on_output = opts.on_output,
-    cell_id = opts.cell_id,
+    cell_id = cell_id,
   }
+  if cell_id then
+    spinner.start(bufnr, cell_id, line)
+  end
   vim.fn.chansend(session.job, payload .. "\n")
 end
 
