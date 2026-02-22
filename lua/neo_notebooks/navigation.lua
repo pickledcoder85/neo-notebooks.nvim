@@ -71,7 +71,7 @@ function M.cell_list(bufnr)
       end
     end
 
-    table.insert(items, string.format("%02d [%s] %s", idx, cell.type, title))
+    table.insert(items, string.format("%02d [%s] L%03d %s", idx, cell.type, cell.start + 1, title))
   end
 
   vim.ui.select(items, { prompt = "Cells" }, function(choice, idx)
@@ -81,6 +81,7 @@ function M.cell_list(bufnr)
     local cell = list[idx]
     if cell then
       move_to_cell_start(bufnr, cell)
+      vim.cmd("normal! zz")
     end
   end)
 end

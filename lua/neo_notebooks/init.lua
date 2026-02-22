@@ -25,6 +25,7 @@ M.config = {
     split_cell = "<leader>xs",
     fold_cell = "<leader>zf",
     unfold_cell = "<leader>zu",
+    toggle_fold = "<leader>zz",
     clear_output = "<leader>co",
   },
 }

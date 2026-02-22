@@ -57,4 +57,16 @@ function M.unfold_cell(bufnr, line)
   vim.cmd(string.format("%d,%dfoldopen", cell.start + 1, cell.finish + 1))
 end
 
+function M.toggle_fold_cell(bufnr, line)
+  bufnr = bufnr or 0
+  line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cell = cells.get_cell_at_line(bufnr, line)
+  local level = vim.fn.foldlevel(cell.start + 1)
+  if level > 0 and vim.fn.foldclosed(cell.start + 1) ~= -1 then
+    M.unfold_cell(bufnr, line)
+  else
+    M.fold_cell(bufnr, line)
+  end
+end
+
 return M

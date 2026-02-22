@@ -73,7 +73,18 @@ This document summarizes implementation choices and the evolution of core featur
 - Duplicate: inserts a copy of the current cell below.
 - Split: inserts a new cell marker at the cursor to split the cell.
 - Fold/Unfold: uses manual folds for the current cell range.
+- Toggle fold: opens or closes the current cell fold depending on state.
 - Clear output: removes inline output extmarks for the current cell.
+
+## Cell list enhancements
+
+- Cell list entries include line numbers.
+- Selecting a cell centers the view.
+
+## .ipynb import/export
+
+- Import reads `.ipynb` JSON and converts cells to marker format.
+- Export writes a minimal `.ipynb` with cell sources (no outputs).
 
 ## Auto-render and keymaps
 

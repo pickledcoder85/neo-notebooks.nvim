@@ -26,7 +26,10 @@ print("hello")
 - `:NeoNotebookCellSplit` splits the current cell at the cursor.
 - `:NeoNotebookCellFold` folds the current cell.
 - `:NeoNotebookCellUnfold` unfolds the current cell.
+- `:NeoNotebookCellFoldToggle` toggles fold for the current cell.
 - `:NeoNotebookOutputClear` clears inline output for the current cell.
+- `:NeoNotebookImportIpynb {path}` imports a `.ipynb` file.
+- `:NeoNotebookExportIpynb {path}` exports the current buffer to `.ipynb`.
 
 ## Configuration
 
@@ -56,6 +59,7 @@ require("neo_notebooks").setup({
     split_cell = "<leader>xs",
     fold_cell = "<leader>zf",
     unfold_cell = "<leader>zu",
+    toggle_fold = "<leader>zz",
     clear_output = "<leader>co",
   },
 })
@@ -128,7 +132,26 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `<leader>xs` split cell at cursor
 - `<leader>zf` fold current cell
 - `<leader>zu` unfold current cell
+- `<leader>zz` toggle fold for current cell
 - `<leader>co` clear output for current cell
+
+### .ipynb import/export (basic)
+
+Import:
+
+```
+:NeoNotebookImportIpynb path/to/notebook.ipynb
+```
+
+Export:
+
+```
+:NeoNotebookExportIpynb path/to/notebook.ipynb
+```
+
+Notes:
+- This is a best-effort conversion of cell sources only (no outputs or rich metadata).
+- Markdown and code cells are supported; other cell types are treated as code.
 
 ### Cell border color
 

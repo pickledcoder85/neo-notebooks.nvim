@@ -7,6 +7,7 @@ local output = require("neo_notebooks.output")
 local overlay = require("neo_notebooks.overlay")
 local navigation = require("neo_notebooks.navigation")
 local actions = require("neo_notebooks.actions")
+local ipynb = require("neo_notebooks.ipynb")
 
 local function has_filetype(bufnr)
   local allowed = nb.config.filetypes
@@ -199,9 +200,39 @@ vim.api.nvim_create_user_command("NeoNotebookCellUnfold", function()
   actions.unfold_cell(0)
 end, {})
 
+vim.api.nvim_create_user_command("NeoNotebookCellFoldToggle", function()
+  actions.toggle_fold_cell(0)
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookOutputClear", function()
   actions.clear_output(0)
 end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookImportIpynb", function(opts)
+  local path = opts.args
+  if path == "" then
+    vim.notify("Provide a .ipynb path", vim.log.levels.WARN)
+    return
+  end
+  local ok, err = ipynb.import_ipynb(path, 0)
+  if not ok then
+    vim.notify(err or "Import failed", vim.log.levels.ERROR)
+    return
+  end
+  render_if_enabled(0)
+end, { nargs = 1, complete = "file" })
+
+vim.api.nvim_create_user_command("NeoNotebookExportIpynb", function(opts)
+  local path = opts.args
+  if path == "" then
+    vim.notify("Provide a .ipynb path", vim.log.levels.WARN)
+    return
+  end
+  local ok, err = ipynb.export_ipynb(path, 0)
+  if not ok then
+    vim.notify(err or "Export failed", vim.log.levels.ERROR)
+  end
+end, { nargs = 1, complete = "file" })
 
 vim.api.nvim_create_user_command("NeoNotebookEnable", function()
   render_if_enabled(0)
@@ -312,6 +343,12 @@ local function set_default_keymaps(bufnr)
   if maps.unfold_cell then
     vim.keymap.set("n", maps.unfold_cell, function()
       actions.unfold_cell(0)
+    end, opts)
+  end
+
+  if maps.toggle_fold then
+    vim.keymap.set("n", maps.toggle_fold, function()
+      actions.toggle_fold_cell(0)
     end, opts)
   end
 
