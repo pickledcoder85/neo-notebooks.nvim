@@ -223,7 +223,6 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 Note: `<M-...>` means the Meta key (typically `Alt` on most keyboards).
 - `<leader>ra` run all code cells
 - `<leader>rs` restart python session
-- `<leader>tt` toggle output mode
 - `<leader>vs` select current cell body
 - `<leader>ns` show cell stats
 - `<leader>rA` run all code cells above

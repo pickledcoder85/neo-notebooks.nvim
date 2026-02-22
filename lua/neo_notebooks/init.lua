@@ -42,7 +42,6 @@ M.config = {
     move_bottom = "<leader>mgg",
     run_all = "<leader>ra",
     restart = "<leader>rs",
-    toggle_output = "<leader>tt",
     select_cell = "<leader>vs",
     stats = "<leader>ns",
     run_above = "<leader>rA",
