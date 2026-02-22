@@ -5,6 +5,7 @@ local exec = require("neo_notebooks.exec")
 local markdown = require("neo_notebooks.markdown")
 local output = require("neo_notebooks.output")
 local overlay = require("neo_notebooks.overlay")
+local navigation = require("neo_notebooks.navigation")
 
 local function has_filetype(bufnr)
   local allowed = nb.config.filetypes
@@ -168,6 +169,18 @@ vim.api.nvim_create_user_command("NeoNotebookCellOverlayToggle", function()
   overlay.toggle(0)
 end, {})
 
+vim.api.nvim_create_user_command("NeoNotebookCellNext", function()
+  navigation.next_cell(0)
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookCellPrev", function()
+  navigation.prev_cell(0)
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookCellList", function()
+  navigation.cell_list(0)
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookEnable", function()
   render_if_enabled(0)
 end, {})
@@ -233,6 +246,24 @@ local function set_default_keymaps(bufnr)
     vim.keymap.set({ "n", "i" }, maps.run_and_next, function()
       vim.cmd("stopinsert")
       vim.cmd("NeoNotebookCellRunAndNext")
+    end, opts)
+  end
+
+  if maps.next_cell then
+    vim.keymap.set("n", maps.next_cell, function()
+      navigation.next_cell(0)
+    end, opts)
+  end
+
+  if maps.prev_cell then
+    vim.keymap.set("n", maps.prev_cell, function()
+      navigation.prev_cell(0)
+    end, opts)
+  end
+
+  if maps.cell_list then
+    vim.keymap.set("n", maps.cell_list, function()
+      navigation.cell_list(0)
     end, opts)
   end
 end

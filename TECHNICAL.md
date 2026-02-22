@@ -57,6 +57,11 @@ This document summarizes implementation choices and the evolution of core featur
 - When enabled, the plugin sets `vim.b.completion = false` inside markdown cells.
 - The previous buffer-local completion setting is restored when returning to code cells.
 
+## Navigation helpers
+
+- `NeoNotebookCellNext` / `NeoNotebookCellPrev` move between cell headers.
+- `NeoNotebookCellList` opens a picker to jump to a cell.
+
 ## Auto-render and keymaps
 
 - Auto-render is gated by:

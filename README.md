@@ -42,6 +42,9 @@ require("neo_notebooks").setup({
     toggle = "<leader>m",
     preview = "<leader>p",
     run_and_next = "<S-CR>",
+    next_cell = "]n",
+    prev_cell = "[n",
+    cell_list = "<leader>l",
   },
 })
 ```
@@ -106,3 +109,6 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `<leader>m` toggle cell type
 - `<leader>p` preview markdown cell
 - `<S-CR>` run cell and create new code cell
+- `]n` next cell
+- `[n` previous cell
+- `<leader>l` open cell list picker

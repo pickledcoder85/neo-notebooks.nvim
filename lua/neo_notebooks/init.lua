@@ -16,6 +16,9 @@ M.config = {
     toggle = "<leader>m",
     preview = "<leader>p",
     run_and_next = "<S-CR>",
+    next_cell = "]n",
+    prev_cell = "[n",
+    cell_list = "<leader>l",
   },
 }
 
