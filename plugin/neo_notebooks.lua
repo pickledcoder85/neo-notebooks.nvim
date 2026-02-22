@@ -171,10 +171,14 @@ vim.api.nvim_create_user_command("NeoNotebookCellRunAndNext", function()
 
   if cell.type == "markdown" then
     if next_cell then
-      vim.api.nvim_win_set_cursor(0, { next_cell.start + 2, 0 })
+      local max_line = vim.api.nvim_buf_line_count(0)
+      local target = math.min(next_cell.start + 2, max_line)
+      vim.api.nvim_win_set_cursor(0, { target, 0 })
     else
       local insert_line = cells.insert_cell_below(0, cell.finish, "code")
-      vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
+      local max_line = vim.api.nvim_buf_line_count(0)
+      local target = math.min(insert_line + 2, max_line)
+      vim.api.nvim_win_set_cursor(0, { target, 0 })
       render_if_enabled(0)
       vim.cmd("startinsert")
     end
@@ -184,10 +188,14 @@ vim.api.nvim_create_user_command("NeoNotebookCellRunAndNext", function()
   run_cell_with_output(line, cell)
 
   if next_cell then
-    vim.api.nvim_win_set_cursor(0, { next_cell.start + 2, 0 })
+    local max_line = vim.api.nvim_buf_line_count(0)
+    local target = math.min(next_cell.start + 2, max_line)
+    vim.api.nvim_win_set_cursor(0, { target, 0 })
   else
     local insert_line = cells.insert_cell_below(0, cell.finish, "code")
-    vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
+    local max_line = vim.api.nvim_buf_line_count(0)
+    local target = math.min(insert_line + 2, max_line)
+    vim.api.nvim_win_set_cursor(0, { target, 0 })
     render_if_enabled(0)
     vim.cmd("startinsert")
   end
