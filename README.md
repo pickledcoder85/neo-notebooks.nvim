@@ -59,9 +59,13 @@ require("neo_notebooks").setup({
   overlay_preview = false,
   suppress_completion_in_markdown = true,
   auto_insert_on_jump = true,
-  border_hl = "NeoNotebookBorder",
+  border_hl_code = "NeoNotebookBorderCode",
+  border_hl_markdown = "NeoNotebookBorderMarkdown",
   show_cell_index = true,
   vertical_borders = true,
+  cell_width_ratio = 0.9,
+  cell_min_width = 60,
+  cell_max_width = 140,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",
@@ -202,16 +206,30 @@ Notes:
 
 ### Cell border color
 
-By default, the plugin defines `NeoNotebookBorder` as green. You can override:
+By default, the plugin defines:
+- `NeoNotebookBorderCode` (green)
+- `NeoNotebookBorderMarkdown` (cyan)
+
+You can override:
 
 ```lua
-vim.api.nvim_set_hl(0, "NeoNotebookBorder", { fg = "#00ff00" })
-require("neo_notebooks").setup({ border_hl = "NeoNotebookBorder" })
+vim.api.nvim_set_hl(0, "NeoNotebookBorderCode", { fg = "#00ff00" })
+vim.api.nvim_set_hl(0, "NeoNotebookBorderMarkdown", { fg = "#00ffff" })
+require("neo_notebooks").setup({
+  border_hl_code = "NeoNotebookBorderCode",
+  border_hl_markdown = "NeoNotebookBorderMarkdown",
+})
 ```
 
 ### Cell index labels
 
 Set `show_cell_index = false` to remove numeric labels from cell borders.
+
+### Cell width
+
+Cells are centered and responsive to window size:
+- `cell_width_ratio` sets the width as a percentage of the window (default `0.9`).
+- `cell_min_width` / `cell_max_width` clamp the width.
 
 ### Vertical borders
 

@@ -106,6 +106,11 @@ This document summarizes implementation choices and the evolution of core featur
 
 - When enabled, cell bodies render a left sign column border and a right aligned border.
 
+## Border styling and width
+
+- Code and markdown borders use separate highlight groups.
+- Width is centered and responsive based on `cell_width_ratio`, clamped by min/max.
+
 ## Cell list enhancements
 
 - Cell list entries include line numbers and a short snippet from the cell body.

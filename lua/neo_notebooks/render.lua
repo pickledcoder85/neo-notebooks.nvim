@@ -21,7 +21,13 @@ function M.render(bufnr)
   bufnr = bufnr or 0
   M.clear(bufnr)
   local win_width = vim.api.nvim_win_get_width(0)
-  local width = math.max(10, win_width - 1)
+  local ratio = config.cell_width_ratio or 0.9
+  local width = math.floor(win_width * ratio)
+  width = math.max(config.cell_min_width or 60, width)
+  width = math.min(config.cell_max_width or win_width, width)
+  width = math.min(width, win_width)
+  width = math.max(10, width)
+  local pad = math.max(0, math.floor((win_width - width) / 2))
   local cells_list = cells.get_cells(bufnr)
 
   for idx, cell in ipairs(cells_list) do
@@ -29,14 +35,17 @@ function M.render(bufnr)
       goto continue
     end
 
-    local top = cell_border(math.min(width, width), "╭", "╮")
-    local bottom = cell_border(math.min(width, width), "╰", "╯")
+    local top = string.rep(" ", pad) .. cell_border(width, "╭", "╮")
+    local bottom = string.rep(" ", pad) .. cell_border(width, "╰", "╯")
     local label = string.format(" [%s] ", cell.type)
     if config.show_cell_index then
       label = string.format(" [%d %s] ", idx, cell.type)
     end
 
-    local hl = config.border_hl or "Comment"
+    local hl = config.border_hl_code or "Comment"
+    if cell.type == "markdown" then
+      hl = config.border_hl_markdown or hl
+    end
 
     vim.api.nvim_buf_set_extmark(bufnr, M.ns, cell.start, 0, {
       virt_lines = { { { top, hl } } },
@@ -50,15 +59,18 @@ function M.render(bufnr)
     })
 
     if config.vertical_borders then
+      local left_col = pad
+      local right_col = math.max(pad, pad + width - 1)
       for line = cell.start, cell.finish do
         vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
           virt_text = { { "│", hl } },
-          virt_text_pos = "inline",
-          right_gravity = false,
+          virt_text_pos = "overlay",
+          virt_text_win_col = left_col,
         })
         vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
           virt_text = { { "│", hl } },
-          virt_text_pos = "right_align",
+          virt_text_pos = "overlay",
+          virt_text_win_col = right_col,
         })
       end
     end
