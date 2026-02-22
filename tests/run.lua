@@ -35,6 +35,8 @@ end
 
 local index = require("neo_notebooks.index")
 local cells = require("neo_notebooks.cells")
+local actions = require("neo_notebooks.actions")
+local output = require("neo_notebooks.output")
 
 -- Test: index build
 with_buf({
@@ -75,6 +77,37 @@ with_buf({
   index.rebuild(buf)
   local cell = cells.get_cell_at_line(buf, 2)
   eq(cell.start, 2, "cell lookup by line")
+end)
+
+-- Test: move cell up preserves id mapping
+with_buf({
+  "# %% [code]",
+  "print(1)",
+  "# %% [code]",
+  "print(2)",
+}, function(buf)
+  index.rebuild(buf)
+  local first = index.get(buf).list[1].id
+  local second = index.get(buf).list[2].id
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 4, 0 })
+    actions.move_cell_up(buf)
+  end)
+  index.rebuild(buf)
+  eq(index.get(buf).list[1].id, second, "move up swaps order")
+  eq(index.get(buf).by_id[first].id, first, "id stays stable")
+end)
+
+-- Test: output placement uses id and does not error
+with_buf({
+  "# %% [code]",
+  "print(1)",
+}, function(buf)
+  local state = index.rebuild(buf)
+  local cell = state.list[1]
+  output.show_inline(buf, { id = cell.id, start = cell.start, finish = cell.finish, type = cell.type }, { "ok" })
+  local marks = vim.api.nvim_buf_get_extmarks(buf, output.ns, 0, -1, {})
+  ok(#marks > 0, "output extmark created")
 end)
 
 print("All tests passed")
