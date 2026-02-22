@@ -158,7 +158,7 @@ This document summarizes implementation choices and the evolution of core featur
 ## Auto-render and keymaps
 
 - Auto-render is gated by:
-  - `filetypes` (default `{ "python", "neo_notebook", "ipynb" }`).
+  - `filetypes` (default `{ "neo_notebook", "ipynb" }`).
   - Optional `require_markers` to render only when markers are present.
 - Keymaps are buffer-local and only set when buffers pass the gating rules.
 
