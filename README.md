@@ -255,6 +255,8 @@ Notes:
   `auto_open_ipynb = true`.
 - Saving (`:w`) in an `.ipynb` buffer exports the current cells back to the `.ipynb` file.
 
+Note: `top_padding` inserts real blank lines at the top of the buffer on first open to keep the top border visible.
+
 ### Cell border color
 
 By default, the plugin defines:

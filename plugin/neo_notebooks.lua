@@ -695,14 +695,16 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
       end
       if not vim.b[args.buf].neo_notebooks_opened then
         vim.b[args.buf].neo_notebooks_opened = true
-        if (nb.config.top_padding or 0) > 0 then
-          vim.schedule(function()
-            if vim.api.nvim_buf_is_valid(args.buf) then
-              local view = vim.fn.winsaveview()
-              view.topline = 1
-              vim.fn.winrestview(view)
-            end
-          end)
+        local pad = nb.config.top_padding or 0
+        if pad > 0 and not vim.b[args.buf].neo_notebooks_top_padded then
+          local blanks = {}
+          for _ = 1, pad do
+            table.insert(blanks, "")
+          end
+          vim.api.nvim_buf_set_lines(args.buf, 0, 0, false, blanks)
+          vim.b[args.buf].neo_notebooks_top_padded = pad
+          index.rebuild(args.buf)
+          vim.api.nvim_win_set_cursor(0, { pad + 1, 0 })
         end
       end
     end
