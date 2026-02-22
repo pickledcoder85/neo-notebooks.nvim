@@ -82,7 +82,7 @@ def _render_pandas_table(value, out_buf):
         table.add_row(*cells)
 
     console = Console(record=True, force_terminal=True, color_system="truecolor", no_color=False)
-    console.print(table)
+    console.print(table, record=True)
     out_buf.write(console.export_text(styles=True))
     if globals_dict.get("__neo_notebooks_debug_ansi", False):
         out_buf.write(
@@ -117,7 +117,7 @@ def handle(obj):
                             print(repr(value))
                     elif use_rich and RICH_AVAILABLE:
                         console = Console(record=True, force_terminal=True, color_system="truecolor", no_color=False)
-                        console.print(value)
+                        console.print(value, record=True)
                         out_buf.write(console.export_text(styles=True))
                         if globals_dict.get("__neo_notebooks_debug_ansi", False):
                             out_buf.write(
