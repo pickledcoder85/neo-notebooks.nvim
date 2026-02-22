@@ -64,22 +64,26 @@ function M.render(bufnr)
       local left_col = pad
       local right_col = math.max(pad, pad + width - 1)
       local text_pad = string.rep(" ", pad + 1)
-      for line = cell.start, cell.finish do
-        vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
-          virt_text = { { text_pad, hl } },
-          virt_text_pos = "inline",
-          right_gravity = false,
-        })
-        vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
-          virt_text = { { "│", hl } },
-          virt_text_pos = "overlay",
-          virt_text_win_col = left_col,
-        })
-        vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
-          virt_text = { { "│", hl } },
-          virt_text_pos = "overlay",
-          virt_text_win_col = right_col,
-        })
+      local start_line = cell.start + 1
+      local end_line = cell.finish - 1
+      if start_line <= end_line then
+        for line = start_line, end_line do
+          vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
+            virt_text = { { text_pad, hl } },
+            virt_text_pos = "inline",
+            right_gravity = false,
+          })
+          vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
+            virt_text = { { "│", hl } },
+            virt_text_pos = "overlay",
+            virt_text_win_col = left_col,
+          })
+          vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
+            virt_text = { { "│", hl } },
+            virt_text_pos = "overlay",
+            virt_text_win_col = right_col,
+          })
+        end
       end
     end
 
