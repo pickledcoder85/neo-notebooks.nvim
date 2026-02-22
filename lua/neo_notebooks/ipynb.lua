@@ -105,6 +105,8 @@ function M.open_ipynb(path)
   if existing ~= -1 then
     local bufnr = existing
     vim.api.nvim_buf_set_option(bufnr, "buftype", "nofile")
+    vim.api.nvim_buf_set_option(bufnr, "swapfile", false)
+    vim.api.nvim_buf_set_option(bufnr, "modifiable", true)
     vim.api.nvim_set_option_value("filetype", "neo_notebook", { buf = bufnr })
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {})
     return M.import_ipynb(path, bufnr)
