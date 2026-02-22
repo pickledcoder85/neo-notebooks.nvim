@@ -63,12 +63,12 @@ end
 function M.get_cell_at_line(bufnr, line)
   local index = vim.b[bufnr] and vim.b[bufnr].neo_notebooks_index
   if index then
-    for _, cell in ipairs(index) do
+    for _, cell in ipairs(index.list) do
       if line >= cell.start and line <= cell.finish then
         return cell
       end
     end
-    return index[#index]
+    return index.list[#index.list]
   end
 
   local list = M.get_cells(bufnr)

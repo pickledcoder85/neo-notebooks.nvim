@@ -117,6 +117,7 @@ require("neo_notebooks").setup({
 ### Cell index cache
 
 The plugin maintains a per-buffer cell index cache and rebuilds it on buffer changes to speed up lookups.
+The cache stores both an ordered list and an ID map for O(1) access.
 
 ### Automatic first cell
 

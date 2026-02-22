@@ -126,6 +126,7 @@ This document summarizes implementation choices and the evolution of core featur
 
 - The plugin stores a per-buffer cache of cell ranges to avoid repeated parsing.
 - The cache is rebuilt on buffer changes.
+- Cache format: `list` (ordered) and `by_id` (O(1) lookup).
 
 ## .ipynb import/export
 
