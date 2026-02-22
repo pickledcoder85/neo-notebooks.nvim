@@ -33,6 +33,7 @@ require("neo_notebooks").setup({
   filetypes = { "python" },
   require_markers = false,
   auto_insert_first_cell = true,
+  overlay_preview = false,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",
@@ -75,6 +76,16 @@ require("neo_notebooks").setup({ output = "float" })
 ### Markdown preview
 
 Run `:NeoNotebookMarkdownPreview` in a markdown cell to open a floating preview window with markdown highlighting.
+
+### Cell overlay preview (read-only)
+
+Enable a floating, read-only overlay that mirrors the current cell:
+
+```lua
+require("neo_notebooks").setup({ overlay_preview = true })
+```
+
+You can toggle it on demand with `:NeoNotebookCellOverlayToggle`.
 
 ### Keymaps (defaults)
 

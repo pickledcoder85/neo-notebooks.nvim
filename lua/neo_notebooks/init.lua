@@ -7,6 +7,7 @@ M.config = {
   filetypes = { "python" },
   require_markers = false,
   auto_insert_first_cell = true,
+  overlay_preview = false,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",

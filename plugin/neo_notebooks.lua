@@ -4,6 +4,7 @@ local render = require("neo_notebooks.render")
 local exec = require("neo_notebooks.exec")
 local markdown = require("neo_notebooks.markdown")
 local output = require("neo_notebooks.output")
+local overlay = require("neo_notebooks.overlay")
 
 local function has_filetype(bufnr)
   local allowed = nb.config.filetypes
@@ -126,6 +127,10 @@ vim.api.nvim_create_user_command("NeoNotebookMarkdownPreview", function()
   markdown.preview_cell(0)
 end, {})
 
+vim.api.nvim_create_user_command("NeoNotebookCellOverlayToggle", function()
+  overlay.toggle(0)
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookEnable", function()
   render_if_enabled(0)
 end, {})
@@ -208,6 +213,21 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
 vim.api.nvim_create_autocmd({ "FileType" }, {
   callback = function(args)
     ensure_initial_markdown_cell(args.buf)
+    if nb.config.overlay_preview then
+      overlay.enable(args.buf)
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "TextChanged", "TextChangedI" }, {
+  callback = function(args)
+    overlay.on_cursor_moved(args.buf)
+  end,
+})
+
+vim.api.nvim_create_autocmd({ "BufLeave", "BufWipeout" }, {
+  callback = function(args)
+    overlay.disable(args.buf)
   end,
 })
 

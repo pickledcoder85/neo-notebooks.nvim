@@ -24,6 +24,8 @@ This document summarizes implementation choices and the evolution of core featur
   - Uses a scratch buffer with `filetype=markdown` for syntax highlighting.
 - `lua/neo_notebooks/output.lua`
   - Manages inline output rendering via extmarks.
+- `lua/neo_notebooks/overlay.lua`
+  - Provides a read-only floating overlay that mirrors the current cell.
 
 ## Execution model
 
@@ -43,6 +45,12 @@ This document summarizes implementation choices and the evolution of core featur
 - `:NeoNotebookMarkdownPreview` opens a centered floating window.
 - Markdown is highlighted using Neovim's `markdown` filetype.
 - Font sizes are not changed (Neovim does not support per-heading font sizes in a single buffer).
+
+## Cell overlay preview
+
+- The overlay is a scratch floating window that mirrors the current cell's lines.
+- It is read-only and updates on cursor and text changes.
+- The overlay is optional and can be toggled per buffer.
 
 ## Auto-render and keymaps
 
