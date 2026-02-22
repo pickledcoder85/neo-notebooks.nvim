@@ -377,14 +377,19 @@ vim.api.nvim_create_autocmd("BufReadPost", {
     end
     vim.b[args.buf].neo_notebooks_ipynb_opened = true
     vim.schedule(function()
-      local ok, err, opened_buf = ipynb.open_ipynb(path)
-      if not ok then
-        vim.notify(err or "Open failed", vim.log.levels.ERROR)
+      if not vim.api.nvim_buf_is_valid(args.buf) then
         return
       end
-      if opened_buf ~= args.buf and vim.api.nvim_buf_is_valid(args.buf) then
-        vim.api.nvim_buf_delete(args.buf, { force = true })
+      vim.api.nvim_buf_set_option(args.buf, "buftype", "nofile")
+      vim.api.nvim_buf_set_option(args.buf, "swapfile", false)
+      vim.api.nvim_buf_set_option(args.buf, "modifiable", true)
+      vim.api.nvim_set_option_value("filetype", "neo_notebook", { buf = args.buf })
+      local ok, err = ipynb.import_ipynb(path, args.buf)
+      if not ok then
+        vim.notify(err or "Import failed", vim.log.levels.ERROR)
+        return
       end
+      render_if_enabled(args.buf)
     end)
   end,
 })
