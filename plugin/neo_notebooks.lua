@@ -30,6 +30,36 @@ local function should_enable(bufnr)
   return true
 end
 
+local function buffer_is_empty(bufnr)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  if #lines == 0 then
+    return true
+  end
+  if #lines == 1 and lines[1] == "" then
+    return true
+  end
+  return false
+end
+
+local function ensure_initial_markdown_cell(bufnr)
+  if not nb.config.auto_insert_first_cell then
+    return
+  end
+  if not should_enable(bufnr) then
+    return
+  end
+  if not buffer_is_empty(bufnr) then
+    return
+  end
+  if cells.has_markers(bufnr) then
+    return
+  end
+
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { "# %% [markdown]", "" })
+  vim.api.nvim_win_set_cursor(0, { 2, 0 })
+  vim.cmd("startinsert")
+end
+
 local function render_if_enabled(bufnr)
   bufnr = bufnr or 0
   if nb.config.auto_render and should_enable(bufnr) then
@@ -172,6 +202,12 @@ end
 vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
   callback = function(args)
     set_default_keymaps(args.buf)
+  end,
+})
+
+vim.api.nvim_create_autocmd({ "FileType" }, {
+  callback = function(args)
+    ensure_initial_markdown_cell(args.buf)
   end,
 })
 

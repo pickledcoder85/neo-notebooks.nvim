@@ -51,6 +51,11 @@ This document summarizes implementation choices and the evolution of core featur
   - Optional `require_markers` to render only when markers are present.
 - Keymaps are buffer-local and only set when buffers pass the gating rules.
 
+## Automatic first cell
+
+- On `FileType` for eligible buffers, if the buffer is empty and has no markers,
+  the plugin inserts `# %% [markdown]` and moves the cursor to the empty line below.
+
 ## Future work
 
 - Add a proper markdown renderer for headings/emphasis.

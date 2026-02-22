@@ -6,6 +6,7 @@ M.config = {
   output = "inline",
   filetypes = { "python" },
   require_markers = false,
+  auto_insert_first_cell = true,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",

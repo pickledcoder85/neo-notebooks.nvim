@@ -32,6 +32,7 @@ require("neo_notebooks").setup({
   output = "inline",
   filetypes = { "python" },
   require_markers = false,
+  auto_insert_first_cell = true,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",
@@ -49,6 +50,15 @@ require("neo_notebooks").setup({
 - Virtual borders are rendered using virtual lines; output is inline by default.
 - The last expression in a code cell is printed automatically (Jupyter-like).
 - This is a minimal experimental baseline and intended to be expanded.
+
+### Automatic first cell
+
+When opening an empty `python` buffer, the plugin inserts a starter markdown cell:
+
+```python
+# %% [markdown]
+
+```
 
 ### Shift+Enter behavior
 
