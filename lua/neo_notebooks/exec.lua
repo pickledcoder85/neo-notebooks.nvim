@@ -238,6 +238,11 @@ local function handle_response(session, resp)
   session.pending[id] = nil
   local output = format_output(resp)
   if pending.on_output then
+    if vim.g.neo_notebooks_debug_output then
+      vim.schedule(function()
+        vim.notify("exec: on_output callback", vim.log.levels.INFO)
+      end)
+    end
     vim.schedule(function()
       pending.on_output(output, pending.cell_id)
     end)
