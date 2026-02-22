@@ -163,7 +163,7 @@ local function handle_response(session, resp)
   session.pending[id] = nil
   local output = format_output(resp)
   if pending.on_output then
-    pending.on_output(output)
+    pending.on_output(output, pending.cell_id)
   else
     open_output_window(output)
   end
@@ -269,6 +269,7 @@ function M.run_cell(bufnr, line, opts)
   session.pending[request_id] = {
     bufnr = bufnr,
     on_output = opts.on_output,
+    cell_id = opts.cell_id,
   }
   vim.fn.chansend(session.job, payload .. "\n")
 end

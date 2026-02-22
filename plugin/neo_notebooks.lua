@@ -136,9 +136,15 @@ end, {})
 local function run_cell_with_output(line, cell)
   if nb.config.output == "inline" then
     exec.run_cell(0, line, {
-      on_output = function(lines)
-        output.show_inline(0, cell, lines)
+      on_output = function(lines, cell_id)
+        output.show_inline(0, {
+          id = cell_id or cell.id,
+          start = cell.start,
+          finish = cell.finish,
+          type = cell.type,
+        }, lines)
       end,
+      cell_id = cell.id,
     })
   else
     exec.run_cell(0, line)

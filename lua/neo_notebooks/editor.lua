@@ -122,19 +122,21 @@ function M.run_from_editor()
   state.cell_start = entry.start
   state.cell_finish = entry.finish
   local line = entry.start + 1
-  if config.output == "inline" then
-    exec.run_cell(state.source_buf, line, {
-      on_output = function(lines)
-        output.show_inline(state.source_buf, {
-          start = state.cell_start,
-          finish = state.cell_finish,
-          type = state.cell_type,
-        }, lines)
-      end,
-    })
-  else
-    exec.run_cell(state.source_buf, line)
-  end
+    if config.output == "inline" then
+      exec.run_cell(state.source_buf, line, {
+        on_output = function(lines, cell_id)
+          output.show_inline(state.source_buf, {
+            id = cell_id or state.cell_id,
+            start = state.cell_start,
+            finish = state.cell_finish,
+            type = state.cell_type,
+          }, lines)
+        end,
+        cell_id = state.cell_id,
+      })
+    else
+      exec.run_cell(state.source_buf, line)
+    end
 end
 
 return M
