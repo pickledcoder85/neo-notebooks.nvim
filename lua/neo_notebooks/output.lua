@@ -34,6 +34,9 @@ function M.clear_all(bufnr)
 end
 
 function M.show_inline(bufnr, cell, lines)
+  if vim.g.neo_notebooks_debug_output then
+    vim.notify("show_inline called: " .. tostring(#lines) .. " lines", vim.log.levels.INFO)
+  end
   bufnr = bufnr or 0
   if not lines or #lines == 0 then
     return
@@ -73,6 +76,9 @@ function M.show_inline(bufnr, cell, lines)
 
   if not cell.id then
     -- Fallback: render directly using current range if no stable id found.
+    if vim.g.neo_notebooks_debug_output then
+      vim.notify("show_inline fallback render", vim.log.levels.INFO)
+    end
     M.render_block(bufnr, cell, lines)
     return
   end
@@ -80,11 +86,17 @@ function M.show_inline(bufnr, cell, lines)
   if cell.id then
     local store = get_store(bufnr)
     if vim.deep_equal(store[cell.id], lines) then
+      if vim.g.neo_notebooks_debug_output then
+        vim.notify("show_inline skipped (same output)", vim.log.levels.INFO)
+      end
       return
     end
     store[cell.id] = lines
   end
 
+  if vim.g.neo_notebooks_debug_output then
+    vim.notify("show_inline render_outputs", vim.log.levels.INFO)
+  end
   M.render_outputs(bufnr)
 end
 
@@ -124,6 +136,9 @@ end
 
 function M.render_outputs(bufnr)
   bufnr = bufnr or 0
+  if vim.g.neo_notebooks_debug_output then
+    vim.notify("render_outputs called", vim.log.levels.INFO)
+  end
   local store = get_store(bufnr)
   vim.api.nvim_buf_clear_namespace(bufnr, M.ns, 0, -1)
   vim.b[bufnr].neo_notebooks_output = {}
