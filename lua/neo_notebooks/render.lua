@@ -101,7 +101,9 @@ function M.render(bufnr)
       end
     end
 
-    vim.api.nvim_buf_set_extmark(bufnr, M.ns, cell.finish, 0, {
+    local line_count = vim.api.nvim_buf_line_count(bufnr)
+    local finish_line = math.min(math.max(cell.finish, 0), math.max(line_count - 1, 0))
+    vim.api.nvim_buf_set_extmark(bufnr, M.ns, finish_line, 0, {
       virt_lines = bottom_lines,
       priority = 100,
     })
@@ -110,8 +112,8 @@ function M.render(bufnr)
       local left_col = pad
       local right_col = math.max(pad, pad + width - 1)
       local text_pad = string.rep(" ", pad + 1)
-      local start_line = cell.start
-      local end_line = cell.finish
+      local start_line = math.min(math.max(cell.start, 0), math.max(line_count - 1, 0))
+      local end_line = math.min(math.max(cell.finish, 0), math.max(line_count - 1, 0))
       if start_line <= end_line then
         for line = start_line, end_line do
           vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
