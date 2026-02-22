@@ -84,6 +84,7 @@ This document summarizes implementation choices and the evolution of core featur
 
 - `NeoNotebookRunAll` executes all code cells in order.
 - `NeoNotebookRestart` stops the Python session and clears outputs.
+- `NeoNotebookOutputToggle` switches between inline and floating output.
 
 ## Cell labels
 

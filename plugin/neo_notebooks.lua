@@ -238,6 +238,10 @@ vim.api.nvim_create_user_command("NeoNotebookRestart", function()
   session.restart(0)
 end, {})
 
+vim.api.nvim_create_user_command("NeoNotebookOutputToggle", function()
+  actions.toggle_output_mode()
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookImportIpynb", function(opts)
   local path = opts.args
   if path == "" then
@@ -427,6 +431,12 @@ local function set_default_keymaps(bufnr)
   if maps.restart then
     vim.keymap.set("n", maps.restart, function()
       session.restart(0)
+    end, opts)
+  end
+
+  if maps.toggle_output then
+    vim.keymap.set("n", maps.toggle_output, function()
+      actions.toggle_output_mode()
     end, opts)
   end
 end

@@ -35,6 +35,7 @@ M.config = {
     move_down = "<leader>md",
     run_all = "<leader>ra",
     restart = "<leader>rs",
+    toggle_output = "<leader>to",
   },
 }
 

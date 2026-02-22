@@ -115,6 +115,17 @@ function M.move_cell_down(bufnr, line)
   vim.cmd("startinsert")
 end
 
+function M.toggle_output_mode()
+  local nb = require("neo_notebooks")
+  if nb.config.output == "inline" then
+    nb.config.output = "float"
+    vim.notify("NeoNotebook: output mode = float", vim.log.levels.INFO)
+  else
+    nb.config.output = "inline"
+    vim.notify("NeoNotebook: output mode = inline", vim.log.levels.INFO)
+  end
+end
+
 function M.fold_cell(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
