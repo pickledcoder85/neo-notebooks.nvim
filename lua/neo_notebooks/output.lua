@@ -58,6 +58,20 @@ function M.get_lines(bufnr, cell_id)
   return nil
 end
 
+function M.has_ansi(lines)
+  if not lines then
+    return false, 0
+  end
+  local count = 0
+  for _, line in ipairs(lines) do
+    local _, n = line:gsub("\27%[[0-9;]*m", "")
+    if n > 0 then
+      count = count + n
+    end
+  end
+  return count > 0, count
+end
+
 function M.show_inline(bufnr, cell, lines)
   if vim.g.neo_notebooks_debug_output then
     vim.notify("show_inline called: " .. tostring(#lines) .. " lines (buf " .. tostring(bufnr) .. ")", vim.log.levels.INFO)
