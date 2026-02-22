@@ -147,6 +147,7 @@ local function move_once(bufnr, direction)
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
   vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
+  output.render_outputs(bufnr)
 end
 
 function M.move_cell_up(bufnr, line, count)
@@ -194,6 +195,7 @@ function M.move_cell_top(bufnr)
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
   vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
+  output.render_outputs(bufnr)
 end
 
 function M.move_cell_bottom(bufnr)
@@ -225,6 +227,7 @@ function M.move_cell_bottom(bufnr)
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
   vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
+  output.render_outputs(bufnr)
 end
 
 function M.toggle_output_mode()
