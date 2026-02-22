@@ -101,6 +101,14 @@ function M.export_ipynb(path, bufnr)
 end
 
 function M.open_ipynb(path)
+  local existing = vim.fn.bufnr(path)
+  if existing ~= -1 then
+    local bufnr = existing
+    vim.api.nvim_buf_set_option(bufnr, "buftype", "nofile")
+    vim.api.nvim_set_option_value("filetype", "neo_notebook", { buf = bufnr })
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {})
+    return M.import_ipynb(path, bufnr)
+  end
   vim.cmd("enew")
   local bufnr = vim.api.nvim_get_current_buf()
   vim.api.nvim_buf_set_name(bufnr, path)
