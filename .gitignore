@@ -13,6 +13,7 @@ __pycache__/
 
 # Local notebooks / scratch
 notebook.py
+debug_pics/
 
 # Neovim logs
 nvim.log

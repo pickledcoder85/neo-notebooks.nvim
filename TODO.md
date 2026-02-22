@@ -7,7 +7,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
 - Verify inline output behavior for `<leader>r` and `<S-CR>` after branch merge.
 - Add `.ipynb` round-trip tests (export then import) and document limitations.
 - Reconcile floating UI experiments vs. mainline behavior (keep experimental or drop).
-- Evaluate output-cell-as-virtual-block approach (render attached output blocks in purple).
+- Verify output blocks render attached to cell bottom (no overlap), including after moves.
 - Option B: `.ipynb` native workflow (new feature/test branch only):
   - Add `ftdetect` for `*.ipynb`.
   - Auto-import on open, auto-export on save.
@@ -18,8 +18,8 @@ This file tracks project scope and the order of work. Items can be moved as prio
     2. Open `new_notebook.py` in Neovim.
   - Expected behaviors to test:
     1. Cell navigation
-       - Press `]n` and `[n`.
-       - Expect: jumps to the first line of the cell body and enters insert mode.
+       - Press `<C-n>` and `<C-p>`.
+       - Expect: jumps to the first line of the cell body in normal mode.
     2. Run a cell
        - Put cursor inside a code cell.
        - Press `<leader>r`.
@@ -30,7 +30,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
        - In a markdown cell: `<S-CR>`
        - Expect: jumps to next cell if it exists, otherwise creates a new code cell and enters insert mode.
     4. Move cells
-       - Put cursor in a cell and run `<leader>mu` or `<leader>md`.
+       - Put cursor in a cell and run `<M-k>` or `<M-j>`.
        - Expect: cell moves up/down and still runs/output attaches correctly.
     5. Split/Duplicate/Delete
        - Split: `<leader>xs`

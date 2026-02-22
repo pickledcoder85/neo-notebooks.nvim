@@ -18,12 +18,12 @@ This document summarizes implementation choices and the evolution of core featur
 - `lua/neo_notebooks/exec.lua`
   - Manages a persistent Python process per buffer.
   - Executes cell code and collects output.
-  - Displays output in a floating window.
+  - Dispatches output to inline or floating renderers.
 - `lua/neo_notebooks/markdown.lua`
   - Opens a markdown preview window for markdown cells.
   - Uses a scratch buffer with `filetype=markdown` for syntax highlighting.
 - `lua/neo_notebooks/output.lua`
-  - Manages inline output rendering via extmarks.
+  - Stores inline output per cell ID and triggers re-rendering.
 - `lua/neo_notebooks/overlay.lua`
   - Provides a read-only floating overlay that mirrors the current cell.
 
@@ -74,7 +74,7 @@ This document summarizes implementation choices and the evolution of core featur
 - Split: inserts a new cell marker at the cursor to split the cell.
 - Fold/Unfold: uses manual folds for the current cell range.
 - Toggle fold: opens or closes the current cell fold depending on state.
-- Clear output: removes inline output extmarks for the current cell.
+- Clear output: clears stored output for the current cell and re-renders.
 - Delete: removes the current cell from the buffer.
 - Clear all output: removes inline output for all cells.
 - Yank: copies the current cell to the default register.
@@ -98,8 +98,8 @@ This document summarizes implementation choices and the evolution of core featur
 ## Output rendering
 
 - Outputs are stored in a per-buffer map keyed by `cell_id`.
-- Output is rendered as a virtual block below the cell with a purple border.
-- Output store tracks `lines` and `len` for alignment math.
+- Output is rendered as a virtual block below the cell with a purple border,
+  attached to the cell's bottom border.
 
 ## Rich rendering (optional)
 

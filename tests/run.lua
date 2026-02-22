@@ -3,6 +3,7 @@ local function add_rtp(path)
 end
 
 add_rtp(vim.fn.getcwd())
+vim.opt.shadafile = "NONE"
 
 local function ok(cond, msg)
   if not cond then
@@ -37,6 +38,7 @@ local index = require("neo_notebooks.index")
 local cells = require("neo_notebooks.cells")
 local actions = require("neo_notebooks.actions")
 local output = require("neo_notebooks.output")
+local render = require("neo_notebooks.render")
 local index_mod = require("neo_notebooks.index")
 local ipynb = require("neo_notebooks.ipynb")
 
@@ -100,7 +102,7 @@ with_buf({
   eq(index.get(buf).by_id[first].id, first, "id stays stable")
 end)
 
--- Test: output placement uses id and does not error
+-- Test: output storage uses cell id and renders without error
 with_buf({
   "# %% [code]",
   "print(1)",
@@ -108,8 +110,9 @@ with_buf({
   local state = index.rebuild(buf)
   local cell = state.list[1]
   output.show_inline(buf, { id = cell.id, start = cell.start, finish = cell.finish, type = cell.type }, { "ok" })
-  local marks = vim.api.nvim_buf_get_extmarks(buf, output.ns, 0, -1, {})
-  ok(#marks > 0, "output extmark created")
+  local lines = output.get_lines(buf, cell.id)
+  ok(lines and #lines == 1 and lines[1] == "ok", "output stored")
+  render.render(buf)
 end)
 
 -- Test: insert cell below creates new id

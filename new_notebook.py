@@ -3,8 +3,9 @@
 # %% [code]
 2 + 2
 
+# Print something
 print("my family")
-# %% [code]
 
 # %% [code]
 3 + 4
+# %% [code]

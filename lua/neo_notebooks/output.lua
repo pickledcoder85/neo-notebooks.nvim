@@ -19,24 +19,18 @@ local function get_store(bufnr)
   return get_buf_var(bufnr, "neo_notebooks_output_store", {})
 end
 
-local function get_state(bufnr)
-  return get_buf_var(bufnr, "neo_notebooks_output", {})
-end
-
 function M.clear_cell(bufnr, cell_start)
   bufnr = bufnr or 0
-  local state = get_state(bufnr)
-  local id = state[cell_start]
-  if id then
-    pcall(vim.api.nvim_buf_del_extmark, bufnr, M.ns, id)
-    state[cell_start] = nil
+  local index = require("neo_notebooks.index")
+  local entry = index.find_cell(bufnr, cell_start)
+  if entry and entry.id then
+    M.clear_by_id(bufnr, entry.id)
   end
 end
 
 function M.clear_all(bufnr)
   bufnr = bufnr or 0
   vim.api.nvim_buf_clear_namespace(bufnr, M.ns, 0, -1)
-  set_buf_var(bufnr, "neo_notebooks_output", {})
   set_buf_var(bufnr, "neo_notebooks_output_store", {})
 end
 
@@ -49,6 +43,19 @@ function M.clear_by_id(bufnr, cell_id)
   store[cell_id] = nil
   set_buf_var(bufnr, "neo_notebooks_output_store", store)
   M.render_outputs(bufnr)
+end
+
+function M.get_lines(bufnr, cell_id)
+  bufnr = bufnr or 0
+  if not cell_id then
+    return nil
+  end
+  local store = get_store(bufnr)
+  local entry = store[cell_id]
+  if entry then
+    return entry.lines
+  end
+  return nil
 end
 
 function M.show_inline(bufnr, cell, lines)
@@ -93,11 +100,9 @@ function M.show_inline(bufnr, cell, lines)
   end
 
   if not cell.id then
-    -- Fallback: render directly using current range if no stable id found.
     if vim.g.neo_notebooks_debug_output then
-      vim.notify("show_inline fallback render", vim.log.levels.INFO)
+      vim.notify("show_inline missing cell id; skipping render", vim.log.levels.WARN)
     end
-    M.render_block(bufnr, cell, lines)
     return
   end
 
@@ -164,39 +169,9 @@ function M.render_outputs(bufnr)
   if vim.g.neo_notebooks_debug_output then
     vim.notify("render_outputs called", vim.log.levels.INFO)
   end
-  local store = get_store(bufnr)
   vim.api.nvim_buf_clear_namespace(bufnr, M.ns, 0, -1)
-  set_buf_var(bufnr, "neo_notebooks_output", {})
-
-  local index = require("neo_notebooks.index")
-  local state = index.rebuild(bufnr)
-  if vim.g.neo_notebooks_debug_output then
-    local keys = {}
-    for k, _ in pairs(store) do
-      table.insert(keys, tostring(k))
-    end
-    vim.notify("render_outputs store keys: " .. table.concat(keys, ","), vim.log.levels.INFO)
-    vim.notify("render_outputs cell count: " .. tostring(#state.list), vim.log.levels.INFO)
-  end
-  local line_count = vim.api.nvim_buf_line_count(bufnr)
-  if line_count == 0 then
-    return
-  end
-
-  for _, cell in ipairs(state.list) do
-    local entry = store[cell.id]
-    if entry and entry.lines and #entry.lines > 0 then
-      local id = M.render_block(bufnr, cell, entry.lines)
-      if cell.id and id then
-        local state = get_state(bufnr)
-        state[cell.id] = id
-        set_buf_var(bufnr, "neo_notebooks_output", state)
-        if vim.g.neo_notebooks_debug_output then
-          vim.notify("render_outputs extmark id " .. tostring(id), vim.log.levels.INFO)
-        end
-      end
-    end
-  end
+  local render = require("neo_notebooks.render")
+  render.render(bufnr)
 end
 
 return M

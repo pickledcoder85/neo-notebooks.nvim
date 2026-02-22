@@ -1,4 +1,5 @@
 local cells = require("neo_notebooks.cells")
+local output = require("neo_notebooks.output")
 local config = require("neo_notebooks").config
 
 local M = {}
@@ -10,6 +11,39 @@ local function cell_border(width, left, right)
     return left .. right
   end
   return left .. string.rep("─", width - 2) .. right
+end
+
+local function pad_text(text, width)
+  if width <= 0 then
+    return ""
+  end
+  local display = vim.fn.strdisplaywidth(text)
+  if display > width then
+    text = vim.fn.strcharpart(text, 0, width)
+    display = vim.fn.strdisplaywidth(text)
+  end
+  if display < width then
+    text = text .. string.rep(" ", width - display)
+  end
+  return text
+end
+
+local function output_block(lines, width, pad, hl)
+  local block = {}
+  local function border(left, right)
+    return string.rep(" ", pad) .. cell_border(width, left, right)
+  end
+
+  -- Output block top border: use downward corners to attach to cell bottom.
+  table.insert(block, { { border("╰", "╯"), hl } })
+  local inner_width = math.max(0, width - 2)
+  for _, line in ipairs(lines) do
+    local clipped = pad_text(line, inner_width)
+    local body = string.rep(" ", pad) .. "│" .. clipped .. "│"
+    table.insert(block, { { body, hl } })
+  end
+  table.insert(block, { { border("╰", "╯"), hl } })
+  return block
 end
 
 function M.clear(bufnr)
@@ -28,7 +62,8 @@ function M.render(bufnr)
   width = math.min(width, win_width)
   width = math.max(10, width)
   local pad = math.max(0, math.floor((win_width - width) / 2))
-  local cells_list = cells.get_cells(bufnr)
+  local index = cells.get_cells_indexed(bufnr)
+  local cells_list = index.list or {}
 
   for idx, cell in ipairs(cells_list) do
     if cell.finish < cell.start then
@@ -55,8 +90,19 @@ function M.render(bufnr)
       priority = 100,
     })
 
+    local bottom_lines = { { { bottom, hl } } }
+    if cell.type == "code" then
+      local out_lines = output.get_lines(bufnr, cell.id)
+      if out_lines and #out_lines > 0 then
+        local out_block = output_block(out_lines, width, pad, "NeoNotebookOutput")
+        for _, line in ipairs(out_block) do
+          table.insert(bottom_lines, line)
+        end
+      end
+    end
+
     vim.api.nvim_buf_set_extmark(bufnr, M.ns, cell.finish, 0, {
-      virt_lines = { { { bottom, hl } } },
+      virt_lines = bottom_lines,
       priority = 100,
     })
 
