@@ -389,6 +389,7 @@ vim.api.nvim_create_autocmd("BufReadPost", {
         vim.notify(err or "Import failed", vim.log.levels.ERROR)
         return
       end
+      index.rebuild(args.buf)
       render_if_enabled(args.buf)
     end)
   end,
