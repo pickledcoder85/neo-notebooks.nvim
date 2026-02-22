@@ -120,6 +120,24 @@ The plugin maintains a per-buffer cell index cache and rebuilds it on buffer cha
 The cache stores both an ordered list and an ID map for O(1) access.
 Each cell has a stable `cell_id` stored as an extmark on the marker line.
 
+### Rich output (optional)
+
+If `rich` is installed in your Python environment, the last expression in a cell is rendered using Rich.
+You can toggle this at runtime inside a notebook:
+
+```python
+neo_rich(False)  # disable rich rendering
+neo_rich(True)   # enable rich rendering
+```
+
+For pandas DataFrames/Series, Rich renders a table (limited to 20 rows/columns by default).
+You can override limits:
+
+```python
+__neo_notebooks_rich_max_rows = 50
+__neo_notebooks_rich_max_cols = 30
+```
+
 ### Tests
 
 Run tests in headless Neovim:

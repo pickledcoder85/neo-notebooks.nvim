@@ -9,7 +9,63 @@ local request_id = 0
 local PY_SERVER = [[
 import sys, json, traceback, io, contextlib, ast
 
+try:
+    from rich.console import Console
+    from rich.table import Table
+    RICH_AVAILABLE = True
+except Exception:
+    Console = None
+    Table = None
+    RICH_AVAILABLE = False
+
 globals_dict = {"__name__": "__main__"}
+globals_dict["__neo_notebooks_rich"] = True
+globals_dict["__neo_notebooks_rich_max_rows"] = 20
+globals_dict["__neo_notebooks_rich_max_cols"] = 20
+
+def neo_rich(enable=None):
+    if enable is None:
+        return globals_dict.get("__neo_notebooks_rich", True)
+    globals_dict["__neo_notebooks_rich"] = bool(enable)
+    return globals_dict["__neo_notebooks_rich"]
+
+globals_dict["neo_rich"] = neo_rich
+
+def _is_pandas_obj(value):
+    mod = getattr(value.__class__, "__module__", "")
+    return mod.startswith("pandas")
+
+def _render_pandas_table(value, out_buf):
+    try:
+        import pandas as pd
+    except Exception:
+        return False
+
+    if isinstance(value, pd.Series):
+        df = value.to_frame()
+    elif isinstance(value, pd.DataFrame):
+        df = value
+    else:
+        return False
+
+    max_rows = int(globals_dict.get("__neo_notebooks_rich_max_rows", 20))
+    max_cols = int(globals_dict.get("__neo_notebooks_rich_max_cols", 20))
+
+    df_view = df.iloc[:max_rows, :max_cols]
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("")
+    for col in df_view.columns:
+        table.add_column(str(col))
+
+    for idx, row in df_view.iterrows():
+        cells = [str(idx)]
+        for col in df_view.columns:
+            cells.append(str(row[col]))
+        table.add_row(*cells)
+
+    console = Console(file=out_buf, force_terminal=False, color_system=None)
+    console.print(table)
+    return True
 
 def handle(obj):
     code = obj.get("code", "")
@@ -27,7 +83,16 @@ def handle(obj):
                     exec(compile(tree, "<cell>", "exec"), globals_dict)
                 value = eval(compile(ast.Expression(last_expr.value), "<cell>", "eval"), globals_dict)
                 if value is not None:
-                    print(repr(value))
+                    use_rich = globals_dict.get("__neo_notebooks_rich", True)
+                    if use_rich and RICH_AVAILABLE and _is_pandas_obj(value):
+                        rendered = _render_pandas_table(value, out_buf)
+                        if not rendered:
+                            print(repr(value))
+                    elif use_rich and RICH_AVAILABLE:
+                        console = Console(file=out_buf, force_terminal=False, color_system=None)
+                        console.print(value)
+                    else:
+                        print(repr(value))
             else:
                 exec(compile(tree, "<cell>", "exec"), globals_dict)
         except Exception:

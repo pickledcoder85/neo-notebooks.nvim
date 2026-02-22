@@ -99,6 +99,12 @@ This document summarizes implementation choices and the evolution of core featur
 - Outputs are stored in a per-buffer map keyed by `cell_id`.
 - Output is rendered as a virtual block below the cell with a purple border.
 
+## Rich rendering (optional)
+
+- If `rich` is available, the last expression uses Rich for rendering.
+- Pandas DataFrames/Series are rendered as tables (row/col limits configurable).
+- Runtime toggle via `neo_rich(True|False)`.
+
 ## Help window
 
 - `NeoNotebookHelp` opens a floating help summary built from current keymaps.
