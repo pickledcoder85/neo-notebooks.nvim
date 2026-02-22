@@ -252,6 +252,7 @@ Notes:
 - `*.nn` files are detected as `neo_notebook` and render cells normally.
 - `*.ipynb` files can be auto-opened into a scratch buffer (converted to marker format)
   when `auto_open_ipynb = true`.
+- Saving (`:w`) in an `.ipynb` buffer exports the current cells back to the `.ipynb` file.
 
 ### Cell border color
 

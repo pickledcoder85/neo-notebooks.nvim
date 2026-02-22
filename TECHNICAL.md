@@ -153,8 +153,9 @@ This document summarizes implementation choices and the evolution of core featur
 
 - Import reads `.ipynb` JSON and converts cells to marker format.
 - Export writes a minimal `.ipynb` with cell sources (no outputs).
-- Open creates a new buffer, sets `filetype=python`, and imports content.
+- Open creates a new buffer, sets `filetype=neo_notebook`, and imports content.
 - When `auto_open_ipynb` is enabled, reading a `.ipynb` auto-opens it into a scratch buffer.
+- `.ipynb` buffers use `buftype=acwrite`; `:w` triggers export to the original file.
 
 ## Auto-render and keymaps
 

@@ -382,7 +382,7 @@ vim.api.nvim_create_autocmd("BufReadPost", {
       if not vim.api.nvim_buf_is_valid(args.buf) then
         return
       end
-      vim.api.nvim_buf_set_option(args.buf, "buftype", "nofile")
+      vim.api.nvim_buf_set_option(args.buf, "buftype", "acwrite")
       vim.api.nvim_buf_set_option(args.buf, "swapfile", false)
       vim.api.nvim_buf_set_option(args.buf, "modifiable", true)
       vim.api.nvim_set_option_value("filetype", "neo_notebook", { buf = args.buf })
@@ -395,6 +395,23 @@ vim.api.nvim_create_autocmd("BufReadPost", {
       index.rebuild(args.buf)
       render_if_enabled(args.buf)
     end)
+  end,
+})
+
+vim.api.nvim_create_autocmd("BufWriteCmd", {
+  pattern = "*.ipynb",
+  callback = function(args)
+    local path = vim.api.nvim_buf_get_name(args.buf)
+    if path == "" then
+      return
+    end
+    local ok, err = ipynb.export_ipynb(path, args.buf)
+    if not ok then
+      vim.notify(err or "Export failed", vim.log.levels.ERROR)
+      return
+    end
+    vim.api.nvim_buf_set_option(args.buf, "modified", false)
+    vim.notify("NeoNotebook: wrote " .. path, vim.log.levels.INFO)
   end,
 })
 
