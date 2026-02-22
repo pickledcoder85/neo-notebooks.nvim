@@ -131,7 +131,8 @@ function M.render(bufnr)
       hl = config.border_hl_markdown or hl
     end
 
-    local label_pad = string.rep(" ", pad)
+    local label_width = vim.fn.strdisplaywidth(label)
+    local label_col = math.max(pad + 1, pad + width - label_width - 1)
     if idx == 1 and cell.start == 0 then
       vim.api.nvim_buf_set_extmark(bufnr, M.ns, 0, 0, {
         virt_lines = { { { "", hl } } },
@@ -142,8 +143,9 @@ function M.render(bufnr)
     vim.api.nvim_buf_set_extmark(bufnr, M.ns, cell.start, 0, {
       virt_lines = { { { top, hl } } },
       virt_lines_above = true,
-      virt_text = { { label_pad .. label, "Identifier" } },
-      virt_text_pos = "right_align",
+      virt_text = { { label, "Identifier" } },
+      virt_text_pos = "overlay",
+      virt_text_win_col = label_col,
       priority = 100,
     })
 
@@ -164,8 +166,12 @@ function M.render(bufnr)
       priority = 100,
     }
     if cell.type == "code" then
-      bottom_opts.virt_text = { { label_pad .. "Python", "Identifier" } }
-      bottom_opts.virt_text_pos = "right_align"
+      local lang = "Python"
+      local lang_width = vim.fn.strdisplaywidth(lang)
+      local lang_col = math.max(pad + 1, pad + width - lang_width - 1)
+      bottom_opts.virt_text = { { lang, "Identifier" } }
+      bottom_opts.virt_text_pos = "overlay"
+      bottom_opts.virt_text_win_col = lang_col
     end
     vim.api.nvim_buf_set_extmark(bufnr, M.ns, finish_line, 0, bottom_opts)
 
