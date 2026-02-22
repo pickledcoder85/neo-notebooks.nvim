@@ -6,7 +6,7 @@ local config = require("neo_notebooks").config
 local M = {}
 
 local function open_editor(bufnr, cell)
-  local lines = vim.api.nvim_buf_get_lines(bufnr, cell.start, cell.finish + 1, false)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, cell.start + 1, cell.finish + 1, false)
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.api.nvim_set_option_value("buftype", "nofile", { buf = buf })
@@ -35,6 +35,7 @@ local function open_editor(bufnr, cell)
     cell_start = cell.start,
     cell_finish = cell.finish,
     cell_type = cell.type,
+    cell_id = cell.id,
   }
 
   vim.keymap.set("n", "q", function()
@@ -64,7 +65,13 @@ local function save_editor(buf)
   end
 
   local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-  vim.api.nvim_buf_set_lines(source, state.cell_start, state.cell_finish + 1, false, lines)
+  local index = require("neo_notebooks.index")
+  local entry = index.get_by_id(source, state.cell_id)
+  if entry then
+    state.cell_start = entry.start
+    state.cell_finish = entry.finish
+  end
+  vim.api.nvim_buf_set_lines(source, state.cell_start + 1, state.cell_finish + 1, false, lines)
   return true
 end
 
@@ -106,7 +113,15 @@ function M.run_from_editor()
     return
   end
 
-  local line = state.cell_start + 1
+  local index = require("neo_notebooks.index")
+  local entry = index.get_by_id(state.source_buf, state.cell_id)
+  if not entry then
+    vim.notify("Cell not found", vim.log.levels.ERROR)
+    return
+  end
+  state.cell_start = entry.start
+  state.cell_finish = entry.finish
+  local line = entry.start + 1
   if config.output == "inline" then
     exec.run_cell(state.source_buf, line, {
       on_output = function(lines)
