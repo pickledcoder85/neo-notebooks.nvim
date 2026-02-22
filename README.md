@@ -232,12 +232,14 @@ Notes:
 By default, the plugin defines:
 - `NeoNotebookBorderCode` (green)
 - `NeoNotebookBorderMarkdown` (cyan)
+- `NeoNotebookOutput` (purple)
 
 You can override:
 
 ```lua
 vim.api.nvim_set_hl(0, "NeoNotebookBorderCode", { fg = "#00ff00" })
 vim.api.nvim_set_hl(0, "NeoNotebookBorderMarkdown", { fg = "#00ffff" })
+vim.api.nvim_set_hl(0, "NeoNotebookOutput", { fg = "#a020f0" })
 require("neo_notebooks").setup({
   border_hl_code = "NeoNotebookBorderCode",
   border_hl_markdown = "NeoNotebookBorderMarkdown",

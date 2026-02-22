@@ -94,6 +94,11 @@ This document summarizes implementation choices and the evolution of core featur
 - `NeoNotebookRunBelow` runs code cells below the cursor.
 - `NeoNotebookAutoRenderToggle` toggles auto-rendering.
 
+## Output rendering
+
+- Outputs are stored in a per-buffer map keyed by `cell_id`.
+- Output is rendered as a virtual block below the cell with a purple border.
+
 ## Help window
 
 - `NeoNotebookHelp` opens a floating help summary built from current keymaps.

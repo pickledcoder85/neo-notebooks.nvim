@@ -7,6 +7,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
 - Verify inline output behavior for `<leader>r` and `<S-CR>` after branch merge.
 - Add `.ipynb` round-trip tests (export then import) and document limitations.
 - Reconcile floating UI experiments vs. mainline behavior (keep experimental or drop).
+- Evaluate output-cell-as-virtual-block approach (render attached output blocks in purple).
 - Manual validation checklist (main, `new_notebook.py`):
   - Setup:
     1. `git checkout main`
