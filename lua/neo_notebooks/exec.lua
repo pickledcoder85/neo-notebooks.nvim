@@ -67,6 +67,8 @@ def _render_pandas_table(value, out_buf):
         table.add_row(*cells)
 
     console = Console(file=out_buf, force_terminal=True, color_system="standard")
+    if globals_dict.get("__neo_notebooks_debug_ansi", False):
+        out_buf.write("\x1b[35m[RICH ANSI ON]\x1b[0m\n")
     console.print(table)
     return True
 
@@ -96,6 +98,8 @@ def handle(obj):
                             print(repr(value))
                     elif use_rich and RICH_AVAILABLE:
                         console = Console(file=out_buf, force_terminal=True, color_system="standard")
+                        if globals_dict.get("__neo_notebooks_debug_ansi", False):
+                            out_buf.write("\x1b[35m[RICH ANSI ON]\x1b[0m\n")
                         console.print(value)
                     else:
                         if _is_pandas_obj(value):
