@@ -61,7 +61,13 @@ function M.render(bufnr)
     if config.vertical_borders then
       local left_col = pad
       local right_col = math.max(pad, pad + width - 1)
+      local text_pad = string.rep(" ", pad + 1)
       for line = cell.start, cell.finish do
+        vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
+          virt_text = { { text_pad, hl } },
+          virt_text_pos = "inline",
+          right_gravity = false,
+        })
         vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
           virt_text = { { "│", hl } },
           virt_text_pos = "overlay",
