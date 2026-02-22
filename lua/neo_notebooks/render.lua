@@ -139,7 +139,8 @@ local function output_block(lines, width, pad, hl)
   table.insert(block, { { border("╭", "╮"), hl } })
   local inner_width = math.max(0, width - 2)
   for _, line in ipairs(lines) do
-    local chunks = config.ansi_output and ansi_chunks(line, hl) or { { line, hl } }
+    local use_ansi = line:find("\27%[") ~= nil
+    local chunks = (use_ansi and ansi_chunks(line, hl)) or { { line, hl } }
     local clipped = truncate_chunks(chunks, inner_width, hl)
     local row = {}
     table.insert(row, { string.rep(" ", pad) .. "│", hl })
