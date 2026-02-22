@@ -35,7 +35,7 @@ end
 
 function M.show_inline(bufnr, cell, lines)
   if vim.g.neo_notebooks_debug_output then
-    vim.notify("show_inline called: " .. tostring(#lines) .. " lines", vim.log.levels.INFO)
+    vim.notify("show_inline called: " .. tostring(#lines) .. " lines (buf " .. tostring(bufnr) .. ")", vim.log.levels.INFO)
   end
   bufnr = bufnr or 0
   if not lines or #lines == 0 then
@@ -92,6 +92,9 @@ function M.show_inline(bufnr, cell, lines)
       return
     end
     store[cell.id] = lines
+    if vim.g.neo_notebooks_debug_output then
+      vim.notify("show_inline stored output for cell_id " .. tostring(cell.id), vim.log.levels.INFO)
+    end
   end
 
   if vim.g.neo_notebooks_debug_output then

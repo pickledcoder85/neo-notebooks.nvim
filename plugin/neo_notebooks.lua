@@ -134,10 +134,11 @@ vim.api.nvim_create_user_command("NeoNotebookCellToggleType", function()
 end, {})
 
 local function run_cell_with_output(line, cell)
+  local bufnr = vim.api.nvim_get_current_buf()
   if nb.config.output == "inline" then
     exec.run_cell(0, line, {
       on_output = function(lines, cell_id)
-        output.show_inline(0, {
+        output.show_inline(bufnr, {
           id = cell_id or cell.id,
           start = cell.start,
           finish = cell.finish,
