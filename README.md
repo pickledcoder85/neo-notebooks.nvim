@@ -39,6 +39,8 @@ print("hello")
 - A spinner appears in the sign column while a cell is executing.
 - While a cell runs, an inline placeholder output shows `cell executing...`.
 - Moving cells clears all outputs (re-run cells to regenerate output).
+- `:NeoNotebookOutputYank` copies current cell output to the default register.
+- `:NeoNotebookOutputOpen` opens current cell output in a scratch split.
 - `:NeoNotebookCellSelect` selects the current cell body.
 - `:NeoNotebookStats` shows a cell count summary.
 - `:NeoNotebookRunAbove` runs all code cells above the cursor.
