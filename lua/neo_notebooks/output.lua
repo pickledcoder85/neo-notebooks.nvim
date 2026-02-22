@@ -59,22 +59,10 @@ function M.show_inline(bufnr, cell, lines)
     store[cell.id] = lines
   end
 
-  M.render_outputs(bufnr)
+  M.render_block(bufnr, cell, lines)
 end
 
-function M.render_outputs(bufnr)
-  bufnr = bufnr or 0
-  local store = get_store(bufnr)
-  vim.api.nvim_buf_clear_namespace(bufnr, M.ns, 0, -1)
-  vim.b[bufnr].neo_notebooks_output = {}
-
-  local index = require("neo_notebooks.index")
-  local state = index.get(bufnr)
-  local line_count = vim.api.nvim_buf_line_count(bufnr)
-  if line_count == 0 then
-    return
-  end
-
+function M.render_block(bufnr, cell, lines)
   local config = require("neo_notebooks").config
   local win_width = vim.api.nvim_win_get_width(0)
   local ratio = config.cell_width_ratio or 0.9
@@ -92,24 +80,38 @@ function M.render_outputs(bufnr)
     return string.rep(" ", pad) .. left .. string.rep("─", width - 2) .. right
   end
 
+  local virt_lines = {}
+  table.insert(virt_lines, { { border("╰", "╯"), "NeoNotebookOutput" } })
+  for _, line in ipairs(lines) do
+    local padded = string.rep(" ", pad + 1) .. line
+    table.insert(virt_lines, { { padded, "NeoNotebookOutput" } })
+  end
+  table.insert(virt_lines, { { border("╰", "╯"), "NeoNotebookOutput" } })
+
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  local target = math.min(math.max(0, cell.finish), line_count - 1)
+  vim.api.nvim_buf_set_extmark(bufnr, M.ns, target, 0, {
+    virt_lines = virt_lines,
+  })
+end
+
+function M.render_outputs(bufnr)
+  bufnr = bufnr or 0
+  local store = get_store(bufnr)
+  vim.api.nvim_buf_clear_namespace(bufnr, M.ns, 0, -1)
+  vim.b[bufnr].neo_notebooks_output = {}
+
+  local index = require("neo_notebooks.index")
+  local state = index.get(bufnr)
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  if line_count == 0 then
+    return
+  end
+
   for _, cell in ipairs(state.list) do
     local lines = store[cell.id]
     if lines and #lines > 0 then
-      local top = border("╰", "╯")
-      local bottom = border("╰", "╯")
-      local hl = "NeoNotebookOutput"
-      local virt_lines = {}
-      table.insert(virt_lines, { { top, hl } })
-      for _, line in ipairs(lines) do
-        local padded = string.rep(" ", pad + 1) .. line
-        table.insert(virt_lines, { { padded, hl } })
-      end
-      table.insert(virt_lines, { { bottom, hl } })
-
-      local target = math.min(math.max(0, cell.finish), line_count - 1)
-      vim.api.nvim_buf_set_extmark(bufnr, M.ns, target, 0, {
-        virt_lines = virt_lines,
-      })
+      M.render_block(bufnr, cell, lines)
     end
   end
 end
