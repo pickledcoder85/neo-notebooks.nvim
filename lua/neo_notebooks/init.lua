@@ -10,6 +10,7 @@ M.config = {
     new_markdown = "]m",
     run = "<leader>r",
     toggle = "<leader>m",
+    preview = "<leader>p",
   },
 }
 

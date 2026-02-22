@@ -19,6 +19,9 @@ This document summarizes implementation choices and the evolution of core featur
   - Manages a persistent Python process per buffer.
   - Executes cell code and collects output.
   - Displays output in a floating window.
+- `lua/neo_notebooks/markdown.lua`
+  - Opens a markdown preview window for markdown cells.
+  - Uses a scratch buffer with `filetype=markdown` for syntax highlighting.
 
 ## Execution model
 
@@ -32,6 +35,12 @@ This document summarizes implementation choices and the evolution of core featur
 - Output is shown in a minimal floating window at the bottom-right of the editor.
 - The output buffer is `nofile` and `bufhidden=wipe`.
 - The window closes on `q` or `<Esc>`.
+
+## Markdown preview
+
+- `:NeoNotebookMarkdownPreview` opens a centered floating window.
+- Markdown is highlighted using Neovim's `markdown` filetype.
+- Font sizes are not changed (Neovim does not support per-heading font sizes in a single buffer).
 
 ## Auto-render and keymaps
 

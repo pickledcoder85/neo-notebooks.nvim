@@ -106,6 +106,16 @@ function M.get_cell_code(bufnr, line)
   return table.concat(lines, "\n"), nil
 end
 
+function M.get_cell_markdown(bufnr, line)
+  local cell = M.get_cell_at_line(bufnr, line)
+  if cell.type ~= "markdown" then
+    return nil, "Current cell is code"
+  end
+
+  local lines = vim.api.nvim_buf_get_lines(bufnr, cell.start + 1, cell.finish + 1, false)
+  return table.concat(lines, "\n"), nil
+end
+
 function M.has_markers(bufnr)
   bufnr = bufnr or 0
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)

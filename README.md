@@ -35,6 +35,7 @@ require("neo_notebooks").setup({
     new_markdown = "]m",
     run = "<leader>r",
     toggle = "<leader>m",
+    preview = "<leader>p",
   },
 })
 ```
@@ -46,9 +47,14 @@ require("neo_notebooks").setup({
 - The last expression in a code cell is printed automatically (Jupyter-like).
 - This is a minimal experimental baseline and intended to be expanded.
 
+### Markdown preview
+
+Run `:NeoNotebookMarkdownPreview` in a markdown cell to open a floating preview window with markdown highlighting.
+
 ### Keymaps (defaults)
 
 - `]c` new code cell below
 - `]m` new markdown cell below
 - `<leader>r` run current cell
 - `<leader>m` toggle cell type
+- `<leader>p` preview markdown cell

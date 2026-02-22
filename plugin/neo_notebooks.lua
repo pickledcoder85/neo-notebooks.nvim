@@ -2,6 +2,7 @@ local nb = require("neo_notebooks")
 local cells = require("neo_notebooks.cells")
 local render = require("neo_notebooks.render")
 local exec = require("neo_notebooks.exec")
+local markdown = require("neo_notebooks.markdown")
 
 local function has_filetype(bufnr)
   local allowed = nb.config.filetypes
@@ -56,6 +57,10 @@ vim.api.nvim_create_user_command("NeoNotebookCellRun", function()
   exec.run_cell(0)
 end, {})
 
+vim.api.nvim_create_user_command("NeoNotebookMarkdownPreview", function()
+  markdown.preview_cell(0)
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookEnable", function()
   render_if_enabled(0)
 end, {})
@@ -108,6 +113,12 @@ local function set_default_keymaps(bufnr)
       local line = vim.api.nvim_win_get_cursor(0)[1] - 1
       cells.toggle_cell_type(0, line)
       render_if_enabled(0)
+    end, opts)
+  end
+
+  if maps.preview then
+    vim.keymap.set("n", maps.preview, function()
+      markdown.preview_cell(0)
     end, opts)
   end
 end
