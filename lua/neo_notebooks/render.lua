@@ -51,8 +51,11 @@ function M.render(bufnr)
     if config.vertical_borders then
       for line = cell.start, cell.finish do
         vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
-          sign_text = "│",
-          sign_hl_group = hl,
+          virt_text = { { "│", hl } },
+          virt_text_pos = "inline",
+          right_gravity = false,
+        })
+        vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
           virt_text = { { "│", hl } },
           virt_text_pos = "right_align",
         })
