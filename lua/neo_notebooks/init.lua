@@ -21,6 +21,11 @@ M.config = {
     next_cell = "]n",
     prev_cell = "[n",
     cell_list = "<leader>l",
+    duplicate_cell = "<leader>yd",
+    split_cell = "<leader>xs",
+    fold_cell = "<leader>zf",
+    unfold_cell = "<leader>zu",
+    clear_output = "<leader>co",
   },
 }
 

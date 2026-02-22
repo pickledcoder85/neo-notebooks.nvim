@@ -6,6 +6,7 @@ local markdown = require("neo_notebooks.markdown")
 local output = require("neo_notebooks.output")
 local overlay = require("neo_notebooks.overlay")
 local navigation = require("neo_notebooks.navigation")
+local actions = require("neo_notebooks.actions")
 
 local function has_filetype(bufnr)
   local allowed = nb.config.filetypes
@@ -182,6 +183,26 @@ vim.api.nvim_create_user_command("NeoNotebookCellList", function()
   navigation.cell_list(0)
 end, {})
 
+vim.api.nvim_create_user_command("NeoNotebookCellDuplicate", function()
+  actions.duplicate_cell(0)
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookCellSplit", function()
+  actions.split_cell(0)
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookCellFold", function()
+  actions.fold_cell(0)
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookCellUnfold", function()
+  actions.unfold_cell(0)
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookOutputClear", function()
+  actions.clear_output(0)
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookEnable", function()
   render_if_enabled(0)
 end, {})
@@ -267,6 +288,36 @@ local function set_default_keymaps(bufnr)
   if maps.cell_list then
     vim.keymap.set("n", maps.cell_list, function()
       navigation.cell_list(0)
+    end, opts)
+  end
+
+  if maps.duplicate_cell then
+    vim.keymap.set("n", maps.duplicate_cell, function()
+      actions.duplicate_cell(0)
+    end, opts)
+  end
+
+  if maps.split_cell then
+    vim.keymap.set("n", maps.split_cell, function()
+      actions.split_cell(0)
+    end, opts)
+  end
+
+  if maps.fold_cell then
+    vim.keymap.set("n", maps.fold_cell, function()
+      actions.fold_cell(0)
+    end, opts)
+  end
+
+  if maps.unfold_cell then
+    vim.keymap.set("n", maps.unfold_cell, function()
+      actions.unfold_cell(0)
+    end, opts)
+  end
+
+  if maps.clear_output then
+    vim.keymap.set("n", maps.clear_output, function()
+      actions.clear_output(0)
     end, opts)
   end
 end

@@ -68,6 +68,13 @@ This document summarizes implementation choices and the evolution of core featur
 - `NeoNotebookCellList` opens a picker to jump to a cell.
 - When `auto_insert_on_jump` is enabled, navigation enters insert mode.
 
+## Cell actions
+
+- Duplicate: inserts a copy of the current cell below.
+- Split: inserts a new cell marker at the cursor to split the cell.
+- Fold/Unfold: uses manual folds for the current cell range.
+- Clear output: removes inline output extmarks for the current cell.
+
 ## Auto-render and keymaps
 
 - Auto-render is gated by:

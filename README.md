@@ -22,6 +22,11 @@ print("hello")
 - `:NeoNotebookCellRun` executes the current code cell with a persistent Python session and shows output.
 - `:NeoNotebookCellRunAndNext` runs the current cell and creates a new code cell below.
 - `:NeoNotebookRender` redraws virtual cell borders.
+- `:NeoNotebookCellDuplicate` duplicates the current cell.
+- `:NeoNotebookCellSplit` splits the current cell at the cursor.
+- `:NeoNotebookCellFold` folds the current cell.
+- `:NeoNotebookCellUnfold` unfolds the current cell.
+- `:NeoNotebookOutputClear` clears inline output for the current cell.
 
 ## Configuration
 
@@ -47,6 +52,11 @@ require("neo_notebooks").setup({
     next_cell = "]n",
     prev_cell = "[n",
     cell_list = "<leader>l",
+    duplicate_cell = "<leader>yd",
+    split_cell = "<leader>xs",
+    fold_cell = "<leader>zf",
+    unfold_cell = "<leader>zu",
+    clear_output = "<leader>co",
   },
 })
 ```
@@ -114,6 +124,11 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `]n` next cell
 - `[n` previous cell
 - `<leader>l` open cell list picker
+- `<leader>yd` duplicate cell
+- `<leader>xs` split cell at cursor
+- `<leader>zf` fold current cell
+- `<leader>zu` unfold current cell
+- `<leader>co` clear output for current cell
 
 ### Cell border color
 
