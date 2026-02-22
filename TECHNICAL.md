@@ -102,6 +102,10 @@ This document summarizes implementation choices and the evolution of core featur
 
 - Borders can include a numeric cell index when `show_cell_index = true`.
 
+## Vertical borders
+
+- When enabled, cell bodies render a left sign column border and a right aligned border.
+
 ## Cell list enhancements
 
 - Cell list entries include line numbers and a short snippet from the cell body.

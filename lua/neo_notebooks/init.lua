@@ -12,6 +12,7 @@ M.config = {
   auto_insert_on_jump = true,
   border_hl = "NeoNotebookBorder",
   show_cell_index = true,
+  vertical_borders = true,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",

@@ -48,6 +48,17 @@ function M.render(bufnr)
       virt_lines = { { { bottom, hl } } },
     })
 
+    if config.vertical_borders then
+      for line = cell.start + 1, cell.finish do
+        vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
+          sign_text = "│",
+          sign_hl_group = hl,
+          virt_text = { { "│", hl } },
+          virt_text_pos = "right_align",
+        })
+      end
+    end
+
     ::continue::
   end
 end

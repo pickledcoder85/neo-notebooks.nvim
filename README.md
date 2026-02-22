@@ -61,6 +61,7 @@ require("neo_notebooks").setup({
   auto_insert_on_jump = true,
   border_hl = "NeoNotebookBorder",
   show_cell_index = true,
+  vertical_borders = true,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",
@@ -211,6 +212,10 @@ require("neo_notebooks").setup({ border_hl = "NeoNotebookBorder" })
 ### Cell index labels
 
 Set `show_cell_index = false` to remove numeric labels from cell borders.
+
+### Vertical borders
+
+Set `vertical_borders = false` to disable left/right cell edges.
 
 ### Auto-insert on navigation
 
