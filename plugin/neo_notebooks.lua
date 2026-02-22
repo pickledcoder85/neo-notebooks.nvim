@@ -19,6 +19,9 @@ local index = require("neo_notebooks.index")
 local set_default_keymaps
 
 local function has_filetype(bufnr)
+  if vim.b[bufnr] and vim.b[bufnr].neo_notebooks_enabled then
+    return true
+  end
   local allowed = nb.config.filetypes
   if not allowed or #allowed == 0 then
     return true
@@ -385,7 +388,8 @@ vim.api.nvim_create_autocmd("BufReadPost", {
       vim.api.nvim_buf_set_option(args.buf, "buftype", "acwrite")
       vim.api.nvim_buf_set_option(args.buf, "swapfile", false)
       vim.api.nvim_buf_set_option(args.buf, "modifiable", true)
-      vim.api.nvim_set_option_value("filetype", "neo_notebook", { buf = args.buf })
+      vim.b[args.buf].neo_notebooks_enabled = true
+      vim.api.nvim_set_option_value("filetype", "python", { buf = args.buf })
       local ok, err = ipynb.import_ipynb(path, args.buf)
       if not ok then
         vim.notify(err or "Import failed", vim.log.levels.ERROR)
@@ -696,9 +700,8 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
 vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
   pattern = "*.nn",
   callback = function(args)
-    if vim.api.nvim_get_option_value("filetype", { buf = args.buf }) == "" then
-      vim.api.nvim_set_option_value("filetype", "neo_notebook", { buf = args.buf })
-    end
+    vim.b[args.buf].neo_notebooks_enabled = true
+    vim.api.nvim_set_option_value("filetype", "python", { buf = args.buf })
   end,
 })
 vim.api.nvim_create_autocmd({ "InsertEnter" }, {

@@ -1,4 +1,4 @@
 augroup neo_notebooks_ftdetect
   autocmd!
-  autocmd BufRead,BufNewFile *.nn setfiletype neo_notebook
+  autocmd BufRead,BufNewFile *.nn setfiletype python
 augroup END

@@ -107,7 +107,8 @@ function M.open_ipynb(path)
     vim.api.nvim_buf_set_option(bufnr, "buftype", "acwrite")
     vim.api.nvim_buf_set_option(bufnr, "swapfile", false)
     vim.api.nvim_buf_set_option(bufnr, "modifiable", true)
-    vim.api.nvim_set_option_value("filetype", "neo_notebook", { buf = bufnr })
+    vim.b[bufnr].neo_notebooks_enabled = true
+    vim.api.nvim_set_option_value("filetype", "python", { buf = bufnr })
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {})
     local ok, err = M.import_ipynb(path, bufnr)
     return ok, err, bufnr
@@ -117,7 +118,8 @@ function M.open_ipynb(path)
   vim.api.nvim_buf_set_name(bufnr, path)
   vim.api.nvim_buf_set_option(bufnr, "buftype", "acwrite")
   vim.api.nvim_buf_set_option(bufnr, "swapfile", false)
-  vim.api.nvim_set_option_value("filetype", "neo_notebook", { buf = bufnr })
+  vim.b[bufnr].neo_notebooks_enabled = true
+  vim.api.nvim_set_option_value("filetype", "python", { buf = bufnr })
   local ok, err = M.import_ipynb(path, bufnr)
   return ok, err, bufnr
 end

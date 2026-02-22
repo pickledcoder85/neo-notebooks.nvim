@@ -249,9 +249,9 @@ Notes:
 
 ### Filetypes
 
-- `*.nn` files are detected as `neo_notebook` and render cells normally.
-- `*.ipynb` files can be auto-opened into a scratch buffer (converted to marker format)
-  when `auto_open_ipynb = true`.
+- `*.nn` files are detected as Python for LSP/syntax and opt-in to NeoNotebook via a buffer flag.
+- `*.ipynb` files auto-open into a Python buffer (converted to marker format) when
+  `auto_open_ipynb = true`.
 - Saving (`:w`) in an `.ipynb` buffer exports the current cells back to the `.ipynb` file.
 
 ### Cell border color
