@@ -82,12 +82,13 @@ def _render_pandas_table(value, out_buf):
         table.add_row(*cells)
 
     console = Console(record=True, force_terminal=True, color_system="truecolor", no_color=False)
-    console.print(table, record=True)
+    console.print(table)
     out_buf.write(console.export_text(styles=True))
     if globals_dict.get("__neo_notebooks_debug_ansi", False):
         out_buf.write(
             "\\n[neo_notebooks] ANSI DEBUG: " + repr(console.export_text(styles=True)) +
-            f" | color_system={console.color_system} is_terminal={console.is_terminal} no_color={console.no_color}"
+            f" | color_system={console.color_system} is_terminal={console.is_terminal} no_color={console.no_color}" +
+            "\\n[neo_notebooks] STDOUT DEBUG: " + repr(out_buf.getvalue())
         )
     return True
 
@@ -117,12 +118,13 @@ def handle(obj):
                             print(repr(value))
                     elif use_rich and RICH_AVAILABLE:
                         console = Console(record=True, force_terminal=True, color_system="truecolor", no_color=False)
-                        console.print(value, record=True)
+                        console.print(value)
                         out_buf.write(console.export_text(styles=True))
                         if globals_dict.get("__neo_notebooks_debug_ansi", False):
                             out_buf.write(
                                 "\\n[neo_notebooks] ANSI DEBUG: " + repr(console.export_text(styles=True)) +
-                                f" | color_system={console.color_system} is_terminal={console.is_terminal} no_color={console.no_color}"
+                                f" | color_system={console.color_system} is_terminal={console.is_terminal} no_color={console.no_color}" +
+                                "\\n[neo_notebooks] STDOUT DEBUG: " + repr(out_buf.getvalue())
                             )
                     else:
                         if _is_pandas_obj(value):
