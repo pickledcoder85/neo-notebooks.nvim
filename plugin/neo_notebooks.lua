@@ -12,6 +12,7 @@ local run_all = require("neo_notebooks.run_all")
 local session = require("neo_notebooks.session")
 local stats = require("neo_notebooks.stats")
 local run_subset = require("neo_notebooks.run_subset")
+local help = require("neo_notebooks.help")
 
 local function has_filetype(bufnr)
   local allowed = nb.config.filetypes
@@ -264,6 +265,10 @@ vim.api.nvim_create_user_command("NeoNotebookRunBelow", function()
   run_subset.run_below(0)
 end, {})
 
+vim.api.nvim_create_user_command("NeoNotebookHelp", function()
+  help.show()
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookImportIpynb", function(opts)
   local path = opts.args
   if path == "" then
@@ -507,6 +512,12 @@ local function set_default_keymaps(bufnr)
   if maps.toggle_overlay then
     vim.keymap.set("n", maps.toggle_overlay, function()
       overlay.toggle(0)
+    end, opts)
+  end
+
+  if maps.help then
+    vim.keymap.set("n", maps.help, function()
+      help.show()
     end, opts)
   end
 end

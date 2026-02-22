@@ -42,6 +42,7 @@ M.config = {
     run_below = "<leader>rB",
     toggle_auto_render = "<leader>tr",
     toggle_overlay = "<leader>to",
+    help = "<leader>nh",
   },
 }
 

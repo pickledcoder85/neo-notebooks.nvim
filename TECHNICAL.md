@@ -94,6 +94,10 @@ This document summarizes implementation choices and the evolution of core featur
 - `NeoNotebookRunBelow` runs code cells below the cursor.
 - `NeoNotebookAutoRenderToggle` toggles auto-rendering.
 
+## Help window
+
+- `NeoNotebookHelp` opens a floating help summary built from current keymaps.
+
 ## Cell labels
 
 - Borders can include a numeric cell index when `show_cell_index = true`.

@@ -41,6 +41,7 @@ print("hello")
 - `:NeoNotebookRunAbove` runs all code cells above the cursor.
 - `:NeoNotebookRunBelow` runs all code cells below the cursor.
 - `:NeoNotebookAutoRenderToggle` toggles auto-rendering.
+- `:NeoNotebookHelp` shows a quick help window.
 - `:NeoNotebookImportIpynb {path}` imports a `.ipynb` file.
 - `:NeoNotebookOpenIpynb {path}` opens a `.ipynb` into a new buffer.
 - `:NeoNotebookExportIpynb {path}` exports the current buffer to `.ipynb`.
@@ -90,6 +91,7 @@ require("neo_notebooks").setup({
     run_below = "<leader>rB",
     toggle_auto_render = "<leader>tr",
     toggle_overlay = "<leader>to",
+    help = "<leader>nh",
   },
 })
 ```
@@ -177,6 +179,7 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `<leader>rB` run all code cells below
 - `<leader>tr` toggle auto-render
 - `<leader>to` toggle overlay preview
+- `<leader>nh` open help
 
 ### .ipynb import/export (basic)
 
