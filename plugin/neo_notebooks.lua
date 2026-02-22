@@ -16,6 +16,8 @@ local help = require("neo_notebooks.help")
 local editor = require("neo_notebooks.editor")
 local index = require("neo_notebooks.index")
 
+local set_default_keymaps
+
 local function has_filetype(bufnr)
   local allowed = nb.config.filetypes
   if not allowed or #allowed == 0 then
@@ -396,7 +398,7 @@ vim.api.nvim_create_autocmd("BufReadPost", {
   end,
 })
 
-local function set_default_keymaps(bufnr)
+set_default_keymaps = function(bufnr)
   if nb.config.keymaps == false then
     return
   end
