@@ -1,0 +1,15 @@
+# Neovim
+*.swp
+*.swo
+*.tmp
+*~
+
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Local notebooks / scratch
+notebook.py
