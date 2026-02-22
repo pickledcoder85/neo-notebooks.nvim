@@ -22,6 +22,8 @@ This document summarizes implementation choices and the evolution of core featur
 - `lua/neo_notebooks/markdown.lua`
   - Opens a markdown preview window for markdown cells.
   - Uses a scratch buffer with `filetype=markdown` for syntax highlighting.
+- `lua/neo_notebooks/output.lua`
+  - Manages inline output rendering via extmarks.
 
 ## Execution model
 
@@ -32,9 +34,9 @@ This document summarizes implementation choices and the evolution of core featur
 
 ## Output handling
 
-- Output is shown in a minimal floating window at the bottom-right of the editor.
-- The output buffer is `nofile` and `bufhidden=wipe`.
-- The window closes on `q` or `<Esc>`.
+- Output defaults to inline `virt_lines` under the cell.
+- Floating output is still available by setting `output = "float"`.
+- Floating output buffers are `nofile` and `bufhidden=wipe` and close on `q` or `<Esc>`.
 
 ## Markdown preview
 

@@ -20,6 +20,7 @@ print("hello")
 - `:NeoNotebookCellNew [code|markdown]` inserts a new cell below the cursor.
 - `:NeoNotebookCellToggleType` toggles the current cell type.
 - `:NeoNotebookCellRun` executes the current code cell with a persistent Python session and shows output.
+- `:NeoNotebookCellRunAndNext` runs the current cell and creates a new code cell below.
 - `:NeoNotebookRender` redraws virtual cell borders.
 
 ## Configuration
@@ -28,6 +29,7 @@ print("hello")
 require("neo_notebooks").setup({
   python_cmd = "python3",
   auto_render = true,
+  output = "inline",
   filetypes = { "python" },
   require_markers = false,
   keymaps = {
@@ -36,6 +38,7 @@ require("neo_notebooks").setup({
     run = "<leader>r",
     toggle = "<leader>m",
     preview = "<leader>p",
+    run_and_next = "<S-CR>",
   },
 })
 ```
@@ -43,9 +46,21 @@ require("neo_notebooks").setup({
 ## Notes
 
 - Cells are separated by lines like `# %% [code]` or `# %% [markdown]`.
-- Virtual borders are rendered using virtual lines; output appears in a floating window.
+- Virtual borders are rendered using virtual lines; output is inline by default.
 - The last expression in a code cell is printed automatically (Jupyter-like).
 - This is a minimal experimental baseline and intended to be expanded.
+
+### Shift+Enter behavior
+
+Default `Shift+Enter` (`<S-CR>`) behavior:
+- Markdown cell: create a new code cell below and enter it.
+- Code cell: execute the cell, show output inline below it, create a new code cell, and enter it.
+
+You can switch output style to a floating window with:
+
+```lua
+require("neo_notebooks").setup({ output = "float" })
+```
 
 ### Markdown preview
 
@@ -58,3 +73,4 @@ Run `:NeoNotebookMarkdownPreview` in a markdown cell to open a floating preview 
 - `<leader>r` run current cell
 - `<leader>m` toggle cell type
 - `<leader>p` preview markdown cell
+- `<S-CR>` run cell and create new code cell

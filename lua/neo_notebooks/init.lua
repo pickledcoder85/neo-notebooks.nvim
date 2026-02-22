@@ -3,6 +3,7 @@ local M = {}
 M.config = {
   python_cmd = "python3",
   auto_render = true,
+  output = "inline",
   filetypes = { "python" },
   require_markers = false,
   keymaps = {
@@ -11,6 +12,7 @@ M.config = {
     run = "<leader>r",
     toggle = "<leader>m",
     preview = "<leader>p",
+    run_and_next = "<S-CR>",
   },
 }
 

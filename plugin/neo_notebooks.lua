@@ -3,6 +3,7 @@ local cells = require("neo_notebooks.cells")
 local render = require("neo_notebooks.render")
 local exec = require("neo_notebooks.exec")
 local markdown = require("neo_notebooks.markdown")
+local output = require("neo_notebooks.output")
 
 local function has_filetype(bufnr)
   local allowed = nb.config.filetypes
@@ -53,8 +54,42 @@ vim.api.nvim_create_user_command("NeoNotebookCellToggleType", function()
   render_if_enabled(0)
 end, {})
 
+local function run_cell_with_output(line, cell)
+  if nb.config.output == "inline" then
+    exec.run_cell(0, line, {
+      on_output = function(lines)
+        output.show_inline(0, cell, lines)
+      end,
+    })
+  else
+    exec.run_cell(0, line)
+  end
+end
+
 vim.api.nvim_create_user_command("NeoNotebookCellRun", function()
-  exec.run_cell(0)
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cell = cells.get_cell_at_line(0, line)
+  run_cell_with_output(line, cell)
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookCellRunAndNext", function()
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cell = cells.get_cell_at_line(0, line)
+
+  if cell.type == "markdown" then
+    local insert_line = cells.insert_cell_below(0, cell.finish, "code")
+    vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
+    render_if_enabled(0)
+    vim.cmd("startinsert")
+    return
+  end
+
+  run_cell_with_output(line, cell)
+
+  local insert_line = cells.insert_cell_below(0, cell.finish, "code")
+  vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
+  render_if_enabled(0)
+  vim.cmd("startinsert")
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookMarkdownPreview", function()
@@ -121,6 +156,13 @@ local function set_default_keymaps(bufnr)
       markdown.preview_cell(0)
     end, opts)
   end
+
+  if maps.run_and_next then
+    vim.keymap.set({ "n", "i" }, maps.run_and_next, function()
+      vim.cmd("stopinsert")
+      vim.cmd("NeoNotebookCellRunAndNext")
+    end, opts)
+  end
 end
 
 nb._on_setup = function()
@@ -136,6 +178,7 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
 vim.api.nvim_create_autocmd({ "BufWipeout" }, {
   callback = function(args)
     exec.stop_session(args.buf)
+    output.clear_all(args.buf)
   end,
 })
 
