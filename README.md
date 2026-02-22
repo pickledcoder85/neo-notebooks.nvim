@@ -39,8 +39,6 @@ print("hello")
 - A spinner appears in the sign column while a cell is executing.
 - While a cell runs, an inline placeholder output shows `cell executing...`.
 - Moving cells clears all outputs (re-run cells to regenerate output).
-- `:NeoNotebookOutputYank` copies current cell output to the default register.
-- `:NeoNotebookOutputOpen` opens current cell output in a scratch split.
 - `:NeoNotebookCellSelect` selects the current cell body.
 - `:NeoNotebookStats` shows a cell count summary.
 - `:NeoNotebookRunAbove` runs all code cells above the cursor.
@@ -76,7 +74,6 @@ require("neo_notebooks").setup({
   cell_min_width = 60,
   cell_max_width = 140,
   top_padding = 1,
-  ansi_output = true,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",
@@ -259,7 +256,6 @@ Notes:
 - Saving (`:w`) in an `.ipynb` buffer exports the current cells back to the `.ipynb` file.
 
 Note: `top_padding` inserts real blank lines at the top of the buffer on first open to keep the top border visible.
-Note: `ansi_output` enables basic ANSI color parsing in output blocks (used by rich).
 
 ### Cell border color
 

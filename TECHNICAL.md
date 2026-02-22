@@ -132,7 +132,6 @@ This document summarizes implementation choices and the evolution of core featur
 - Code and markdown borders use separate highlight groups.
 - Width is centered and responsive based on `cell_width_ratio`, clamped by min/max.
 - `top_padding` inserts real blank lines at the top of the buffer on first open to keep the top border visible.
-- `ansi_output` enables basic ANSI color parsing for output blocks.
 
 ## Cell list enhancements
 

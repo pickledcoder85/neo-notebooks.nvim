@@ -383,65 +383,6 @@ vim.api.nvim_create_user_command("NeoNotebookEnable", function()
   render_if_enabled(0)
 end, {})
 
-vim.api.nvim_create_user_command("NeoNotebookDebugAnsi", function()
-  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
-  local cell = cells.get_cell_at_line(0, line)
-  if not cell or not cell.id then
-    vim.notify("NeoNotebook: no cell id found", vim.log.levels.WARN)
-    return
-  end
-  local lines = output.get_lines(0, cell.id)
-  if not lines or #lines == 0 then
-    vim.notify("NeoNotebook: no output for cell", vim.log.levels.INFO)
-    return
-  end
-  local has_ansi, count = output.has_ansi(lines)
-  if has_ansi then
-    vim.notify("NeoNotebook: ANSI sequences found (" .. tostring(count) .. ")", vim.log.levels.INFO)
-  else
-    vim.notify("NeoNotebook: no ANSI sequences in output", vim.log.levels.WARN)
-  end
-end, {})
-
-vim.api.nvim_create_user_command("NeoNotebookOutputYank", function()
-  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
-  local cell = cells.get_cell_at_line(0, line)
-  if not cell or not cell.id then
-    vim.notify("NeoNotebook: no cell id found", vim.log.levels.WARN)
-    return
-  end
-  local lines = output.get_lines(0, cell.id)
-  if not lines or #lines == 0 then
-    vim.notify("NeoNotebook: no output for cell", vim.log.levels.INFO)
-    return
-  end
-  vim.fn.setreg('"', table.concat(lines, "\n"))
-  vim.notify("NeoNotebook: output copied to register", vim.log.levels.INFO)
-end, {})
-
-vim.api.nvim_create_user_command("NeoNotebookOutputOpen", function()
-  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
-  local cell = cells.get_cell_at_line(0, line)
-  if not cell or not cell.id then
-    vim.notify("NeoNotebook: no cell id found", vim.log.levels.WARN)
-    return
-  end
-  local lines = output.get_lines(0, cell.id)
-  if not lines or #lines == 0 then
-    vim.notify("NeoNotebook: no output for cell", vim.log.levels.INFO)
-    return
-  end
-  local buf = vim.api.nvim_create_buf(true, true)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  vim.api.nvim_set_option_value("filetype", "neo_notebook_output", { buf = buf })
-  vim.api.nvim_set_option_value("buftype", "nofile", { buf = buf })
-  vim.api.nvim_set_option_value("bufhidden", "wipe", { buf = buf })
-  vim.api.nvim_set_option_value("swapfile", false, { buf = buf })
-  vim.cmd("split")
-  vim.api.nvim_win_set_buf(0, buf)
-  vim.cmd("normal! gg")
-end, {})
-
 vim.api.nvim_create_autocmd({ "BufEnter", "TextChanged", "TextChangedI" }, {
   callback = function(args)
     render_if_enabled(args.buf)

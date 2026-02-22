@@ -28,107 +28,6 @@ local function pad_text(text, width)
   return text
 end
 
-local ANSI_COLORS = {
-  [30] = "Black",
-  [31] = "Red",
-  [32] = "Green",
-  [33] = "Yellow",
-  [34] = "Blue",
-  [35] = "Magenta",
-  [36] = "Cyan",
-  [37] = "White",
-  [90] = "BrightBlack",
-  [91] = "BrightRed",
-  [92] = "BrightGreen",
-  [93] = "BrightYellow",
-  [94] = "BrightBlue",
-  [95] = "BrightMagenta",
-  [96] = "BrightCyan",
-  [97] = "BrightWhite",
-}
-
-local function ansi_chunks(line, base_hl)
-  local chunks = {}
-  local i = 1
-  local state = { fg = nil, bold = false }
-
-  local function current_hl()
-    if not state.fg then
-      return base_hl
-    end
-    local name = "NeoNotebookAnsi" .. state.fg
-    if state.bold then
-      name = name .. "Bold"
-    end
-    return name
-  end
-
-  while true do
-    local s, e, seq = line:find("\27%[([0-9;]*)m", i)
-    local text = line:sub(i, (s or (#line + 1)) - 1)
-    if text ~= "" then
-      table.insert(chunks, { text, current_hl() })
-    end
-    if not s then
-      break
-    end
-    local codes = {}
-    if seq == "" then
-      codes = { 0 }
-    else
-      for code in seq:gmatch("[0-9]+") do
-        table.insert(codes, tonumber(code))
-      end
-    end
-    for _, code in ipairs(codes) do
-      if code == 0 then
-        state = { fg = nil, bold = false }
-      elseif code == 1 then
-        state.bold = true
-      elseif code == 22 then
-        state.bold = false
-      elseif code == 39 then
-        state.fg = nil
-      elseif ANSI_COLORS[code] then
-        state.fg = ANSI_COLORS[code]
-      end
-    end
-    i = e + 1
-  end
-
-  if #chunks == 0 then
-    return { { "", base_hl } }
-  end
-  return chunks
-end
-
-local function truncate_chunks(chunks, width, base_hl)
-  if width <= 0 then
-    return {}
-  end
-  local out = {}
-  local remaining = width
-  for _, chunk in ipairs(chunks) do
-    local text, hl = chunk[1], chunk[2]
-    local w = vim.fn.strdisplaywidth(text)
-    if w <= remaining then
-      table.insert(out, { text, hl })
-      remaining = remaining - w
-    else
-      local truncated = vim.fn.strcharpart(text, 0, remaining)
-      if truncated ~= "" then
-        table.insert(out, { truncated, hl })
-      end
-      remaining = 0
-      break
-    end
-  end
-  if remaining > 0 then
-    table.insert(out, { string.rep(" ", remaining), base_hl })
-  end
-  return out
-end
-
 local function output_block(lines, width, pad, hl)
   local block = {}
   local function border(left, right)
@@ -139,16 +38,9 @@ local function output_block(lines, width, pad, hl)
   table.insert(block, { { border("╭", "╮"), hl } })
   local inner_width = math.max(0, width - 2)
   for _, line in ipairs(lines) do
-    local use_ansi = line:find("\27%[") ~= nil
-    local chunks = (use_ansi and ansi_chunks(line, hl)) or { { line, hl } }
-    local clipped = truncate_chunks(chunks, inner_width, hl)
-    local row = {}
-    table.insert(row, { string.rep(" ", pad) .. "│", hl })
-    for _, chunk in ipairs(clipped) do
-      table.insert(row, chunk)
-    end
-    table.insert(row, { "│", hl })
-    table.insert(block, row)
+    local clipped = pad_text(line, inner_width)
+    local body = string.rep(" ", pad) .. "│" .. clipped .. "│"
+    table.insert(block, { { body, hl } })
   end
   table.insert(block, { { border("╰", "╯"), hl } })
   return block

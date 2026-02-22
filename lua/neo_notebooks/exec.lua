@@ -9,13 +9,7 @@ local sessions = {}
 local request_id = 0
 
 local PY_SERVER = [[
-import sys, json, traceback, io, contextlib, ast, os
-
-os.environ.setdefault("FORCE_COLOR", "1")
-os.environ.setdefault("RICH_FORCE_COLOR", "1")
-os.environ.setdefault("TTY_COMPATIBLE", "1")
-os.environ.setdefault("TERM", "xterm-256color")
-os.environ.pop("NO_COLOR", None)
+import sys, json, traceback, io, contextlib, ast
 
 try:
     from rich.console import Console
@@ -31,7 +25,6 @@ globals_dict["__neo_notebooks_rich"] = True
 globals_dict["__neo_notebooks_rich_max_rows"] = 20
 globals_dict["__neo_notebooks_rich_max_cols"] = 20
 globals_dict["__neo_notebooks_rich_tip_shown"] = False
-globals_dict["__neo_notebooks_debug_ansi"] = False
 
 def neo_rich(enable=None):
     if enable is None:
@@ -40,14 +33,6 @@ def neo_rich(enable=None):
     return globals_dict["__neo_notebooks_rich"]
 
 globals_dict["neo_rich"] = neo_rich
-
-def neo_ansi_debug(enable=None):
-    if enable is None:
-        return globals_dict.get("__neo_notebooks_debug_ansi", False)
-    globals_dict["__neo_notebooks_debug_ansi"] = bool(enable)
-    return globals_dict["__neo_notebooks_debug_ansi"]
-
-globals_dict["neo_ansi_debug"] = neo_ansi_debug
 
 def _is_pandas_obj(value):
     mod = getattr(value.__class__, "__module__", "")
@@ -70,10 +55,10 @@ def _render_pandas_table(value, out_buf):
     max_cols = int(globals_dict.get("__neo_notebooks_rich_max_cols", 20))
 
     df_view = df.iloc[:max_rows, :max_cols]
-    table = Table(show_header=True, header_style="bold cyan", title_style="bold magenta")
+    table = Table(show_header=True, header_style="bold")
     table.add_column("")
     for col in df_view.columns:
-        table.add_column(str(col), style="yellow")
+        table.add_column(str(col))
 
     for idx, row in df_view.iterrows():
         cells = [str(idx)]
@@ -81,23 +66,8 @@ def _render_pandas_table(value, out_buf):
             cells.append(str(row[col]))
         table.add_row(*cells)
 
-    console = Console(record=True, force_terminal=True, color_system="truecolor", no_color=False)
+    console = Console(file=out_buf, force_terminal=False, color_system=None)
     console.print(table)
-    if globals_dict.get("__neo_notebooks_debug_ansi", False):
-        try:
-            import importlib.metadata as _md
-            _rich_ver = _md.version("rich")
-        except Exception:
-            _rich_ver = "unknown"
-        _record = getattr(console, "_record", None)
-        _record_len = len(_record) if isinstance(_record, list) else "n/a"
-        _stdout = out_buf.getvalue()
-        _esc_count = _stdout.count("\x1b")
-        out_buf.write(
-            "\\n[neo_notebooks] ANSI DEBUG: stdout_esc=" + str(_esc_count) +
-            f" | color_system={console.color_system} is_terminal={console.is_terminal} no_color={console.no_color} rich={_rich_ver} record={getattr(console,'record',None)} record_len={_record_len}" +
-            "\\n[neo_notebooks] STDOUT DEBUG: " + repr(_stdout)
-        )
     return True
 
 def handle(obj):
@@ -125,23 +95,8 @@ def handle(obj):
                         if not rendered:
                             print(repr(value))
                     elif use_rich and RICH_AVAILABLE:
-                        console = Console(record=True, force_terminal=True, color_system="truecolor", no_color=False)
+                        console = Console(file=out_buf, force_terminal=False, color_system=None)
                         console.print(value)
-                        if globals_dict.get("__neo_notebooks_debug_ansi", False):
-                            try:
-                                import importlib.metadata as _md
-                                _rich_ver = _md.version("rich")
-                            except Exception:
-                                _rich_ver = "unknown"
-                            _record = getattr(console, "_record", None)
-                            _record_len = len(_record) if isinstance(_record, list) else "n/a"
-                            _stdout = out_buf.getvalue()
-                            _esc_count = _stdout.count("\x1b")
-                            out_buf.write(
-                                "\\n[neo_notebooks] ANSI DEBUG: stdout_esc=" + str(_esc_count) +
-                                f" | color_system={console.color_system} is_terminal={console.is_terminal} no_color={console.no_color} rich={_rich_ver} record={getattr(console,'record',None)} record_len={_record_len}" +
-                                "\\n[neo_notebooks] STDOUT DEBUG: " + repr(_stdout)
-                            )
                     else:
                         if _is_pandas_obj(value):
                             try:
