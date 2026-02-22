@@ -37,6 +37,7 @@ local index = require("neo_notebooks.index")
 local cells = require("neo_notebooks.cells")
 local actions = require("neo_notebooks.actions")
 local output = require("neo_notebooks.output")
+local index_mod = require("neo_notebooks.index")
 
 -- Test: index build
 with_buf({
@@ -108,6 +109,20 @@ with_buf({
   output.show_inline(buf, { id = cell.id, start = cell.start, finish = cell.finish, type = cell.type }, { "ok" })
   local marks = vim.api.nvim_buf_get_extmarks(buf, output.ns, 0, -1, {})
   ok(#marks > 0, "output extmark created")
+end)
+
+-- Test: insert cell below creates new id
+with_buf({
+  "# %% [code]",
+  "print(1)",
+}, function(buf)
+  index.rebuild(buf)
+  vim.api.nvim_buf_call(buf, function()
+    actions.split_cell(buf, 1)
+  end)
+  local state = index.rebuild(buf)
+  eq(#state.list, 2, "split adds a cell")
+  ok(state.list[1].id ~= state.list[2].id, "ids are unique")
 end)
 
 print("All tests passed")

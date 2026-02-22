@@ -8,10 +8,20 @@ function M.duplicate_cell(bufnr, line)
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
 
   local cell = cells.get_cell_at_line(bufnr, line)
+  if cell.id then
+    local index = require("neo_notebooks.index")
+    local entry = index.get_by_id(bufnr, cell.id)
+    if entry then
+      cell.start = entry.start
+      cell.finish = entry.finish
+    end
+  end
   local lines = vim.api.nvim_buf_get_lines(bufnr, cell.start, cell.finish + 1, false)
   local insert_at = cell.finish + 1
 
   vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, lines)
+  local index = require("neo_notebooks.index")
+  index.rebuild(bufnr)
   local new_start = insert_at
   vim.api.nvim_win_set_cursor(0, { new_start + 2, 0 })
   vim.cmd("startinsert")
@@ -22,6 +32,14 @@ function M.split_cell(bufnr, line)
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
 
   local cell = cells.get_cell_at_line(bufnr, line)
+  if cell.id then
+    local index = require("neo_notebooks.index")
+    local entry = index.get_by_id(bufnr, cell.id)
+    if entry then
+      cell.start = entry.start
+      cell.finish = entry.finish
+    end
+  end
   if line <= cell.start then
     vim.notify("Place cursor inside the cell body to split", vim.log.levels.WARN)
     return
@@ -29,6 +47,8 @@ function M.split_cell(bufnr, line)
 
   local marker = "# %% [" .. cell.type .. "]"
   vim.api.nvim_buf_set_lines(bufnr, line, line, false, { marker })
+  local index = require("neo_notebooks.index")
+  index.rebuild(bufnr)
   vim.api.nvim_win_set_cursor(0, { line + 2, 0 })
   vim.cmd("startinsert")
 end
@@ -65,6 +85,8 @@ function M.delete_cell(bufnr, line)
     end
   end
   vim.api.nvim_buf_set_lines(bufnr, cell.start, cell.finish + 1, false, {})
+  local index = require("neo_notebooks.index")
+  index.rebuild(bufnr)
   vim.api.nvim_win_set_cursor(0, { math.max(1, cell.start + 1), 0 })
   vim.cmd("startinsert")
 end
