@@ -84,6 +84,8 @@ def handle(obj):
                 value = eval(compile(ast.Expression(last_expr.value), "<cell>", "eval"), globals_dict)
                 if value is not None:
                     use_rich = globals_dict.get("__neo_notebooks_rich", True)
+                    if use_rich and not RICH_AVAILABLE:
+                        out_buf.write("[neo_notebooks] Tip: install 'rich' for nicer output\n")
                     if use_rich and RICH_AVAILABLE and _is_pandas_obj(value):
                         rendered = _render_pandas_table(value, out_buf)
                         if not rendered:
@@ -92,7 +94,13 @@ def handle(obj):
                         console = Console(file=out_buf, force_terminal=False, color_system=None)
                         console.print(value)
                     else:
-                        print(repr(value))
+                        if _is_pandas_obj(value):
+                            try:
+                                print(value.to_string())
+                            except Exception:
+                                print(repr(value))
+                        else:
+                            print(repr(value))
             else:
                 exec(compile(tree, "<cell>", "exec"), globals_dict)
         except Exception:
