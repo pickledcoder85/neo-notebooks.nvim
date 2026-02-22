@@ -54,6 +54,67 @@ function M.delete_cell(bufnr, line)
   vim.cmd("startinsert")
 end
 
+function M.yank_cell(bufnr, line)
+  bufnr = bufnr or 0
+  line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cell = cells.get_cell_at_line(bufnr, line)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, cell.start, cell.finish + 1, false)
+  vim.fn.setreg("\"", lines)
+  vim.notify("NeoNotebook: cell yanked", vim.log.levels.INFO)
+end
+
+function M.move_cell_up(bufnr, line)
+  bufnr = bufnr or 0
+  line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+  local list = cells.get_cells(bufnr)
+  local idx = nil
+  for i, cell in ipairs(list) do
+    if line >= cell.start and line <= cell.finish then
+      idx = i
+      break
+    end
+  end
+  if not idx or idx == 1 then
+    return
+  end
+
+  local current = list[idx]
+  local prev = list[idx - 1]
+  local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
+
+  vim.api.nvim_buf_set_lines(bufnr, current.start, current.finish + 1, false, {})
+  vim.api.nvim_buf_set_lines(bufnr, prev.start, prev.start, false, current_lines)
+  vim.api.nvim_win_set_cursor(0, { prev.start + 2, 0 })
+  vim.cmd("startinsert")
+end
+
+function M.move_cell_down(bufnr, line)
+  bufnr = bufnr or 0
+  line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+  local list = cells.get_cells(bufnr)
+  local idx = nil
+  for i, cell in ipairs(list) do
+    if line >= cell.start and line <= cell.finish then
+      idx = i
+      break
+    end
+  end
+  if not idx or idx == #list then
+    return
+  end
+
+  local current = list[idx]
+  local next = list[idx + 1]
+  local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
+  local current_len = current.finish - current.start + 1
+
+  vim.api.nvim_buf_set_lines(bufnr, current.start, current.finish + 1, false, {})
+  local insert_at = next.finish - current_len + 1
+  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, current_lines)
+  vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
+  vim.cmd("startinsert")
+end
+
 function M.fold_cell(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1

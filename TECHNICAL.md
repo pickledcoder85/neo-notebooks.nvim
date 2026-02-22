@@ -77,6 +77,8 @@ This document summarizes implementation choices and the evolution of core featur
 - Clear output: removes inline output extmarks for the current cell.
 - Delete: removes the current cell from the buffer.
 - Clear all output: removes inline output for all cells.
+- Yank: copies the current cell to the default register.
+- Move up/down: swaps the current cell with the previous/next cell.
 
 ## Run all and session control
 

@@ -218,6 +218,18 @@ vim.api.nvim_create_user_command("NeoNotebookCellDelete", function()
   actions.delete_cell(0)
 end, {})
 
+vim.api.nvim_create_user_command("NeoNotebookCellYank", function()
+  actions.yank_cell(0)
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookCellMoveUp", function()
+  actions.move_cell_up(0)
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookCellMoveDown", function()
+  actions.move_cell_down(0)
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookRunAll", function()
   run_all.run_all(0)
 end, {})
@@ -385,6 +397,24 @@ local function set_default_keymaps(bufnr)
   if maps.delete_cell then
     vim.keymap.set("n", maps.delete_cell, function()
       actions.delete_cell(0)
+    end, opts)
+  end
+
+  if maps.yank_cell then
+    vim.keymap.set("n", maps.yank_cell, function()
+      actions.yank_cell(0)
+    end, opts)
+  end
+
+  if maps.move_up then
+    vim.keymap.set("n", maps.move_up, function()
+      actions.move_cell_up(0)
+    end, opts)
+  end
+
+  if maps.move_down then
+    vim.keymap.set("n", maps.move_down, function()
+      actions.move_cell_down(0)
     end, opts)
   end
 

@@ -30,6 +30,9 @@ print("hello")
 - `:NeoNotebookOutputClear` clears inline output for the current cell.
 - `:NeoNotebookOutputClearAll` clears inline output for all cells.
 - `:NeoNotebookCellDelete` deletes the current cell.
+- `:NeoNotebookCellYank` yanks the current cell to the default register.
+- `:NeoNotebookCellMoveUp` moves the current cell up.
+- `:NeoNotebookCellMoveDown` moves the current cell down.
 - `:NeoNotebookRunAll` runs all code cells.
 - `:NeoNotebookRestart` restarts the Python session and clears outputs.
 - `:NeoNotebookImportIpynb {path}` imports a `.ipynb` file.
@@ -68,6 +71,9 @@ require("neo_notebooks").setup({
     clear_output = "<leader>co",
     clear_all_output = "<leader>cO",
     delete_cell = "<leader>dd",
+    yank_cell = "<leader>yy",
+    move_up = "<leader>mu",
+    move_down = "<leader>md",
     run_all = "<leader>ra",
     restart = "<leader>rs",
   },
@@ -145,6 +151,9 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `<leader>co` clear output for current cell
 - `<leader>cO` clear output for all cells
 - `<leader>dd` delete current cell
+- `<leader>yy` yank current cell
+- `<leader>mu` move cell up
+- `<leader>md` move cell down
 - `<leader>ra` run all code cells
 - `<leader>rs` restart python session
 
