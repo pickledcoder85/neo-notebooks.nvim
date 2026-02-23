@@ -298,6 +298,12 @@ local function handle_response(session, resp)
   else
     open_output_window(output)
   end
+  if session.active_request_id == id then
+    session.active_request_id = nil
+  end
+  if session.drain_queue then
+    session.drain_queue()
+  end
 end
 
 local function ensure_session(bufnr)
@@ -316,6 +322,9 @@ local function ensure_session(bufnr)
     job = nil,
     pending = {},
     partial = "",
+    queue = {},
+    active_request_id = nil,
+    drain_queue = nil,
   }
 
   session.job = vim.fn.jobstart(cmd, {
@@ -375,28 +384,19 @@ function M.stop_session(bufnr)
   sessions[bufnr] = nil
 end
 
-function M.run_cell(bufnr, line, opts)
-  bufnr = bufnr or 0
-  line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+local function build_request(bufnr, line, opts)
   opts = opts or {}
-
   local code, err = cells.get_cell_code(bufnr, line)
   if err then
     vim.notify(err, vim.log.levels.WARN)
-    return
+    return nil
   end
 
   if code == nil or code == "" then
     vim.notify("Cell is empty", vim.log.levels.INFO)
-    return
+    return nil
   end
 
-  local session = ensure_session(bufnr)
-  if not session then
-    return
-  end
-
-  request_id = request_id + 1
   local cell_id = opts.cell_id
   if not cell_id then
     local index = require("neo_notebooks.index")
@@ -405,11 +405,25 @@ function M.run_cell(bufnr, line, opts)
       cell_id = cell.id
     end
   end
-  if cell_id and opts.on_output then
+
+  return {
+    bufnr = bufnr,
+    line = line,
+    code = code,
+    on_output = opts.on_output,
+    cell_id = cell_id,
+  }
+end
+
+local function dispatch_request(session, req)
+  request_id = request_id + 1
+  local id = request_id
+
+  if req.cell_id and req.on_output then
     local index = require("neo_notebooks.index")
-    local cell = index.get_by_id(bufnr, cell_id) or index.find_cell(bufnr, line)
+    local cell = index.get_by_id(req.bufnr, req.cell_id) or index.find_cell(req.bufnr, req.line)
     if cell then
-      output.show_inline(bufnr, {
+      output.show_inline(req.bufnr, {
         id = cell.id,
         start = cell.start,
         finish = cell.finish,
@@ -417,16 +431,57 @@ function M.run_cell(bufnr, line, opts)
       }, { "cell executing..." })
     end
   end
-  local payload = vim.fn.json_encode({ id = request_id, code = code })
-  session.pending[request_id] = {
-    bufnr = bufnr,
-    on_output = opts.on_output,
-    cell_id = cell_id,
+
+  local payload = vim.fn.json_encode({ id = id, code = req.code })
+  session.pending[id] = {
+    bufnr = req.bufnr,
+    on_output = req.on_output,
+    cell_id = req.cell_id,
   }
-  if cell_id then
-    spinner.start(bufnr, cell_id, line)
+  session.active_request_id = id
+  if req.cell_id then
+    spinner.start(req.bufnr, req.cell_id, req.line)
   end
   vim.fn.chansend(session.job, payload .. "\n")
+end
+
+local function make_queue_drainer(session)
+  return function()
+    if session.active_request_id then
+      return
+    end
+    while #session.queue > 0 do
+      local req = table.remove(session.queue, 1)
+      if req and vim.api.nvim_buf_is_valid(req.bufnr) then
+        dispatch_request(session, req)
+        return
+      end
+    end
+  end
+end
+
+function M.enqueue_cell(bufnr, line, opts)
+  bufnr = bufnr or 0
+  line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+  opts = opts or {}
+  local req = build_request(bufnr, line, opts)
+  if not req then
+    return
+  end
+
+  local session = ensure_session(bufnr)
+  if not session then
+    return
+  end
+  if not session.drain_queue then
+    session.drain_queue = make_queue_drainer(session)
+  end
+  table.insert(session.queue, req)
+  session.drain_queue()
+end
+
+function M.run_cell(bufnr, line, opts)
+  M.enqueue_cell(bufnr, line, opts)
 end
 
 return M
