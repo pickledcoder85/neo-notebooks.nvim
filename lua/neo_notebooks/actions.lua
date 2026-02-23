@@ -349,6 +349,9 @@ end
 
 function M.handle_enter_insert(bufnr)
   bufnr = bufnr or 0
+  if config.strict_containment == "soft" or config.strict_containment == true then
+    M.contain_insert_entry(bufnr)
+  end
   local decision = policy.decide(bufnr, "insert_cr")
   if decision.action == "block" then
     if decision.reason and decision.reason ~= "" then
@@ -365,6 +368,9 @@ end
 
 function M.handle_enter_normal(bufnr)
   bufnr = bufnr or 0
+  if config.strict_containment == "soft" or config.strict_containment == true then
+    M.contain_insert_entry(bufnr)
+  end
   local state = containment.cursor_state(bufnr)
   if not state.cell then
     vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", true)
@@ -411,6 +417,30 @@ function M.clamp_cursor_to_cell_left(bufnr)
   if col < target_col then
     vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
     vim.api.nvim_win_set_cursor(0, { line + 1, 0 })
+    vim.cmd("normal! " .. tostring(target_col + 1) .. "|")
+  end
+end
+
+function M.contain_insert_entry(bufnr)
+  bufnr = bufnr or 0
+  local state = containment.cursor_state(bufnr)
+  if not state.cell then
+    return
+  end
+  local cell = containment.ensure_body_line(bufnr, state.cell)
+  state = containment.cursor_state(bufnr)
+
+  local target = state.line
+  if state.line <= cell.start then
+    target = state.body_start
+  elseif state.has_next and state.line >= state.protected_floor then
+    target = math.max(state.body_start, state.protected_floor - 1)
+  end
+
+  local target_col = left_boundary_col(cell)
+  if target ~= state.line or state.col < target_col then
+    vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
+    vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
     vim.cmd("normal! " .. tostring(target_col + 1) .. "|")
   end
 end

@@ -43,6 +43,9 @@ local index_mod = require("neo_notebooks.index")
 local ipynb = require("neo_notebooks.ipynb")
 local nb = require("neo_notebooks")
 
+-- Test: default strict containment mode is soft
+eq(nb.config.strict_containment, "soft", "strict containment default")
+
 -- Test: index build
 with_buf({
   "# %% [code]",
@@ -468,6 +471,24 @@ with_buf({
     pos = vim.api.nvim_win_get_cursor(0)
   end)
   ok(pos[1] < 4, "normal enter does not step into next marker")
+end)
+
+-- Test: insert entry from protected bottom line is moved into editable body
+with_buf({
+  "# %% [markdown]",
+  "line 1",
+  "",
+  "# %% [code]",
+  "print(2)",
+}, function(buf)
+  index.rebuild(buf)
+  local pos = nil
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 3, 0 })
+    actions.contain_insert_entry(buf)
+    pos = vim.api.nvim_win_get_cursor(0)
+  end)
+  ok(pos[1] <= 2, "insert entry moved above protected bottom line")
 end)
 
 print("All tests passed")

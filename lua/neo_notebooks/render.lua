@@ -286,6 +286,7 @@ function M.render(bufnr)
         render_finish = math.max(last_nonempty + 1, cell.start + 1)
       end
     end
+    render_finish = math.min(render_finish, cell.finish)
     -- While editing, do not visually collapse trailing blank lines above the cursor.
     if in_insert and active and active.id == cell.id then
       local keep = 0

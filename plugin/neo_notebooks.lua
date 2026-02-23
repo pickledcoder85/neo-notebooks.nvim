@@ -873,6 +873,11 @@ vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
 })
 vim.api.nvim_create_autocmd({ "InsertEnter" }, {
   callback = function(args)
+    if should_enable(args.buf) then
+      if nb.config.strict_containment == "soft" or nb.config.strict_containment == true then
+        actions.contain_insert_entry(args.buf)
+      end
+    end
     update_completion(args.buf)
     update_textwidth(args.buf)
   end,
