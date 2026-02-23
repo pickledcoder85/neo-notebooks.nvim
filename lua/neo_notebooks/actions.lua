@@ -347,6 +347,46 @@ function M.insert_newline_in_cell(bufnr)
   return decision_keys(bufnr, decision)
 end
 
+function M.handle_enter_insert(bufnr)
+  bufnr = bufnr or 0
+  local decision = policy.decide(bufnr, "insert_cr")
+  if decision.action == "block" then
+    if decision.reason and decision.reason ~= "" then
+      vim.notify(decision.reason, vim.log.levels.WARN)
+    end
+    return
+  end
+  if decision.action == "redirect" and decision.target == "open_line_below" then
+    M.open_line_below(bufnr)
+    return
+  end
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", true)
+end
+
+function M.handle_enter_normal(bufnr)
+  bufnr = bufnr or 0
+  local state = containment.cursor_state(bufnr)
+  if not state.cell then
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", true)
+    return
+  end
+  local cell = state.cell
+  cell = containment.ensure_body_line(bufnr, cell)
+  state = containment.cursor_state(bufnr)
+  local target = state.line + 1
+  if target < state.body_start then
+    target = state.body_start
+  end
+  if state.has_next then
+    target = math.min(target, state.protected_floor)
+  else
+    target = math.min(target, math.max(state.body_start, state.cell.finish))
+  end
+  target = math.max(state.body_start, target)
+  local col = left_boundary_col(state.cell)
+  vim.api.nvim_win_set_cursor(0, { target + 1, col })
+end
+
 function M.guard_backspace_in_insert(bufnr)
   bufnr = bufnr or 0
   local decision = policy.decide(bufnr, "insert_bs")

@@ -429,5 +429,23 @@ with_buf({
   eq(s.active_cell_index, 2, "active cell index matches second cell")
 end)
 
+-- Test: normal-mode enter stays inside current cell near bottom
+with_buf({
+  "# %% [markdown]",
+  "line 1",
+  "",
+  "# %% [code]",
+  "print(2)",
+}, function(buf)
+  index.rebuild(buf)
+  local pos = nil
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 3, 0 })
+    actions.handle_enter_normal(buf)
+    pos = vim.api.nvim_win_get_cursor(0)
+  end)
+  ok(pos[1] < 4, "normal enter does not step into next marker")
+end)
+
 print("All tests passed")
 vim.cmd("qa!")
