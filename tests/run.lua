@@ -167,6 +167,29 @@ with_buf({
   vim.api.nvim_buf_delete(buf2, { force = true })
 end)
 
+-- Test: ipynb import drops leading blank code cell before markdown
+with_buf({
+  "# %% [code]",
+  "print(1)",
+}, function(buf)
+  local path = vim.fn.tempname() .. ".ipynb"
+  local doc = {
+    cells = {
+      { cell_type = "code", metadata = {}, source = { "\n", "\n", "\n" } },
+      { cell_type = "markdown", metadata = {}, source = { "# Title\n" } },
+      { cell_type = "code", metadata = {}, source = { "print(2)\n" } },
+    },
+    metadata = { language_info = { name = "python" } },
+    nbformat = 4,
+    nbformat_minor = 5,
+  }
+  vim.fn.writefile({ vim.fn.json_encode(doc) }, path)
+  local ok_import, err_import = ipynb.import_ipynb(path, buf)
+  ok(ok_import, err_import or "import failed")
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, 2, false)
+  eq(lines[1], "# %% [markdown]", "leading blank code cell removed on import")
+end)
+
 -- Test: line insertion inside a cell shifts following cells
 with_buf({
   "# %% [code]",

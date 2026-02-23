@@ -32,6 +32,15 @@ local function normalize_lines(src)
   return out
 end
 
+local function source_is_blank(src)
+  for _, line in ipairs(normalize_lines(src or {})) do
+    if line ~= "" then
+      return false
+    end
+  end
+  return true
+end
+
 function M.import_ipynb(path, bufnr)
   bufnr = bufnr or 0
   local content, err = read_file(path)
@@ -45,6 +54,13 @@ function M.import_ipynb(path, bufnr)
   end
 
   local cells_in = doc.cells or {}
+  if #cells_in >= 2 then
+    local first = cells_in[1]
+    local second = cells_in[2]
+    if first and second and first.cell_type == "code" and second.cell_type == "markdown" and source_is_blank(first.source) then
+      table.remove(cells_in, 1)
+    end
+  end
   local lines = {}
 
   for _, cell in ipairs(cells_in) do
