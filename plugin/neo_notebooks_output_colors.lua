@@ -1,5 +1,5 @@
 vim.api.nvim_set_hl(0, "NeoNotebookOutput", { fg = "#a020f0" })
-vim.api.nvim_set_hl(0, "NeoNotebookSpinner", { fg = "yellow" })
+vim.api.nvim_set_hl(0, "NeoNotebookSpinner", { link = "NeoNotebookOutput" })
 vim.api.nvim_set_hl(0, "NeoNotebookAnsiBlack", { fg = "#000000" })
 vim.api.nvim_set_hl(0, "NeoNotebookAnsiRed", { fg = "#cd3131" })
 vim.api.nvim_set_hl(0, "NeoNotebookAnsiGreen", { fg = "#0dbc79" })

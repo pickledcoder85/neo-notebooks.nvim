@@ -306,6 +306,7 @@ function M.render(bufnr)
       top_line = cell.start,
       bottom_line = finish_line,
     }
+    index_mod.set_layout(bufnr, cell.id, cell.layout)
     local bottom_opts = {
       virt_lines = bottom_lines,
       priority = 100,

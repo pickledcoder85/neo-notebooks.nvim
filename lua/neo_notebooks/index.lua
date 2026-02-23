@@ -79,4 +79,22 @@ function M.get_by_id(bufnr, id)
   return state.by_id[id]
 end
 
+function M.set_layout(bufnr, id, layout)
+  bufnr = bufnr or 0
+  if not id or not layout then
+    return
+  end
+  local state = M.get(bufnr)
+  local cell = state.by_id[id]
+  if not cell then
+    return
+  end
+  cell.layout = {
+    left_col = layout.left_col,
+    right_col = layout.right_col,
+    top_line = layout.top_line,
+    bottom_line = layout.bottom_line,
+  }
+end
+
 return M
