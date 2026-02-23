@@ -64,6 +64,9 @@ local function ensure_initial_markdown_cell(bufnr)
   if vim.b[bufnr] and vim.b[bufnr].neo_notebooks_skip_initial then
     return
   end
+  if vim.b[bufnr] and vim.b[bufnr].neo_notebooks_is_ipynb then
+    return
+  end
   if vim.api.nvim_buf_get_option(bufnr, "buftype") == "acwrite" then
     return
   end
@@ -80,6 +83,39 @@ local function ensure_initial_markdown_cell(bufnr)
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { "# %% [markdown]", "" })
   vim.api.nvim_win_set_cursor(0, { 2, 0 })
   vim.cmd("startinsert")
+end
+
+local function remove_empty_leading_code_cell(bufnr)
+  if not (vim.b[bufnr] and vim.b[bufnr].neo_notebooks_is_ipynb) then
+    return
+  end
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local first = nil
+  local second = nil
+  for i, line in ipairs(lines) do
+    if line:match("^# %%%% %[(%w+)%]") then
+      if not first then
+        first = i
+      else
+        second = i
+        break
+      end
+    end
+  end
+  if not first or not second then
+    return
+  end
+  local first_type = lines[first]:match("^# %%%% %[(%w+)%]")
+  local second_type = lines[second]:match("^# %%%% %[(%w+)%]")
+  if first_type ~= "code" or second_type ~= "markdown" then
+    return
+  end
+  for i = first + 1, second - 1 do
+    if lines[i] ~= "" then
+      return
+    end
+  end
+  vim.api.nvim_buf_set_lines(bufnr, first - 1, first, false, {})
 end
 
 local function update_completion(bufnr)
@@ -449,6 +485,7 @@ vim.api.nvim_create_autocmd("BufReadPost", {
       vim.api.nvim_buf_set_option(args.buf, "buftype", "acwrite")
       vim.api.nvim_buf_set_option(args.buf, "swapfile", false)
       vim.api.nvim_buf_set_option(args.buf, "modifiable", true)
+      vim.b[args.buf].neo_notebooks_is_ipynb = true
       vim.b[args.buf].neo_notebooks_enabled = true
       vim.api.nvim_set_option_value("filetype", "python", { buf = args.buf })
       local ok, err = ipynb.import_ipynb(path, args.buf)
@@ -458,6 +495,7 @@ vim.api.nvim_create_autocmd("BufReadPost", {
         return
       end
       ensure_top_padding(args.buf)
+      remove_empty_leading_code_cell(args.buf)
       vim.b[args.buf].neo_notebooks_skip_initial = true
       set_default_keymaps(args.buf)
       index.rebuild(args.buf)
