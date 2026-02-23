@@ -64,6 +64,9 @@ local function ensure_initial_markdown_cell(bufnr)
   if vim.b[bufnr] and vim.b[bufnr].neo_notebooks_skip_initial then
     return
   end
+  if vim.api.nvim_buf_get_option(bufnr, "buftype") == "acwrite" then
+    return
+  end
   if not should_enable(bufnr) then
     return
   end
@@ -455,7 +458,7 @@ vim.api.nvim_create_autocmd("BufReadPost", {
         return
       end
       ensure_top_padding(args.buf)
-      vim.b[args.buf].neo_notebooks_skip_initial = false
+      vim.b[args.buf].neo_notebooks_skip_initial = true
       set_default_keymaps(args.buf)
       index.rebuild(args.buf)
       render_if_enabled(args.buf)
