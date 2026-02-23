@@ -210,6 +210,12 @@ local function trim_cell_spacing(bufnr)
     local gap_end = next_marker - 1
     if gap_start <= gap_end then
       table.insert(remove, { start = gap_start, stop = gap_end + 1 })
+    elseif keep > 0 and last_nonempty + 1 == next_marker then
+      vim.api.nvim_buf_set_lines(bufnr, next_marker - 1, next_marker - 1, false, { "" })
+      lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+      for j = i + 1, #markers do
+        markers[j] = markers[j] + 1
+      end
     end
   end
   if #remove == 0 then

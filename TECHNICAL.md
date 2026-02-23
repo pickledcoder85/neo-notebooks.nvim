@@ -133,7 +133,7 @@ This document summarizes implementation choices and the evolution of core featur
 - Width is centered and responsive based on `cell_width_ratio`, clamped by min/max.
 - `top_padding` inserts real blank lines at the top of the buffer on first open to keep the top border visible.
 - `trim_cell_spacing` collapses extra blank lines between cells once per buffer.
-- `cell_gap_lines` controls how many blank lines to keep between cells (default 0).
+- `cell_gap_lines` controls how many blank lines to keep between cells (default 1).
 
 ## Cell list enhancements
 
