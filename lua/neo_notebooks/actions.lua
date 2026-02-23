@@ -321,6 +321,11 @@ function M.open_line_below(bufnr)
   local cell = containment.get_cell(bufnr, line)
   cell = containment.ensure_body_line(bufnr, cell)
   local insert_at = containment.clamped_insert_at(cell, line + 1)
+  -- If containment clamping would place insertion at/above cursor on bottom lines,
+  -- force a true "below" insert so Enter grows the active cell downward.
+  if insert_at <= line then
+    insert_at = math.min(line + 1, cell.finish + 1)
+  end
   vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
   local index = require("neo_notebooks.index")
   index.rebuild(bufnr)
@@ -541,6 +546,71 @@ function M.goto_cell_bottom(bufnr)
   end
   local col = left_boundary_col(cell)
   vim.api.nvim_win_set_cursor(0, { target + 1, col })
+end
+
+local function cell_editable_bottom(bufnr, cell)
+  local keep = 0
+  if containment.has_next_marker(bufnr, cell) then
+    keep = math.max(0, config.cell_gap_lines or 0)
+  end
+  return math.max(cell.start + 1, cell.finish - keep)
+end
+
+function M.move_line_down_contained(bufnr, count)
+  bufnr = bufnr or 0
+  count = count or vim.v.count1
+  for _ = 1, count do
+    local state = containment.cursor_state(bufnr)
+    if not state.cell then
+      vim.cmd("normal! j")
+      return
+    end
+    local idx = state.active_cell_index
+    local list = state.index and state.index.list or {}
+    local next_cell = (idx and list[idx + 1]) or nil
+    local target_cell = state.cell
+    local target = state.line + 1
+    local bottom = cell_editable_bottom(bufnr, state.cell)
+    if target > bottom then
+      if next_cell then
+        target = next_cell.start + 1
+        target_cell = next_cell
+      else
+        target = bottom
+      end
+    end
+    target = math.max(target_cell.start + 1, target)
+    local col = left_boundary_col(target_cell)
+    vim.api.nvim_win_set_cursor(0, { target + 1, col })
+  end
+end
+
+function M.move_line_up_contained(bufnr, count)
+  bufnr = bufnr or 0
+  count = count or vim.v.count1
+  for _ = 1, count do
+    local state = containment.cursor_state(bufnr)
+    if not state.cell then
+      vim.cmd("normal! k")
+      return
+    end
+    local idx = state.active_cell_index
+    local list = state.index and state.index.list or {}
+    local prev_cell = (idx and list[idx - 1]) or nil
+    local target_cell = state.cell
+    local target = state.line - 1
+    if target < state.body_start then
+      if prev_cell then
+        target = cell_editable_bottom(bufnr, prev_cell)
+        target_cell = prev_cell
+      else
+        target = state.body_start
+      end
+    end
+    target = math.max(target_cell.start + 1, target)
+    local col = left_boundary_col(target_cell)
+    vim.api.nvim_win_set_cursor(0, { target + 1, col })
+  end
 end
 
 function M.fold_cell(bufnr, line)

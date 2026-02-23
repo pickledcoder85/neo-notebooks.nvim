@@ -211,6 +211,25 @@ with_buf({
   eq(lines[5], "# %% [code]", "next cell marker shifts down")
 end)
 
+-- Test: open_line_below on protected bottom inserts below (not above)
+with_buf({
+  "# %% [markdown]",
+  "line 1",
+  "",
+  "# %% [code]",
+  "print(2)",
+}, function(buf)
+  index.rebuild(buf)
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 3, 0 }) -- protected bottom line of first cell
+    actions.open_line_below(buf)
+  end)
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  eq(lines[3], "", "original bottom line stays in place")
+  eq(lines[4], "", "new line inserted below current line")
+  eq(lines[5], "# %% [code]", "next marker shifted down")
+end)
+
 -- Test: normalize_spacing trims drifted trailing gaps
 with_buf({
   "# %% [code]",
@@ -532,6 +551,42 @@ with_buf({
     pos = vim.api.nvim_win_get_cursor(0)
   end)
   ok(pos[1] <= 2, "insert entry moved above protected bottom line")
+end)
+
+-- Test: contained j skips protected gap to next cell body
+with_buf({
+  "# %% [markdown]",
+  "m1",
+  "",
+  "# %% [code]",
+  "c1",
+}, function(buf)
+  index.rebuild(buf)
+  local pos = nil
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 3, 0 }) -- protected bottom line of first cell
+    actions.move_line_down_contained(buf, 1)
+    pos = vim.api.nvim_win_get_cursor(0)
+  end)
+  eq(pos[1], 5, "contained j jumps to next cell body")
+end)
+
+-- Test: contained k from first body line jumps to previous cell editable bottom
+with_buf({
+  "# %% [markdown]",
+  "m1",
+  "",
+  "# %% [code]",
+  "c1",
+}, function(buf)
+  index.rebuild(buf)
+  local pos = nil
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 5, 0 }) -- first body line of second cell
+    actions.move_line_up_contained(buf, 1)
+    pos = vim.api.nvim_win_get_cursor(0)
+  end)
+  eq(pos[1], 2, "contained k jumps to previous cell editable bottom")
 end)
 
 print("All tests passed")

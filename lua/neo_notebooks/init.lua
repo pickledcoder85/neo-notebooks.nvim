@@ -23,6 +23,7 @@ M.config = {
   cell_gap_lines = 1,
   soft_contain = true,
   strict_containment = "soft",
+  contain_line_nav = true,
   textwidth_in_cells = true,
   keymaps = {
     new_code = "<leader><leader>ac",
