@@ -75,6 +75,20 @@ function M.decide(bufnr, op, ctx)
     return allow("<BS>")
   end
 
+  if op == "insert_del" then
+    if containment.marker_type(state.text) then
+      return block("NeoNotebook: cannot edit cell marker line")
+    end
+    local line_len = vim.fn.strchars(state.text)
+    if state.col >= line_len then
+      local next_text = vim.api.nvim_buf_get_lines(bufnr, state.line + 1, state.line + 2, false)[1] or ""
+      if containment.marker_type(next_text) then
+        return block("NeoNotebook: cannot delete into cell marker line")
+      end
+    end
+    return allow("<Del>")
+  end
+
   if op == "delete_line" then
     local count = ctx.count or vim.v.count
     if not count or count < 1 then

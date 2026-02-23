@@ -441,6 +441,49 @@ with_buf({
   eq(keys, "<BS>", "insert backspace allowed in body text")
 end)
 
+-- Test: insert delete guard blocks marker edits
+with_buf({
+  "# %% [markdown]",
+  "line 1",
+}, function(buf)
+  index.rebuild(buf)
+  local keys = nil
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 1, 2 })
+    keys = actions.guard_delete_in_insert(buf)
+  end)
+  eq(keys, "", "insert delete blocked on marker")
+end)
+
+-- Test: insert delete guard blocks delete-join into marker
+with_buf({
+  "line 1",
+  "# %% [code]",
+  "print(2)",
+}, function(buf)
+  index.rebuild(buf)
+  local keys = nil
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 1, 6 })
+    keys = actions.guard_delete_in_insert(buf)
+  end)
+  eq(keys, "", "insert delete blocked when next line is marker")
+end)
+
+-- Test: insert delete guard allows normal body delete
+with_buf({
+  "# %% [markdown]",
+  "line 1",
+}, function(buf)
+  index.rebuild(buf)
+  local keys = nil
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 2, 1 })
+    keys = actions.guard_delete_in_insert(buf)
+  end)
+  eq(keys, "<Del>", "insert delete allowed in body text")
+end)
+
 -- Test: cursor state exposes active cell id and index
 with_buf({
   "# %% [markdown]",

@@ -349,9 +349,6 @@ end
 
 function M.handle_enter_insert(bufnr)
   bufnr = bufnr or 0
-  if config.strict_containment == "soft" or config.strict_containment == true then
-    M.contain_insert_entry(bufnr)
-  end
   local decision = policy.decide(bufnr, "insert_cr")
   if decision.action == "block" then
     if decision.reason and decision.reason ~= "" then
@@ -368,9 +365,6 @@ end
 
 function M.handle_enter_normal(bufnr)
   bufnr = bufnr or 0
-  if config.strict_containment == "soft" or config.strict_containment == true then
-    M.contain_insert_entry(bufnr)
-  end
   local state = containment.cursor_state(bufnr)
   if not state.cell then
     vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", true)
@@ -396,6 +390,12 @@ end
 function M.guard_backspace_in_insert(bufnr)
   bufnr = bufnr or 0
   local decision = policy.decide(bufnr, "insert_bs")
+  return decision_keys(bufnr, decision)
+end
+
+function M.guard_delete_in_insert(bufnr)
+  bufnr = bufnr or 0
+  local decision = policy.decide(bufnr, "insert_del")
   return decision_keys(bufnr, decision)
 end
 
