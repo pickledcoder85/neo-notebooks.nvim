@@ -266,7 +266,21 @@ function M.render(bufnr)
       end
     end
 
-    local finish_line = math.min(math.max(cell.finish, 0), math.max(line_count - 1, 0))
+    local render_finish = cell.finish
+    if cell.finish >= cell.start + 1 then
+      local lines = vim.api.nvim_buf_get_lines(bufnr, cell.start + 1, cell.finish + 1, false)
+      local last_nonempty = nil
+      for i = #lines, 1, -1 do
+        if lines[i] ~= "" then
+          last_nonempty = cell.start + i
+          break
+        end
+      end
+      if last_nonempty then
+        render_finish = math.max(last_nonempty, cell.start + 1)
+      end
+    end
+    local finish_line = math.min(math.max(render_finish, 0), math.max(line_count - 1, 0))
     local bottom_opts = {
       virt_lines = bottom_lines,
       priority = 100,
@@ -286,7 +300,7 @@ function M.render(bufnr)
       local right_col = math.max(pad, pad + width - 1)
       local text_pad = string.rep(" ", pad + 1)
       local start_line = math.min(math.max(cell.start, 0), math.max(line_count - 1, 0))
-      local end_line = math.min(math.max(cell.finish, 0), math.max(line_count - 1, 0))
+      local end_line = math.min(math.max(render_finish, 0), math.max(line_count - 1, 0))
       if start_line <= end_line then
         for line = start_line, end_line do
           vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
