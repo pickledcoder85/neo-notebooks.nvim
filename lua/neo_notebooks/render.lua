@@ -161,6 +161,8 @@ end
 
 function M.render(bufnr)
   bufnr = bufnr or 0
+  local index_mod = require("neo_notebooks.index")
+  local state = index_mod.rebuild(bufnr)
   M.clear(bufnr)
   local win_width = vim.api.nvim_win_get_width(0)
   local ratio = config.cell_width_ratio or 0.9
@@ -170,8 +172,7 @@ function M.render(bufnr)
   width = math.min(width, win_width)
   width = math.max(10, width)
   local pad = math.max(0, math.floor((win_width - width) / 2))
-  local index = cells.get_cells_indexed(bufnr)
-  local cells_list = index.list or {}
+  local cells_list = state.list or {}
   local line_count = vim.api.nvim_buf_line_count(bufnr)
 
   local function get_buf_var(name, default)

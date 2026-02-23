@@ -1,8 +1,50 @@
 local cells = require("neo_notebooks.cells")
 local output = require("neo_notebooks.output")
 local config = require("neo_notebooks").config
+local containment = require("neo_notebooks.containment")
+local policy = require("neo_notebooks.policy")
 
 local M = {}
+
+local function contained_open_line_below_keys(bufnr)
+  return string.format("<C-o><Cmd>lua require('neo_notebooks.actions').open_line_below(%d)<CR>", bufnr)
+end
+
+local function decision_keys(bufnr, decision)
+  if decision.action == "block" then
+    if decision.reason and decision.reason ~= "" then
+      vim.notify(decision.reason, vim.log.levels.WARN)
+    end
+    return ""
+  end
+  if decision.action == "redirect" then
+    if decision.target == "open_line_below" then
+      return contained_open_line_below_keys(bufnr)
+    end
+    return ""
+  end
+  return decision.keys or ""
+end
+
+function M.get_cursor_state(bufnr, line, col)
+  bufnr = bufnr or 0
+  return containment.cursor_state(bufnr, line, col)
+end
+
+local function left_boundary_col(cell)
+  if cell.layout and cell.layout.left_col then
+    return cell.layout.left_col + 1
+  end
+  local win_width = vim.api.nvim_win_get_width(0)
+  local ratio = config.cell_width_ratio or 0.9
+  local width = math.floor(win_width * ratio)
+  width = math.max(config.cell_min_width or 60, width)
+  width = math.min(config.cell_max_width or win_width, width)
+  width = math.min(width, win_width)
+  width = math.max(10, width)
+  local pad = math.max(0, math.floor((win_width - width) / 2))
+  return pad + 1
+end
 
 function M.duplicate_cell(bufnr, line)
   bufnr = bufnr or 0
@@ -276,9 +318,9 @@ end
 function M.open_line_below(bufnr)
   bufnr = bufnr or 0
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
-  local cell = cells.get_cell_at_line(bufnr, line)
-  local insert_at = math.min(line + 1, cell.finish + 1)
-  insert_at = math.max(insert_at, cell.start + 1)
+  local cell = containment.get_cell(bufnr, line)
+  cell = containment.ensure_body_line(bufnr, cell)
+  local insert_at = containment.clamped_insert_at(cell, line + 1)
   vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
   local index = require("neo_notebooks.index")
   index.rebuild(bufnr)
@@ -289,8 +331,9 @@ end
 function M.open_line_above(bufnr)
   bufnr = bufnr or 0
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
-  local cell = cells.get_cell_at_line(bufnr, line)
-  local insert_at = math.max(cell.start + 1, line)
+  local cell = containment.get_cell(bufnr, line)
+  cell = containment.ensure_body_line(bufnr, cell)
+  local insert_at = containment.clamped_insert_at(cell, line)
   vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
   local index = require("neo_notebooks.index")
   index.rebuild(bufnr)
@@ -300,61 +343,133 @@ end
 
 function M.insert_newline_in_cell(bufnr)
   bufnr = bufnr or 0
-  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
-  local col = vim.api.nvim_win_get_cursor(0)[2]
-  local cell = cells.get_cell_at_line(bufnr, line)
-  if line >= cell.finish then
-    local insert_at = cell.finish + 1
-    vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
-    local index = require("neo_notebooks.index")
-    index.rebuild(bufnr)
-    vim.api.nvim_win_set_cursor(0, { insert_at + 1, math.min(col, 0) })
+  local decision = policy.decide(bufnr, "insert_cr")
+  return decision_keys(bufnr, decision)
+end
+
+function M.guard_backspace_in_insert(bufnr)
+  bufnr = bufnr or 0
+  local decision = policy.decide(bufnr, "insert_bs")
+  return decision_keys(bufnr, decision)
+end
+
+function M.clamp_cursor_to_cell_left(bufnr)
+  bufnr = bufnr or 0
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local line = cursor[1] - 1
+  local col = cursor[2]
+  local cell = containment.get_cell(bufnr, line)
+  if not cell then
     return
   end
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", true)
+  cell = containment.ensure_body_line(bufnr, cell)
+  local text = vim.api.nvim_buf_get_lines(bufnr, line, line + 1, false)[1] or ""
+  if text ~= "" then
+    return
+  end
+  local target_col = left_boundary_col(cell)
+  if col < target_col then
+    vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
+    vim.api.nvim_win_set_cursor(0, { line + 1, 0 })
+    vim.cmd("normal! " .. tostring(target_col + 1) .. "|")
+  end
+end
+
+function M.normalize_spacing(bufnr)
+  bufnr = bufnr or 0
+  if not config.trim_cell_spacing then
+    return
+  end
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local markers = {}
+  for i, line in ipairs(lines) do
+    if containment.marker_type(line) then
+      table.insert(markers, i)
+    end
+  end
+  if #markers <= 1 then
+    return
+  end
+
+  local remove = {}
+  local keep = math.max(0, config.cell_gap_lines or 0)
+  for i = 1, #markers - 1 do
+    local start_marker = markers[i]
+    local next_marker = markers[i + 1]
+    local last_nonempty = start_marker
+    for j = next_marker - 1, start_marker + 1, -1 do
+      if lines[j] ~= "" then
+        last_nonempty = j
+        break
+      end
+    end
+    local gap_start = last_nonempty + 1 + keep
+    local gap_end = next_marker - 1
+    if gap_start <= gap_end then
+      table.insert(remove, { start = gap_start - 1, stop = gap_end })
+    end
+  end
+  if #remove == 0 then
+    return
+  end
+
+  for i = #remove, 1, -1 do
+    local r = remove[i]
+    vim.api.nvim_buf_set_lines(bufnr, r.start, r.stop, false, {})
+  end
+end
+
+function M.guard_delete_current_line(bufnr, count)
+  bufnr = bufnr or 0
+  local decision = policy.decide(bufnr, "delete_line", { count = count })
+  return decision_keys(bufnr, decision)
+end
+
+function M.guard_delete_char(bufnr)
+  bufnr = bufnr or 0
+  local decision = policy.decide(bufnr, "delete_char")
+  return decision_keys(bufnr, decision)
+end
+
+function M.guard_delete_to_eol(bufnr)
+  bufnr = bufnr or 0
+  local decision = policy.decide(bufnr, "delete_to_eol")
+  return decision_keys(bufnr, decision)
+end
+
+function M.guard_visual_delete(bufnr, mode_override, first_line, last_line)
+  bufnr = bufnr or 0
+  local decision = policy.decide(bufnr, "delete_visual", {
+    mode = mode_override,
+    first_line = first_line,
+    last_line = last_line,
+  })
+  return decision_keys(bufnr, decision)
 end
 
 function M.goto_cell_top(bufnr)
   bufnr = bufnr or 0
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
-  local cell = cells.get_cell_at_line(bufnr, line)
-  local target = math.min(cell.start + 1, cell.finish)
-  local col = 0
-  if cell.layout and cell.layout.left_col then
-    col = cell.layout.left_col + 1
-  else
-    local win_width = vim.api.nvim_win_get_width(0)
-    local ratio = config.cell_width_ratio or 0.9
-    local width = math.floor(win_width * ratio)
-    width = math.max(config.cell_min_width or 60, width)
-    width = math.min(config.cell_max_width or win_width, width)
-    width = math.min(width, win_width)
-    width = math.max(10, width)
-    local pad = math.max(0, math.floor((win_width - width) / 2))
-    col = pad + 1
-  end
+  local cell = containment.get_cell(bufnr, line)
+  cell = containment.ensure_body_line(bufnr, cell)
+  local target = cell.start + 1
+  local col = left_boundary_col(cell)
   vim.api.nvim_win_set_cursor(0, { target + 1, col })
 end
 
 function M.goto_cell_bottom(bufnr)
   bufnr = bufnr or 0
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
-  local cell = cells.get_cell_at_line(bufnr, line)
-  local target = math.max(cell.start + 1, cell.finish)
-  local col = 0
-  if cell.layout and cell.layout.left_col then
-    col = cell.layout.left_col + 1
+  local cell = containment.get_cell(bufnr, line)
+  cell = containment.ensure_body_line(bufnr, cell)
+  local target = cell.finish
+  if containment.has_next_marker(bufnr, cell) then
+    local keep = math.max(0, config.cell_gap_lines or 0)
+    target = math.max(cell.start + 1, cell.finish - keep)
   else
-    local win_width = vim.api.nvim_win_get_width(0)
-    local ratio = config.cell_width_ratio or 0.9
-    local width = math.floor(win_width * ratio)
-    width = math.max(config.cell_min_width or 60, width)
-    width = math.min(config.cell_max_width or win_width, width)
-    width = math.min(width, win_width)
-    width = math.max(10, width)
-    local pad = math.max(0, math.floor((win_width - width) / 2))
-    col = pad + 1
+    target = math.max(cell.start + 1, cell.finish)
   end
+  local col = left_boundary_col(cell)
   vim.api.nvim_win_set_cursor(0, { target + 1, col })
 end
 
