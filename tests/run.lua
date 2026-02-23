@@ -237,6 +237,36 @@ with_buf({
   eq(lines[1], "# %% [markdown]", "leading blank code cell removed on import")
 end)
 
+-- Test: ipynb import/export trims trailing blank lines per cell
+with_buf({
+  "# %% [code]",
+  "print(1)",
+  "",
+  "",
+  "# %% [markdown]",
+  "# Title",
+  "",
+  "",
+}, function(buf)
+  local path = vim.fn.tempname() .. ".ipynb"
+  local ok_export, err_export = ipynb.export_ipynb(path, buf)
+  ok(ok_export, err_export or "export failed")
+
+  local buf2 = vim.api.nvim_create_buf(false, true)
+  local ok_import, err_import = ipynb.import_ipynb(path, buf2)
+  ok(ok_import, err_import or "import failed")
+  actions.normalize_spacing(buf2)
+  local lines = vim.api.nvim_buf_get_lines(buf2, 0, -1, false)
+  local marker_count = 0
+  for _, line in ipairs(lines) do
+    if line:match("^# %%%% %[(%w+)%]") then
+      marker_count = marker_count + 1
+    end
+  end
+  eq(marker_count, 2, "still two cells after trim")
+  vim.api.nvim_buf_delete(buf2, { force = true })
+end)
+
 -- Test: line insertion inside a cell shifts following cells
 with_buf({
   "# %% [code]",
