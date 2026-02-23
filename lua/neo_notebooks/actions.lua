@@ -1,5 +1,6 @@
 local cells = require("neo_notebooks.cells")
 local output = require("neo_notebooks.output")
+local config = require("neo_notebooks").config
 
 local M = {}
 
@@ -318,7 +319,15 @@ function M.goto_cell_top(bufnr)
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local cell = cells.get_cell_at_line(bufnr, line)
   local target = math.min(cell.start + 1, cell.finish)
-  vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
+  local win_width = vim.api.nvim_win_get_width(0)
+  local ratio = config.cell_width_ratio or 0.9
+  local width = math.floor(win_width * ratio)
+  width = math.max(config.cell_min_width or 60, width)
+  width = math.min(config.cell_max_width or win_width, width)
+  width = math.min(width, win_width)
+  width = math.max(10, width)
+  local pad = math.max(0, math.floor((win_width - width) / 2))
+  vim.api.nvim_win_set_cursor(0, { target + 1, pad + 1 })
 end
 
 function M.goto_cell_bottom(bufnr)
@@ -326,7 +335,15 @@ function M.goto_cell_bottom(bufnr)
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local cell = cells.get_cell_at_line(bufnr, line)
   local target = math.max(cell.start + 1, cell.finish)
-  vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
+  local win_width = vim.api.nvim_win_get_width(0)
+  local ratio = config.cell_width_ratio or 0.9
+  local width = math.floor(win_width * ratio)
+  width = math.max(config.cell_min_width or 60, width)
+  width = math.min(config.cell_max_width or win_width, width)
+  width = math.min(width, win_width)
+  width = math.max(10, width)
+  local pad = math.max(0, math.floor((win_width - width) / 2))
+  vim.api.nvim_win_set_cursor(0, { target + 1, pad + 1 })
 end
 
 function M.fold_cell(bufnr, line)
