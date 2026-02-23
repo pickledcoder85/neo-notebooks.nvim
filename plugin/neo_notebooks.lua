@@ -181,6 +181,9 @@ local function trim_cell_spacing(bufnr)
   if not nb.config.trim_cell_spacing then
     return
   end
+  if vim.b[bufnr].neo_notebooks_spacing_trimmed then
+    return
+  end
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local markers = {}
   for i, line in ipairs(lines) do
@@ -192,6 +195,7 @@ local function trim_cell_spacing(bufnr)
     return
   end
   local remove = {}
+  local keep = nb.config.cell_gap_lines or 0
   for i = 1, #markers - 1 do
     local start_marker = markers[i]
     local next_marker = markers[i + 1]
@@ -202,7 +206,7 @@ local function trim_cell_spacing(bufnr)
         break
       end
     end
-    local gap_start = last_nonempty + 2
+    local gap_start = last_nonempty + 1 + keep
     local gap_end = next_marker - 1
     if gap_start <= gap_end then
       table.insert(remove, { start = gap_start, stop = gap_end + 1 })
@@ -216,6 +220,7 @@ local function trim_cell_spacing(bufnr)
     local r = remove[i]
     vim.api.nvim_buf_set_lines(bufnr, r.start, r.stop, false, {})
   end
+  vim.b[bufnr].neo_notebooks_spacing_trimmed = true
 end
 
 local function render_if_enabled(bufnr)

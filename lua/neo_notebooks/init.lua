@@ -20,6 +20,7 @@ M.config = {
   cell_max_width = 140,
   top_padding = 1,
   trim_cell_spacing = true,
+  cell_gap_lines = 0,
   keymaps = {
     new_code = "<leader><leader>ac",
     new_markdown = "<leader><leader>am",
