@@ -857,6 +857,7 @@ vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "TextChanged", "Tex
 vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
   callback = function(args)
     if should_enable(args.buf) then
+      actions.consume_pending_virtual_indent(args.buf)
       index.rebuild(args.buf)
       render_if_enabled(args.buf)
     end
@@ -928,6 +929,7 @@ vim.api.nvim_create_autocmd({ "InsertLeave" }, {
     if not should_enable(args.buf) then
       return
     end
+    vim.b[args.buf].neo_notebooks_pending_virtual_indent = nil
     trim_cell_spacing(args.buf)
     index.rebuild(args.buf)
     actions.clamp_cursor_to_cell_left(args.buf)

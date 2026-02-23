@@ -26,6 +26,12 @@ local function decision_keys(bufnr, decision)
   return decision.keys or ""
 end
 
+local function mark_pending_virtual_indent(bufnr, line, pad)
+  local pending = vim.b[bufnr].neo_notebooks_pending_virtual_indent or {}
+  pending[tostring(line)] = pad
+  vim.b[bufnr].neo_notebooks_pending_virtual_indent = pending
+end
+
 function M.get_cursor_state(bufnr, line, col)
   bufnr = bufnr or 0
   return containment.cursor_state(bufnr, line, col)
@@ -341,8 +347,12 @@ function M.open_line_below(bufnr)
   vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
   local index = require("neo_notebooks.index")
   index.rebuild(bufnr)
+  local target_col = left_boundary_col(cell)
+  vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
   vim.api.nvim_win_set_cursor(0, { insert_at + 1, 0 })
-  vim.cmd("startinsert!")
+  vim.cmd("normal! " .. tostring(target_col + 1) .. "|")
+  mark_pending_virtual_indent(bufnr, insert_at, target_col)
+  vim.cmd("startinsert")
 end
 
 function M.open_line_above(bufnr)
@@ -354,8 +364,12 @@ function M.open_line_above(bufnr)
   vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
   local index = require("neo_notebooks.index")
   index.rebuild(bufnr)
+  local target_col = left_boundary_col(cell)
+  vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
   vim.api.nvim_win_set_cursor(0, { insert_at + 1, 0 })
-  vim.cmd("startinsert!")
+  vim.cmd("normal! " .. tostring(target_col + 1) .. "|")
+  mark_pending_virtual_indent(bufnr, insert_at, target_col)
+  vim.cmd("startinsert")
 end
 
 function M.insert_newline_in_cell(bufnr)
@@ -378,6 +392,19 @@ function M.handle_enter_insert(bufnr)
     return
   end
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", true)
+  vim.schedule(function()
+    if not vim.api.nvim_get_mode().mode:match("^i") then
+      return
+    end
+    local state = containment.cursor_state(bufnr)
+    if not state.cell then
+      return
+    end
+    local target_col = left_boundary_col(state.cell)
+    vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
+    vim.cmd("normal! " .. tostring(target_col + 1) .. "|")
+    mark_pending_virtual_indent(bufnr, state.line, target_col)
+  end)
 end
 
 function M.handle_enter_normal(bufnr)
@@ -460,6 +487,38 @@ function M.contain_insert_entry(bufnr)
     vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
     vim.cmd("normal! " .. tostring(target_col + 1) .. "|")
   end
+end
+
+function M.consume_pending_virtual_indent(bufnr)
+  bufnr = bufnr or 0
+  local pending = vim.b[bufnr].neo_notebooks_pending_virtual_indent
+  if not pending then
+    return
+  end
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local line = cursor[1] - 1
+  local key = tostring(line)
+  local pad = pending[key]
+  if not pad or pad <= 0 then
+    return
+  end
+  local text = vim.api.nvim_buf_get_lines(bufnr, line, line + 1, false)[1] or ""
+  if text == "" then
+    return
+  end
+  if not text:match("%S") then
+    return
+  end
+  local leading = #(text:match("^(%s*)") or "")
+  local trim = math.min(leading, pad)
+  if trim > 0 then
+    local new_text = text:sub(trim + 1)
+    vim.api.nvim_buf_set_lines(bufnr, line, line + 1, false, { new_text })
+    local col = math.max(0, cursor[2] - trim)
+    vim.api.nvim_win_set_cursor(0, { line + 1, col })
+  end
+  pending[key] = nil
+  vim.b[bufnr].neo_notebooks_pending_virtual_indent = pending
 end
 
 function M.normalize_spacing(bufnr)

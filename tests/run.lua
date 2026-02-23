@@ -324,6 +324,22 @@ with_buf({
   eq(lines[6], "# %% [code]", "next marker shifted down after paste")
 end)
 
+-- Test: pending virtual indent is consumed on first real text input
+with_buf({
+  "# %% [markdown]",
+  "",
+}, function(buf)
+  index.rebuild(buf)
+  vim.b[buf].neo_notebooks_pending_virtual_indent = { ["1"] = 4 }
+  vim.api.nvim_buf_set_lines(buf, 1, 2, false, { "    hello" })
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 2, 9 })
+    actions.consume_pending_virtual_indent(buf)
+  end)
+  local line = vim.api.nvim_buf_get_lines(buf, 1, 2, false)[1]
+  eq(line, "hello", "synthetic pending indent removed")
+end)
+
 -- Test: normalize_spacing trims drifted trailing gaps
 with_buf({
   "# %% [code]",
