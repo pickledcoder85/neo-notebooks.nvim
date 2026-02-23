@@ -177,6 +177,46 @@ local function ensure_top_padding(bufnr)
   end
 end
 
+local function trim_cell_spacing(bufnr)
+  if not nb.config.trim_cell_spacing then
+    return
+  end
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local markers = {}
+  for i, line in ipairs(lines) do
+    if line:match("^# %%%% %[(%w+)%]") then
+      table.insert(markers, i)
+    end
+  end
+  if #markers <= 1 then
+    return
+  end
+  local remove = {}
+  for i = 2, #markers do
+    local m = markers[i]
+    local j = m - 1
+    local blank_count = 0
+    while j >= 1 and lines[j] == "" do
+      blank_count = blank_count + 1
+      j = j - 1
+    end
+    if blank_count > 1 then
+      -- remove extra blanks, keep one
+      for k = m - blank_count, m - 2 do
+        table.insert(remove, { start = k, stop = k + 1 })
+      end
+    end
+  end
+  if #remove == 0 then
+    return
+  end
+  -- remove from bottom to top
+  for i = #remove, 1, -1 do
+    local r = remove[i]
+    vim.api.nvim_buf_set_lines(bufnr, r.start, r.stop, false, {})
+  end
+end
+
 local function render_if_enabled(bufnr)
   bufnr = bufnr or 0
   if nb.config.auto_render and should_enable(bufnr) then
@@ -789,6 +829,7 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
     set_default_keymaps(args.buf)
     if should_enable(args.buf) then
       ensure_top_padding(args.buf)
+      trim_cell_spacing(args.buf)
       index.rebuild(args.buf)
 
       local function jump_to_first_body()

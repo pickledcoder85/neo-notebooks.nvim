@@ -132,6 +132,7 @@ This document summarizes implementation choices and the evolution of core featur
 - Code and markdown borders use separate highlight groups.
 - Width is centered and responsive based on `cell_width_ratio`, clamped by min/max.
 - `top_padding` inserts real blank lines at the top of the buffer on first open to keep the top border visible.
+- `trim_cell_spacing` collapses multiple blank lines before cell markers to a single blank line.
 
 ## Cell list enhancements
 
