@@ -222,16 +222,18 @@ function M.render(bufnr)
     line_count = vim.api.nvim_buf_line_count(bufnr)
   end
 
-  for idx, cell in ipairs(cells_list) do
+  local visible_idx = 0
+  for _, cell in ipairs(cells_list) do
     if cell.finish < cell.start or cell.border == false then
       goto continue
     end
+    visible_idx = visible_idx + 1
 
     local top = string.rep(" ", pad) .. cell_border(width, "╭", "╮")
     local bottom = string.rep(" ", pad) .. cell_border(width, "╰", "╯")
     local label = string.format("[%s]", cell.type)
     if config.show_cell_index then
-      label = string.format("[%d %s]", idx, cell.type)
+      label = string.format("[%d %s]", visible_idx, cell.type)
     end
 
     local hl = config.border_hl_code or "Comment"

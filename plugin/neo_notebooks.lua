@@ -790,25 +790,22 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
     if should_enable(args.buf) then
       ensure_top_padding(args.buf)
       index.rebuild(args.buf)
+      if not vim.b[args.buf].neo_notebooks_opened then
+        vim.b[args.buf].neo_notebooks_opened = true
+        local state = index.get(args.buf)
+        for _, entry in ipairs(state.list) do
+          if entry.border ~= false then
+            local target = math.min(entry.start + 1, entry.finish)
+            vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
+            break
+          end
+        end
+      end
       local line = vim.api.nvim_win_get_cursor(0)[1] - 1
       local cell = cells.get_cell_at_line(args.buf, line)
       if cell and line == cell.start then
         local target = math.min(cell.start + 1, cell.finish)
         vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
-      end
-      if not vim.b[args.buf].neo_notebooks_opened then
-        vim.b[args.buf].neo_notebooks_opened = true
-        local pad = nb.config.top_padding or 0
-        if pad > 0 and not vim.b[args.buf].neo_notebooks_top_padded then
-          local blanks = {}
-          for _ = 1, pad do
-            table.insert(blanks, "")
-          end
-          vim.api.nvim_buf_set_lines(args.buf, 0, 0, false, blanks)
-          vim.b[args.buf].neo_notebooks_top_padded = pad
-          index.rebuild(args.buf)
-          vim.api.nvim_win_set_cursor(0, { pad + 1, 0 })
-        end
       end
     end
   end,
