@@ -192,19 +192,20 @@ local function trim_cell_spacing(bufnr)
     return
   end
   local remove = {}
-  for i = 2, #markers do
-    local m = markers[i]
-    local j = m - 1
-    local blank_count = 0
-    while j >= 1 and lines[j] == "" do
-      blank_count = blank_count + 1
-      j = j - 1
-    end
-    if blank_count > 1 then
-      -- remove extra blanks, keep one
-      for k = m - blank_count, m - 2 do
-        table.insert(remove, { start = k, stop = k + 1 })
+  for i = 1, #markers - 1 do
+    local start_marker = markers[i]
+    local next_marker = markers[i + 1]
+    local last_nonempty = start_marker
+    for j = next_marker - 1, start_marker + 1, -1 do
+      if lines[j] ~= "" then
+        last_nonempty = j
+        break
       end
+    end
+    local gap_start = last_nonempty + 2
+    local gap_end = next_marker - 1
+    if gap_start <= gap_end then
+      table.insert(remove, { start = gap_start, stop = gap_end + 1 })
     end
   end
   if #remove == 0 then
