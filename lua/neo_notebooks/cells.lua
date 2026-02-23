@@ -16,6 +16,21 @@ end
 function M.get_cells(bufnr)
   bufnr = bufnr or 0
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local ok_tail, tail_pad = pcall(vim.api.nvim_buf_get_var, bufnr, "neo_notebooks_tail_pad")
+  if ok_tail and type(tail_pad) == "number" and tail_pad > 0 and tail_pad <= #lines then
+    local all_blank = true
+    for i = #lines - tail_pad + 1, #lines do
+      if lines[i] ~= "" then
+        all_blank = false
+        break
+      end
+    end
+    if all_blank then
+      for _ = 1, tail_pad do
+        table.remove(lines)
+      end
+    end
+  end
   local cells = {}
   local current_type = "code"
 

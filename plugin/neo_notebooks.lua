@@ -186,6 +186,21 @@ local function render_if_enabled(bufnr)
   end
 end
 
+local function logical_cell_insert_base(bufnr, cell)
+  local body = vim.api.nvim_buf_get_lines(bufnr, cell.start + 1, cell.finish + 1, false)
+  local last_nonempty = nil
+  for i = #body, 1, -1 do
+    if body[i] ~= "" then
+      last_nonempty = cell.start + i
+      break
+    end
+  end
+  if not last_nonempty then
+    return cell.start + 1
+  end
+  return last_nonempty + 1
+end
+
 vim.api.nvim_create_user_command("NeoNotebookRender", function()
   render.render(0)
 end, {})
@@ -247,7 +262,8 @@ vim.api.nvim_create_user_command("NeoNotebookCellRunAndNext", function()
       local target = math.min(next_cell.start + 2, max_line)
       vim.api.nvim_win_set_cursor(0, { target, 0 })
     else
-      local insert_line = cells.insert_cell_below(0, cell.finish, "code")
+      local insert_base = logical_cell_insert_base(0, cell)
+      local insert_line = cells.insert_cell_below(0, insert_base, "code")
       local max_line = vim.api.nvim_buf_line_count(0)
       local target = math.min(insert_line + 2, max_line)
       vim.api.nvim_win_set_cursor(0, { target, 0 })
@@ -264,7 +280,8 @@ vim.api.nvim_create_user_command("NeoNotebookCellRunAndNext", function()
     local target = math.min(next_cell.start + 2, max_line)
     vim.api.nvim_win_set_cursor(0, { target, 0 })
   else
-    local insert_line = cells.insert_cell_below(0, cell.finish, "code")
+    local insert_base = logical_cell_insert_base(0, cell)
+    local insert_line = cells.insert_cell_below(0, insert_base, "code")
     local max_line = vim.api.nvim_buf_line_count(0)
     local target = math.min(insert_line + 2, max_line)
     vim.api.nvim_win_set_cursor(0, { target, 0 })

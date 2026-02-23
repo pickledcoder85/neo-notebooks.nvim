@@ -87,6 +87,18 @@ with_buf({
   eq(cell.start, 2, "cell lookup by line")
 end)
 
+-- Test: get_cells ignores render tail padding lines
+with_buf({
+  "# %% [code]",
+  "print(1)",
+  "",
+}, function(buf)
+  vim.api.nvim_buf_set_lines(buf, 3, 3, false, { "", "", "" })
+  vim.api.nvim_buf_set_var(buf, "neo_notebooks_tail_pad", 3)
+  local list = cells.get_cells(buf)
+  eq(list[1].finish, 2, "tail pad excluded from cell finish")
+end)
+
 -- Test: move cell up preserves id mapping
 with_buf({
   "# %% [code]",
