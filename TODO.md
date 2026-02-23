@@ -4,6 +4,11 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Now
 
+- Cell spacing + containment polish:
+  - Keep cursor inside active cell on `o`, `O`, `<CR>`, `gg`, `G`.
+  - Maintain a single blank line inside each cell (before bottom border).
+  - Preserve `cell_gap_lines` between cells without drifting gaps.
+  - Ensure line insertions shift all cells below the active cell.
 - Verify inline output behavior for `<leader>r` and `<S-CR>` after branch merge.
 - Add `.ipynb` round-trip tests (export then import) and document limitations.
 - Reconcile floating UI experiments vs. mainline behavior (keep experimental or drop).
