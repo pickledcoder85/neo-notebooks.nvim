@@ -61,6 +61,9 @@ local function ensure_initial_markdown_cell(bufnr)
   if not nb.config.auto_insert_first_cell then
     return
   end
+  if vim.b[bufnr] and vim.b[bufnr].neo_notebooks_skip_initial then
+    return
+  end
   if not should_enable(bufnr) then
     return
   end
@@ -439,6 +442,7 @@ vim.api.nvim_create_autocmd("BufReadPost", {
       if not vim.api.nvim_buf_is_valid(args.buf) then
         return
       end
+      vim.b[args.buf].neo_notebooks_skip_initial = true
       vim.api.nvim_buf_set_option(args.buf, "buftype", "acwrite")
       vim.api.nvim_buf_set_option(args.buf, "swapfile", false)
       vim.api.nvim_buf_set_option(args.buf, "modifiable", true)
@@ -446,10 +450,12 @@ vim.api.nvim_create_autocmd("BufReadPost", {
       vim.api.nvim_set_option_value("filetype", "python", { buf = args.buf })
       local ok, err = ipynb.import_ipynb(path, args.buf)
       if not ok then
+        vim.b[args.buf].neo_notebooks_skip_initial = false
         vim.notify(err or "Import failed", vim.log.levels.ERROR)
         return
       end
       ensure_top_padding(args.buf)
+      vim.b[args.buf].neo_notebooks_skip_initial = false
       set_default_keymaps(args.buf)
       index.rebuild(args.buf)
       render_if_enabled(args.buf)
