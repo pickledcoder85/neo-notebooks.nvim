@@ -549,6 +549,19 @@ with_buf({
   eq(s.active_cell_index, 2, "active cell index matches second cell")
 end)
 
+-- Test: empty vs non-empty cell body detection
+with_buf({
+  "# %% [code]",
+  "",
+  "",
+}, function(buf)
+  index.rebuild(buf)
+  ok(not actions.cell_has_nonempty_body(buf, 1), "empty body detected")
+  vim.api.nvim_buf_set_lines(buf, 1, 2, false, { "x = 1" })
+  index.rebuild(buf)
+  ok(actions.cell_has_nonempty_body(buf, 1), "non-empty body detected")
+end)
+
 -- Test: normal-mode enter stays inside current cell near bottom
 with_buf({
   "# %% [markdown]",

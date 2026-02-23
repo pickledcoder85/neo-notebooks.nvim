@@ -62,6 +62,10 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 - Full `.ipynb` metadata + outputs support.
 - Kernel-backed execution (minimal Jupyter client with text/plain only), with optional kitty image output.
+- Optional execution dependency awareness:
+  - Detect likely upstream cell dependencies and warn on reordered runs.
+  - Offer targeted "run required predecessors" before executing a moved cell.
+  - Keep default behavior globally scoped for lightweight workflows.
 - Optional inline image rendering via kitty protocol.
 - True floating-cell UI mode (editable floats synced to hidden buffer).
 - Improved markdown rendering (headings, emphasis).

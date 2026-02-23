@@ -31,6 +31,22 @@ function M.get_cursor_state(bufnr, line, col)
   return containment.cursor_state(bufnr, line, col)
 end
 
+function M.cell_has_nonempty_body(bufnr, line)
+  bufnr = bufnr or 0
+  line = line or (vim.api.nvim_win_get_cursor(0)[1] - 1)
+  local cell = containment.get_cell(bufnr, line)
+  if not cell then
+    return false
+  end
+  local body = vim.api.nvim_buf_get_lines(bufnr, cell.start + 1, cell.finish + 1, false)
+  for _, body_line in ipairs(body) do
+    if body_line:match("%S") then
+      return true
+    end
+  end
+  return false
+end
+
 local function left_boundary_col(cell)
   if cell.layout and cell.layout.left_col then
     return cell.layout.left_col + 1

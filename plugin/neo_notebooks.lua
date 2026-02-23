@@ -273,6 +273,15 @@ vim.api.nvim_create_user_command("NeoNotebookCellRunAndNext", function()
     return
   end
 
+  if not next_cell and not actions.cell_has_nonempty_body(0, line) then
+    vim.notify("NeoNotebook: current code cell is empty; not adding another cell", vim.log.levels.INFO)
+    local max_line = vim.api.nvim_buf_line_count(0)
+    local target = math.min(cell.start + 2, max_line)
+    vim.api.nvim_win_set_cursor(0, { target, 0 })
+    vim.cmd("startinsert")
+    return
+  end
+
   run_cell_with_output(line, cell)
 
   if next_cell then
