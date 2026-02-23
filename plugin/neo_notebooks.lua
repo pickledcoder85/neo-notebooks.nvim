@@ -797,7 +797,7 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
           if entry.border ~= false then
             local target = math.min(entry.start + 1, entry.finish)
             vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
-            break
+            return
           end
         end
       end
