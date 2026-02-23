@@ -2,6 +2,7 @@ local cells = require("neo_notebooks.cells")
 local output = require("neo_notebooks.output")
 local config = require("neo_notebooks").config
 local containment = require("neo_notebooks.containment")
+local spinner = require("neo_notebooks.spinner")
 
 local M = {}
 
@@ -130,7 +131,7 @@ local function truncate_chunks(chunks, width, base_hl)
   return out
 end
 
-local function output_block(lines, width, pad, hl)
+local function output_block(lines, width, pad, hl, spin)
   local block = {}
   local function border(left, right)
     return string.rep(" ", pad) .. cell_border(width, left, right)
@@ -139,7 +140,10 @@ local function output_block(lines, width, pad, hl)
   -- Output block top border: downward corners.
   table.insert(block, { { border("╭", "╮"), hl } })
   local inner_width = math.max(0, width - 2)
-  for _, line in ipairs(lines) do
+  for i, line in ipairs(lines) do
+    if spin and i == 1 then
+      line = spin .. " " .. line
+    end
     local use_ansi = line:find("\27%[") ~= nil
     local chunks = (use_ansi and ansi_chunks(line, hl)) or { { line, hl } }
     local clipped = truncate_chunks(chunks, inner_width, hl)
@@ -265,7 +269,8 @@ function M.render(bufnr)
     if cell.type == "code" then
       local out_lines = output.get_lines(bufnr, cell.id)
       if out_lines and #out_lines > 0 then
-        local out_block = output_block(out_lines, width, pad, "NeoNotebookOutput")
+        local spin = spinner.get_frame(bufnr, cell.id)
+        local out_block = output_block(out_lines, width, pad, "NeoNotebookOutput", spin)
         for _, line in ipairs(out_block) do
           table.insert(bottom_lines, line)
         end
