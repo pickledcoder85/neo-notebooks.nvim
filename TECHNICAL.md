@@ -135,6 +135,7 @@ This document summarizes implementation choices and the evolution of core featur
 - `trim_cell_spacing` collapses extra blank lines between cells once per buffer.
 - `cell_gap_lines` controls how many blank lines to keep between cells (default 1).
 - `soft_contain` remaps `o`, `O`, and `<CR>` to keep edits within a cell.
+- `textwidth_in_cells` sets `textwidth` to the cell inner width for soft line wrapping.
 
 ## Cell list enhancements
 

@@ -155,6 +155,37 @@ local function update_completion(bufnr)
   end
 end
 
+local function update_textwidth(bufnr)
+  if not nb.config.textwidth_in_cells then
+    return
+  end
+  if not should_enable(bufnr) then
+    return
+  end
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cell = cells.get_cell_at_line(bufnr, line)
+  if not cell then
+    return
+  end
+  if not vim.b[bufnr].neo_notebooks_prev_textwidth then
+    vim.b[bufnr].neo_notebooks_prev_textwidth = vim.bo[bufnr].textwidth
+  end
+  local inner_width = nil
+  if cell.layout and cell.layout.left_col and cell.layout.right_col then
+    inner_width = math.max(1, cell.layout.right_col - cell.layout.left_col - 1)
+  else
+    local win_width = vim.api.nvim_win_get_width(0)
+    local ratio = nb.config.cell_width_ratio or 0.9
+    local width = math.floor(win_width * ratio)
+    width = math.max(nb.config.cell_min_width or 60, width)
+    width = math.min(nb.config.cell_max_width or win_width, width)
+    width = math.min(width, win_width)
+    width = math.max(10, width)
+    inner_width = math.max(1, width - 2)
+  end
+  vim.bo[bufnr].textwidth = inner_width
+end
+
 local function ensure_top_padding(bufnr)
   local pad = nb.config.top_padding or 0
   if pad <= 0 then
@@ -843,6 +874,7 @@ vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "TextChanged", "Tex
   callback = function(args)
     overlay.on_cursor_moved(args.buf)
     update_completion(args.buf)
+    update_textwidth(args.buf)
   end,
 })
 
@@ -905,6 +937,7 @@ vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
 vim.api.nvim_create_autocmd({ "InsertEnter" }, {
   callback = function(args)
     update_completion(args.buf)
+    update_textwidth(args.buf)
   end,
 })
 
