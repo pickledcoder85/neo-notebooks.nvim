@@ -313,6 +313,22 @@ function M.insert_newline_in_cell(bufnr)
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", true)
 end
 
+function M.goto_cell_top(bufnr)
+  bufnr = bufnr or 0
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cell = cells.get_cell_at_line(bufnr, line)
+  local target = math.min(cell.start + 1, cell.finish)
+  vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
+end
+
+function M.goto_cell_bottom(bufnr)
+  bufnr = bufnr or 0
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cell = cells.get_cell_at_line(bufnr, line)
+  local target = math.max(cell.start + 1, cell.finish)
+  vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
+end
+
 function M.fold_cell(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
