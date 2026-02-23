@@ -85,39 +85,6 @@ local function ensure_initial_markdown_cell(bufnr)
   vim.cmd("startinsert")
 end
 
-local function remove_empty_leading_code_cell(bufnr)
-  if not (vim.b[bufnr] and vim.b[bufnr].neo_notebooks_is_ipynb) then
-    return
-  end
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local first = nil
-  local second = nil
-  for i, line in ipairs(lines) do
-    if line:match("^# %%%% %[(%w+)%]") then
-      if not first then
-        first = i
-      else
-        second = i
-        break
-      end
-    end
-  end
-  if not first or not second then
-    return
-  end
-  local first_type = lines[first]:match("^# %%%% %[(%w+)%]")
-  local second_type = lines[second]:match("^# %%%% %[(%w+)%]")
-  if first_type ~= "code" or second_type ~= "markdown" then
-    return
-  end
-  for i = first + 1, second - 1 do
-    if lines[i] ~= "" then
-      return
-    end
-  end
-  vim.api.nvim_buf_set_lines(bufnr, first - 1, first, false, {})
-end
-
 local function update_completion(bufnr)
   if not nb.config.suppress_completion_in_markdown then
     return
@@ -209,55 +176,7 @@ local function ensure_top_padding(bufnr)
 end
 
 local function trim_cell_spacing(bufnr)
-  if not nb.config.trim_cell_spacing then
-    return
-  end
-  if vim.b[bufnr].neo_notebooks_spacing_trimmed then
-    return
-  end
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local markers = {}
-  for i, line in ipairs(lines) do
-    if line:match("^# %%%% %[(%w+)%]") then
-      table.insert(markers, i)
-    end
-  end
-  if #markers <= 1 then
-    return
-  end
-  local remove = {}
-  local keep = nb.config.cell_gap_lines or 0
-  for i = 1, #markers - 1 do
-    local start_marker = markers[i]
-    local next_marker = markers[i + 1]
-    local last_nonempty = start_marker
-    for j = next_marker - 1, start_marker + 1, -1 do
-      if lines[j] ~= "" then
-        last_nonempty = j
-        break
-      end
-    end
-    local gap_start = last_nonempty + 1 + keep
-    local gap_end = next_marker - 1
-    if gap_start <= gap_end then
-      table.insert(remove, { start = gap_start, stop = gap_end + 1 })
-    elseif keep > 0 and last_nonempty + 1 == next_marker then
-      vim.api.nvim_buf_set_lines(bufnr, next_marker - 1, next_marker - 1, false, { "" })
-      lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-      for j = i + 1, #markers do
-        markers[j] = markers[j] + 1
-      end
-    end
-  end
-  if #remove == 0 then
-    return
-  end
-  -- remove from bottom to top
-  for i = #remove, 1, -1 do
-    local r = remove[i]
-    vim.api.nvim_buf_set_lines(bufnr, r.start, r.stop, false, {})
-  end
-  vim.b[bufnr].neo_notebooks_spacing_trimmed = true
+  actions.normalize_spacing(bufnr)
 end
 
 local function render_if_enabled(bufnr)
@@ -540,7 +459,7 @@ vim.api.nvim_create_user_command("NeoNotebookAnsiSample", function()
   })
 end, {})
 
-vim.api.nvim_create_autocmd({ "BufEnter", "TextChanged", "TextChangedI" }, {
+vim.api.nvim_create_autocmd({ "BufEnter" }, {
   callback = function(args)
     render_if_enabled(args.buf)
   end,
@@ -578,7 +497,6 @@ vim.api.nvim_create_autocmd("BufReadPost", {
         return
       end
       ensure_top_padding(args.buf)
-      remove_empty_leading_code_cell(args.buf)
       vim.b[args.buf].neo_notebooks_skip_initial = true
       set_default_keymaps(args.buf)
       index.rebuild(args.buf)
@@ -841,19 +759,51 @@ set_default_keymaps = function(bufnr)
   if nb.config.soft_contain then
     vim.keymap.set("n", "o", function()
       actions.open_line_below(bufnr)
-    end, opts)
+    end, vim.tbl_extend("force", opts, { remap = true }))
     vim.keymap.set("n", "O", function()
       actions.open_line_above(bufnr)
-    end, opts)
+    end, vim.tbl_extend("force", opts, { remap = true }))
     vim.keymap.set("n", "gg", function()
       actions.goto_cell_top(bufnr)
     end, opts)
     vim.keymap.set("n", "G", function()
       actions.goto_cell_bottom(bufnr)
     end, opts)
+    if nb.config.contain_line_nav ~= false then
+      vim.keymap.set("n", "j", function()
+        actions.move_line_down_contained(bufnr, vim.v.count1)
+      end, opts)
+      vim.keymap.set("n", "k", function()
+        actions.move_line_up_contained(bufnr, vim.v.count1)
+      end, opts)
+    end
+    vim.keymap.set("n", "<CR>", function()
+      actions.handle_enter_normal(bufnr)
+    end, opts)
     vim.keymap.set("i", "<CR>", function()
-      actions.insert_newline_in_cell(bufnr)
+      actions.handle_enter_insert(bufnr)
     end, { silent = true, buffer = bufnr })
+    vim.keymap.set("i", "<BS>", function()
+      return actions.guard_backspace_in_insert(bufnr)
+    end, { silent = true, buffer = bufnr, expr = true })
+    vim.keymap.set("i", "<Del>", function()
+      return actions.guard_delete_in_insert(bufnr)
+    end, { silent = true, buffer = bufnr, expr = true })
+    vim.keymap.set("n", "dd", function()
+      return actions.guard_delete_current_line(bufnr)
+    end, { silent = true, buffer = bufnr, expr = true, replace_keycodes = false })
+    vim.keymap.set("n", "p", function()
+      actions.handle_paste_below(bufnr)
+    end, opts)
+    vim.keymap.set("n", "x", function()
+      return actions.guard_delete_char(bufnr)
+    end, { silent = true, buffer = bufnr, expr = true, replace_keycodes = false })
+    vim.keymap.set("n", "D", function()
+      return actions.guard_delete_to_eol(bufnr)
+    end, { silent = true, buffer = bufnr, expr = true, replace_keycodes = false })
+    vim.keymap.set("x", "d", function()
+      return actions.guard_visual_delete(bufnr)
+    end, { silent = true, buffer = bufnr, expr = true, replace_keycodes = false })
   end
 end
 
@@ -882,6 +832,7 @@ vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
   callback = function(args)
     if should_enable(args.buf) then
       index.rebuild(args.buf)
+      render_if_enabled(args.buf)
     end
   end,
 })
@@ -936,8 +887,25 @@ vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
 })
 vim.api.nvim_create_autocmd({ "InsertEnter" }, {
   callback = function(args)
+    if should_enable(args.buf) then
+      if nb.config.strict_containment == "soft" or nb.config.strict_containment == true then
+        actions.contain_insert_entry(args.buf)
+      end
+    end
     update_completion(args.buf)
     update_textwidth(args.buf)
+  end,
+})
+
+vim.api.nvim_create_autocmd({ "InsertLeave" }, {
+  callback = function(args)
+    if not should_enable(args.buf) then
+      return
+    end
+    trim_cell_spacing(args.buf)
+    index.rebuild(args.buf)
+    actions.clamp_cursor_to_cell_left(args.buf)
+    render_if_enabled(args.buf)
   end,
 })
 
