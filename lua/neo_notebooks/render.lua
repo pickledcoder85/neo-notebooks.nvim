@@ -1,6 +1,7 @@
 local cells = require("neo_notebooks.cells")
 local output = require("neo_notebooks.output")
 local config = require("neo_notebooks").config
+local containment = require("neo_notebooks.containment")
 
 local M = {}
 
@@ -224,6 +225,10 @@ function M.render(bufnr)
   end
 
   local visible_idx = 0
+  local cursor_line = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local mode = vim.api.nvim_get_mode().mode
+  local in_insert = mode:sub(1, 1) == "i"
+  local active = containment.get_cell(bufnr, cursor_line)
   for _, cell in ipairs(cells_list) do
     if cell.finish < cell.start or cell.border == false then
       goto continue
@@ -280,6 +285,16 @@ function M.render(bufnr)
       if last_nonempty then
         render_finish = math.max(last_nonempty + 1, cell.start + 1)
       end
+    end
+    -- While editing, do not visually collapse trailing blank lines above the cursor.
+    if in_insert and active and active.id == cell.id then
+      local keep = 0
+      if containment.has_next_marker(bufnr, cell) then
+        keep = math.max(0, config.cell_gap_lines or 0)
+      end
+      local max_visible = math.max(cell.start + 1, cell.finish - keep)
+      local cursor_clamped = math.max(cell.start + 1, math.min(cursor_line, max_visible))
+      render_finish = math.max(render_finish, cursor_clamped)
     end
     local finish_line = math.min(math.max(render_finish, 0), math.max(line_count - 1, 0))
     local left_col = pad
