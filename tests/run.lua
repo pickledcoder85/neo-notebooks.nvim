@@ -131,6 +131,38 @@ with_buf({
   render.render(buf)
 end)
 
+-- Test: move operations preserve output lines by cell id
+with_buf({
+  "# %% [code]",
+  "print(1)",
+  "# %% [code]",
+  "print(2)",
+}, function(buf)
+  local state = index.rebuild(buf)
+  local first = state.list[1]
+  local second = state.list[2]
+  output.show_inline(buf, { id = first.id, start = first.start, finish = first.finish, type = first.type }, { "out1" })
+  output.show_inline(buf, { id = second.id, start = second.start, finish = second.finish, type = second.type }, { "out2" })
+
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 4, 0 })
+    actions.move_cell_up(buf)
+  end)
+  state = index.rebuild(buf)
+  ok(output.get_lines(buf, first.id)[1] == "out1", "first output preserved after move up")
+  ok(output.get_lines(buf, second.id)[1] == "out2", "second output preserved after move up")
+  render.render(buf)
+
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 2, 0 })
+    actions.move_cell_down(buf)
+  end)
+  state = index.rebuild(buf)
+  ok(output.get_lines(buf, first.id)[1] == "out1", "first output preserved after move down")
+  ok(output.get_lines(buf, second.id)[1] == "out2", "second output preserved after move down")
+  render.render(buf)
+end)
+
 -- Test: render rebuilds index after delete-like edits (prevents stale borders)
 with_buf({
   "# %% [code]",
