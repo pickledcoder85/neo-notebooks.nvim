@@ -522,6 +522,24 @@ function M.guard_visual_delete(bufnr, mode_override, first_line, last_line)
   return decision_keys(bufnr, decision)
 end
 
+function M.handle_paste_below(bufnr)
+  bufnr = bufnr or 0
+  local state = containment.cursor_state(bufnr)
+  if not state.cell then
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("p", true, false, true), "n", true)
+    return
+  end
+  if state.has_next and state.line >= state.protected_floor then
+    local cell = containment.ensure_body_line(bufnr, state.cell)
+    local insert_at = math.min(state.line + 1, cell.finish + 1)
+    vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
+    local index = require("neo_notebooks.index")
+    index.rebuild(bufnr)
+    vim.api.nvim_win_set_cursor(0, { insert_at, 0 })
+  end
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("p", true, false, true), "n", true)
+end
+
 function M.goto_cell_top(bufnr)
   bufnr = bufnr or 0
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1

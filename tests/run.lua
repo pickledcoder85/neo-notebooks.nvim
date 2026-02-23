@@ -230,6 +230,26 @@ with_buf({
   eq(lines[5], "# %% [code]", "next marker shifted down")
 end)
 
+-- Test: contained p from protected bottom inserts below and shifts next marker
+with_buf({
+  "# %% [markdown]",
+  "line 1",
+  "",
+  "# %% [code]",
+  "print(2)",
+}, function(buf)
+  index.rebuild(buf)
+  vim.fn.setreg('"', { "PASTE" }, "l")
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 3, 0 })
+    actions.handle_paste_below(buf)
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false)
+  end)
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  eq(lines[4], "PASTE", "paste goes below active line")
+  eq(lines[6], "# %% [code]", "next marker shifted down after paste")
+end)
+
 -- Test: normalize_spacing trims drifted trailing gaps
 with_buf({
   "# %% [code]",
