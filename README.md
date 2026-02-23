@@ -38,7 +38,7 @@ print("hello")
 - `:NeoNotebookOutputToggle` toggles output mode between inline and floating.
 - A spinner appears in the sign column while a cell is executing.
 - While a cell runs, an inline placeholder output shows `cell executing...`.
-- Moving cells clears all outputs (re-run cells to regenerate output).
+- Moving cells preserves outputs by stable cell ID.
 - `:NeoNotebookCellSelect` selects the current cell body.
 - `:NeoNotebookStats` shows a cell count summary.
 - `:NeoNotebookRunAbove` runs all code cells above the cursor.
@@ -77,6 +77,8 @@ require("neo_notebooks").setup({
   trim_cell_spacing = true,
   cell_gap_lines = 1,
   soft_contain = true,
+  strict_containment = "soft",
+  contain_line_nav = true,
   textwidth_in_cells = true,
   keymaps = {
     new_code = "]c",
@@ -171,6 +173,7 @@ When opening an empty `python` buffer, the plugin inserts a starter markdown cel
 Default `Shift+Enter` (`<S-CR>`) behavior:
 - Markdown cell: create a new code cell below and enter it.
 - Code cell: execute the cell, show output inline below it, create a new code cell, and enter it.
+- If the trailing code cell is empty, it will not create another empty trailing code cell.
 
 You can switch output style to a floating window with:
 
@@ -224,6 +227,8 @@ This sets `vim.b.completion = false` when entering markdown cells and restores t
 - `<M-j>` move cell down (accepts counts, e.g. `2<M-j>`)
 - `<leader>mG` move cell to top
 - `<leader>mgg` move cell to bottom
+- `j` / `k` stay inside the active cell body when `soft_contain=true` and `contain_line_nav=true`
+  (use `<C-n>` / `<C-p>` to move between cells)
 
 Note: `<M-...>` means the Meta key (typically `Alt` on most keyboards).
 - `<leader>ra` run all code cells
@@ -251,6 +256,7 @@ Export:
 Notes:
 - This is a best-effort conversion of cell sources only (no outputs or rich metadata).
 - Markdown and code cells are supported; other cell types are treated as code.
+- Import drops a leading blank code cell if it appears before the first markdown cell.
 
 ### Filetypes
 
