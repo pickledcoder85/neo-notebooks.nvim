@@ -26,6 +26,7 @@ globals_dict["__neo_notebooks_rich_max_rows"] = 20
 globals_dict["__neo_notebooks_rich_max_cols"] = 20
 globals_dict["__neo_notebooks_rich_tip_shown"] = False
 globals_dict["__neo_notebooks_debug_ansi"] = False
+globals_dict["__neo_notebooks_force_rich_console"] = True
 
 def neo_rich(enable=None):
     if enable is None:
@@ -42,6 +43,36 @@ def neo_ansi_debug(enable=None):
     return globals_dict["__neo_notebooks_debug_ansi"]
 
 globals_dict["neo_ansi_debug"] = neo_ansi_debug
+
+def neo_force_rich_console(enable=None):
+    if enable is None:
+        return globals_dict.get("__neo_notebooks_force_rich_console", True)
+    globals_dict["__neo_notebooks_force_rich_console"] = bool(enable)
+    return globals_dict["__neo_notebooks_force_rich_console"]
+
+globals_dict["neo_force_rich_console"] = neo_force_rich_console
+
+def _maybe_patch_rich_console():
+    if not globals_dict.get("__neo_notebooks_force_rich_console", True):
+        return
+    if not RICH_AVAILABLE:
+        return
+    try:
+        import rich.console as _rc
+    except Exception:
+        return
+    if getattr(_rc, "__neo_notebooks_patched", False):
+        return
+    _orig_console = _rc.Console
+
+    def _patched_console(*args, **kwargs):
+        kwargs.setdefault("force_terminal", True)
+        kwargs.setdefault("color_system", "standard")
+        kwargs.setdefault("no_color", False)
+        return _orig_console(*args, **kwargs)
+
+    _rc.Console = _patched_console
+    _rc.__neo_notebooks_patched = True
 
 def _is_pandas_obj(value):
     mod = getattr(value.__class__, "__module__", "")
@@ -64,10 +95,15 @@ def _render_pandas_table(value, out_buf):
     max_cols = int(globals_dict.get("__neo_notebooks_rich_max_cols", 20))
 
     df_view = df.iloc[:max_rows, :max_cols]
-    table = Table(show_header=True, header_style="bold cyan", title_style="bold magenta")
+    table = Table(
+        show_header=True,
+        header_style="bold cyan",
+        title_style="bold magenta",
+        border_style="bright_magenta",
+    )
     table.add_column("")
     for col in df_view.columns:
-        table.add_column(str(col), style="yellow")
+        table.add_column(str(col), style="bright_yellow")
 
     for idx, row in df_view.iterrows():
         cells = [str(idx)]
@@ -85,6 +121,7 @@ def handle(obj):
     code = obj.get("code", "")
     out_buf = io.StringIO()
     err_buf = io.StringIO()
+    _maybe_patch_rich_console()
     ok = True
     trace = ""
     with contextlib.redirect_stdout(out_buf), contextlib.redirect_stderr(err_buf):
