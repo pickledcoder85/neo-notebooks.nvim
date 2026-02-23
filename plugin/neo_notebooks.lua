@@ -790,20 +790,11 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
     if should_enable(args.buf) then
       ensure_top_padding(args.buf)
       index.rebuild(args.buf)
-      local cur_line = vim.api.nvim_win_get_cursor(0)[1] - 1
-      local cur_cell = cells.get_cell_at_line(args.buf, cur_line)
-      if cur_cell and cur_cell.border == false then
-        local state = index.get(args.buf)
-        for _, entry in ipairs(state.list) do
-          if entry.border ~= false then
-            local target = math.min(entry.start + 1, entry.finish)
-            vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
-            break
-          end
+
+      local function jump_to_first_body()
+        if not vim.api.nvim_buf_is_valid(args.buf) then
+          return
         end
-      end
-      if not vim.b[args.buf].neo_notebooks_opened then
-        vim.b[args.buf].neo_notebooks_opened = true
         local state = index.get(args.buf)
         for _, entry in ipairs(state.list) do
           if entry.border ~= false then
@@ -813,12 +804,22 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
           end
         end
       end
-      local line = vim.api.nvim_win_get_cursor(0)[1] - 1
-      local cell = cells.get_cell_at_line(args.buf, line)
-      if cell and line == cell.start then
-        local target = math.min(cell.start + 1, cell.finish)
-        vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
-      end
+
+      vim.schedule(function()
+        if not vim.api.nvim_buf_is_valid(args.buf) then
+          return
+        end
+        local cur_line = vim.api.nvim_win_get_cursor(0)[1] - 1
+        local cur_cell = cells.get_cell_at_line(args.buf, cur_line)
+        if cur_cell and (cur_cell.border == false or cur_line == cur_cell.start) then
+          jump_to_first_body()
+          return
+        end
+        if not vim.b[args.buf].neo_notebooks_opened then
+          vim.b[args.buf].neo_notebooks_opened = true
+          jump_to_first_body()
+        end
+      end)
     end
   end,
 })
