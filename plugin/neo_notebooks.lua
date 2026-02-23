@@ -806,6 +806,18 @@ set_default_keymaps = function(bufnr)
       editor.run_from_editor()
     end, opts)
   end
+
+  if nb.config.soft_contain then
+    vim.keymap.set("n", "o", function()
+      actions.open_line_below(bufnr)
+    end, opts)
+    vim.keymap.set("n", "O", function()
+      actions.open_line_above(bufnr)
+    end, opts)
+    vim.keymap.set("i", "<CR>", function()
+      actions.insert_newline_in_cell(bufnr)
+    end, { silent = true, buffer = bufnr })
+  end
 end
 
 nb._on_setup = function()

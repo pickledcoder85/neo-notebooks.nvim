@@ -21,6 +21,7 @@ M.config = {
   top_padding = 1,
   trim_cell_spacing = true,
   cell_gap_lines = 1,
+  soft_contain = true,
   keymaps = {
     new_code = "<leader><leader>ac",
     new_markdown = "<leader><leader>am",

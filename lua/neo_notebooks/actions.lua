@@ -272,6 +272,47 @@ function M.toggle_auto_render()
   vim.notify(string.format("NeoNotebook: auto_render = %s", tostring(nb.config.auto_render)), vim.log.levels.INFO)
 end
 
+function M.open_line_below(bufnr)
+  bufnr = bufnr or 0
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cell = cells.get_cell_at_line(bufnr, line)
+  local insert_at = math.min(line + 1, cell.finish + 1)
+  insert_at = math.max(insert_at, cell.start + 1)
+  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
+  local index = require("neo_notebooks.index")
+  index.rebuild(bufnr)
+  vim.api.nvim_win_set_cursor(0, { insert_at + 1, 0 })
+  vim.cmd("startinsert!")
+end
+
+function M.open_line_above(bufnr)
+  bufnr = bufnr or 0
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cell = cells.get_cell_at_line(bufnr, line)
+  local insert_at = math.max(cell.start + 1, line)
+  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
+  local index = require("neo_notebooks.index")
+  index.rebuild(bufnr)
+  vim.api.nvim_win_set_cursor(0, { insert_at + 1, 0 })
+  vim.cmd("startinsert!")
+end
+
+function M.insert_newline_in_cell(bufnr)
+  bufnr = bufnr or 0
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local col = vim.api.nvim_win_get_cursor(0)[2]
+  local cell = cells.get_cell_at_line(bufnr, line)
+  if line >= cell.finish then
+    local insert_at = cell.finish + 1
+    vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
+    local index = require("neo_notebooks.index")
+    index.rebuild(bufnr)
+    vim.api.nvim_win_set_cursor(0, { insert_at + 1, math.min(col, 0) })
+    return
+  end
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", true)
+end
+
 function M.fold_cell(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1

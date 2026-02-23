@@ -134,6 +134,7 @@ This document summarizes implementation choices and the evolution of core featur
 - `top_padding` inserts real blank lines at the top of the buffer on first open to keep the top border visible.
 - `trim_cell_spacing` collapses extra blank lines between cells once per buffer.
 - `cell_gap_lines` controls how many blank lines to keep between cells (default 1).
+- `soft_contain` remaps `o`, `O`, and `<CR>` to keep edits within a cell.
 
 ## Cell list enhancements
 
