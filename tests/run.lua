@@ -553,7 +553,7 @@ with_buf({
   ok(pos[1] <= 2, "insert entry moved above protected bottom line")
 end)
 
--- Test: contained j skips protected gap to next cell body
+-- Test: contained j clamps at active cell editable bottom
 with_buf({
   "# %% [markdown]",
   "m1",
@@ -568,10 +568,10 @@ with_buf({
     actions.move_line_down_contained(buf, 1)
     pos = vim.api.nvim_win_get_cursor(0)
   end)
-  eq(pos[1], 5, "contained j jumps to next cell body")
+  eq(pos[1], 2, "contained j clamps to active cell editable bottom")
 end)
 
--- Test: contained k from first body line jumps to previous cell editable bottom
+-- Test: contained k clamps at active cell body start
 with_buf({
   "# %% [markdown]",
   "m1",
@@ -586,7 +586,7 @@ with_buf({
     actions.move_line_up_contained(buf, 1)
     pos = vim.api.nvim_win_get_cursor(0)
   end)
-  eq(pos[1], 2, "contained k jumps to previous cell editable bottom")
+  eq(pos[1], 5, "contained k clamps within active cell")
 end)
 
 print("All tests passed")

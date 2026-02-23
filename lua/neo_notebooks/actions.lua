@@ -565,22 +565,11 @@ function M.move_line_down_contained(bufnr, count)
       vim.cmd("normal! j")
       return
     end
-    local idx = state.active_cell_index
-    local list = state.index and state.index.list or {}
-    local next_cell = (idx and list[idx + 1]) or nil
-    local target_cell = state.cell
     local target = state.line + 1
     local bottom = cell_editable_bottom(bufnr, state.cell)
-    if target > bottom then
-      if next_cell then
-        target = next_cell.start + 1
-        target_cell = next_cell
-      else
-        target = bottom
-      end
-    end
-    target = math.max(target_cell.start + 1, target)
-    local col = left_boundary_col(target_cell)
+    target = math.min(target, bottom)
+    target = math.max(state.body_start, target)
+    local col = left_boundary_col(state.cell)
     vim.api.nvim_win_set_cursor(0, { target + 1, col })
   end
 end
@@ -594,21 +583,9 @@ function M.move_line_up_contained(bufnr, count)
       vim.cmd("normal! k")
       return
     end
-    local idx = state.active_cell_index
-    local list = state.index and state.index.list or {}
-    local prev_cell = (idx and list[idx - 1]) or nil
-    local target_cell = state.cell
     local target = state.line - 1
-    if target < state.body_start then
-      if prev_cell then
-        target = cell_editable_bottom(bufnr, prev_cell)
-        target_cell = prev_cell
-      else
-        target = state.body_start
-      end
-    end
-    target = math.max(target_cell.start + 1, target)
-    local col = left_boundary_col(target_cell)
+    target = math.max(state.body_start, target)
+    local col = left_boundary_col(state.cell)
     vim.api.nvim_win_set_cursor(0, { target + 1, col })
   end
 end
