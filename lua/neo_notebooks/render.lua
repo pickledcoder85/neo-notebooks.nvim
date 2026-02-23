@@ -281,6 +281,14 @@ function M.render(bufnr)
       end
     end
     local finish_line = math.min(math.max(render_finish, 0), math.max(line_count - 1, 0))
+    local left_col = pad
+    local right_col = math.max(pad, pad + width - 1)
+    cell.layout = {
+      left_col = left_col,
+      right_col = right_col,
+      top_line = cell.start,
+      bottom_line = finish_line,
+    }
     local bottom_opts = {
       virt_lines = bottom_lines,
       priority = 100,
@@ -296,8 +304,6 @@ function M.render(bufnr)
     vim.api.nvim_buf_set_extmark(bufnr, M.ns, finish_line, 0, bottom_opts)
 
     if config.vertical_borders then
-      local left_col = pad
-      local right_col = math.max(pad, pad + width - 1)
       local text_pad = string.rep(" ", pad + 1)
       local start_line = math.min(math.max(cell.start, 0), math.max(line_count - 1, 0))
       local end_line = math.min(math.max(render_finish, 0), math.max(line_count - 1, 0))
