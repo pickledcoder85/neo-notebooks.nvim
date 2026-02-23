@@ -131,6 +131,38 @@ with_buf({
   render.render(buf)
 end)
 
+-- Test: move operations preserve output lines by cell id
+with_buf({
+  "# %% [code]",
+  "print(1)",
+  "# %% [code]",
+  "print(2)",
+}, function(buf)
+  local state = index.rebuild(buf)
+  local first = state.list[1]
+  local second = state.list[2]
+  output.show_inline(buf, { id = first.id, start = first.start, finish = first.finish, type = first.type }, { "out1" })
+  output.show_inline(buf, { id = second.id, start = second.start, finish = second.finish, type = second.type }, { "out2" })
+
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 4, 0 })
+    actions.move_cell_up(buf)
+  end)
+  state = index.rebuild(buf)
+  ok(output.get_lines(buf, first.id)[1] == "out1", "first output preserved after move up")
+  ok(output.get_lines(buf, second.id)[1] == "out2", "second output preserved after move up")
+  render.render(buf)
+
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 2, 0 })
+    actions.move_cell_down(buf)
+  end)
+  state = index.rebuild(buf)
+  ok(output.get_lines(buf, first.id)[1] == "out1", "first output preserved after move down")
+  ok(output.get_lines(buf, second.id)[1] == "out2", "second output preserved after move down")
+  render.render(buf)
+end)
+
 -- Test: render rebuilds index after delete-like edits (prevents stale borders)
 with_buf({
   "# %% [code]",
@@ -203,6 +235,36 @@ with_buf({
   ok(ok_import, err_import or "import failed")
   local lines = vim.api.nvim_buf_get_lines(buf, 0, 2, false)
   eq(lines[1], "# %% [markdown]", "leading blank code cell removed on import")
+end)
+
+-- Test: ipynb import/export trims trailing blank lines per cell
+with_buf({
+  "# %% [code]",
+  "print(1)",
+  "",
+  "",
+  "# %% [markdown]",
+  "# Title",
+  "",
+  "",
+}, function(buf)
+  local path = vim.fn.tempname() .. ".ipynb"
+  local ok_export, err_export = ipynb.export_ipynb(path, buf)
+  ok(ok_export, err_export or "export failed")
+
+  local buf2 = vim.api.nvim_create_buf(false, true)
+  local ok_import, err_import = ipynb.import_ipynb(path, buf2)
+  ok(ok_import, err_import or "import failed")
+  actions.normalize_spacing(buf2)
+  local lines = vim.api.nvim_buf_get_lines(buf2, 0, -1, false)
+  local marker_count = 0
+  for _, line in ipairs(lines) do
+    if line:match("^# %%%% %[(%w+)%]") then
+      marker_count = marker_count + 1
+    end
+  end
+  eq(marker_count, 2, "still two cells after trim")
+  vim.api.nvim_buf_delete(buf2, { force = true })
 end)
 
 -- Test: line insertion inside a cell shifts following cells

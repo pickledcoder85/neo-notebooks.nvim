@@ -9,6 +9,12 @@ This document summarizes implementation choices and the evolution of core featur
   - Sets buffer-local keymaps.
   - Runs auto-render via autocommands.
   - Stops Python sessions when buffers are wiped.
+- `lua/neo_notebooks/containment.lua`
+  - Canonical cursor/cell geometry helper.
+  - Computes active cell identity, editable body bounds, and protected floor.
+- `lua/neo_notebooks/policy.lua`
+  - Central policy engine for edit/navigation guards.
+  - Decides allow/redirect/block for Enter, delete, and protected-line operations.
 - `lua/neo_notebooks/cells.lua`
   - Parses cell markers (`# %% [code|markdown]`).
   - Identifies the current cell and inserts new cells.
@@ -80,9 +86,9 @@ This document summarizes implementation choices and the evolution of core featur
 - Delete: removes the current cell from the buffer.
 - Clear all output: removes inline output for all cells.
 - Yank: copies the current cell to the default register.
-- Move up/down: swaps the current cell with the previous/next cell and clears outputs.
+- Move up/down: swaps the current cell with the previous/next cell while preserving outputs by cell ID.
 - Select: enters visual line mode and selects the current cell body.
-- Move to top/bottom: relocates the current cell to the start or end of the notebook and clears outputs.
+- Move to top/bottom: relocates the current cell to the start or end of the notebook while preserving outputs by cell ID.
 
 ## Stats
 
@@ -135,6 +141,8 @@ This document summarizes implementation choices and the evolution of core featur
 - `trim_cell_spacing` collapses extra blank lines between cells once per buffer.
 - `cell_gap_lines` controls how many blank lines to keep between cells (default 1).
 - `soft_contain` remaps `o`, `O`, and `<CR>` to keep edits within a cell.
+- `strict_containment = "soft"` enforces containment on edit-entry points (InsertEnter/Enter handlers).
+- `contain_line_nav` remaps `j/k` to stay within active cell editable bounds.
 - `textwidth_in_cells` sets `textwidth` to the cell inner width for soft line wrapping.
 
 ## Cell list enhancements
@@ -157,6 +165,7 @@ This document summarizes implementation choices and the evolution of core featur
 ## .ipynb import/export
 
 - Import reads `.ipynb` JSON and converts cells to marker format.
+- Import drops a leading blank code cell when followed by markdown (common notebook artifact).
 - Export writes a minimal `.ipynb` with cell sources (no outputs).
 - Open creates a new buffer, sets `filetype=python`, and imports content.
 - When `auto_open_ipynb` is enabled, reading a `.ipynb` auto-opens it into a scratch buffer.
@@ -178,5 +187,4 @@ This document summarizes implementation choices and the evolution of core featur
 
 - Add a proper markdown renderer for headings/emphasis.
 - Provide navigation and cell list UI.
-- Add `.ipynb` import/export.
 - Add Lua tests for parsing and execution.

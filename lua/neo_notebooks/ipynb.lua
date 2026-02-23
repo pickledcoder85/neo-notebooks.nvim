@@ -32,8 +32,17 @@ local function normalize_lines(src)
   return out
 end
 
+local function trim_trailing_blank_lines(lines)
+  local out = vim.deepcopy(lines)
+  while #out > 0 and out[#out] == "" do
+    table.remove(out)
+  end
+  return out
+end
+
 local function source_is_blank(src)
-  for _, line in ipairs(normalize_lines(src or {})) do
+  local normalized = trim_trailing_blank_lines(normalize_lines(src or {}))
+  for _, line in ipairs(normalized) do
     if line ~= "" then
       return false
     end
@@ -69,7 +78,7 @@ function M.import_ipynb(path, bufnr)
     table.insert(lines, marker)
 
     local src = cell.source or {}
-    for _, line in ipairs(normalize_lines(src)) do
+    for _, line in ipairs(trim_trailing_blank_lines(normalize_lines(src))) do
       table.insert(lines, line)
     end
 
@@ -91,6 +100,7 @@ function M.export_ipynb(path, bufnr)
 
   for _, cell in ipairs(list) do
     local body = vim.api.nvim_buf_get_lines(bufnr, cell.start + 1, cell.finish + 1, false)
+    body = trim_trailing_blank_lines(body)
     local src = {}
     for _, line in ipairs(body) do
       table.insert(src, line .. "\n")

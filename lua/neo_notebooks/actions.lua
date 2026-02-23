@@ -215,8 +215,6 @@ local function move_once(bufnr, direction)
   local target = math.min(insert_at + 2, max_line)
   vim.api.nvim_win_set_cursor(0, { target, 0 })
   index.rebuild(bufnr)
-
-  output.clear_all(bufnr)
 end
 
 function M.move_cell_up(bufnr, line, count)
@@ -266,7 +264,6 @@ function M.move_cell_top(bufnr)
   end
   vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
   index.rebuild(bufnr)
-  output.clear_all(bufnr)
 end
 
 function M.move_cell_bottom(bufnr)
@@ -300,7 +297,6 @@ function M.move_cell_bottom(bufnr)
   end
   vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
   index.rebuild(bufnr)
-  output.clear_all(bufnr)
 end
 
 function M.toggle_output_mode()
