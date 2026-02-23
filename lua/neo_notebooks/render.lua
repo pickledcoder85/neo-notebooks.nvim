@@ -277,7 +277,7 @@ function M.render(bufnr)
         end
       end
       if last_nonempty then
-        render_finish = math.max(last_nonempty, cell.start + 1)
+        render_finish = math.max(last_nonempty + 1, cell.start + 1)
       end
     end
     local finish_line = math.min(math.max(render_finish, 0), math.max(line_count - 1, 0))
