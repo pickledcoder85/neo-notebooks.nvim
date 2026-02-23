@@ -4,23 +4,14 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Now
 
-- Cell spacing + containment polish:
-  - Keep cursor inside active cell on `o`, `O`, `<CR>`, `gg`, `G`.
-  - Maintain a single blank line inside each cell (before bottom border).
-  - Preserve `cell_gap_lines` between cells without drifting gaps.
-  - Ensure line insertions shift all cells below the active cell.
-- Verify inline output behavior for `<leader>r` and `<S-CR>` after branch merge.
-- Add `.ipynb` round-trip tests (export then import) and document limitations.
+- Verify inline output behavior for `<leader>r` and `<S-CR>` after merge on real notebooks.
 - Reconcile floating UI experiments vs. mainline behavior (keep experimental or drop).
-- Verify output blocks render attached to cell bottom (no overlap), including after moves.
-- Option B: `.ipynb` native workflow (new feature/test branch only):
-  - Add `ftdetect` for `*.ipynb`.
-  - Auto-import on open, auto-export on save.
-  - Set default filetypes to `{ "ipynb" }` once stabilized.
-- Manual validation checklist (main, `new_notebook.py`):
+- Verify output blocks render attached to cell bottom (no overlap), including after moves and reruns.
+- Decide whether to preserve outputs on cell move (currently clears all outputs) now that alignment is more stable.
+- Manual validation checklist (main, `notebooks/test.ipynb`):
   - Setup:
     1. `git checkout main`
-    2. Open `new_notebook.py` in Neovim.
+    2. Open `notebooks/test.ipynb` in Neovim.
   - Expected behaviors to test:
     1. Cell navigation
        - Press `<C-n>` and `<C-p>`.
@@ -36,7 +27,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
        - Expect: jumps to next cell if it exists, otherwise creates a new code cell and enters insert mode.
     4. Move cells
        - Put cursor in a cell and run `<M-k>` or `<M-j>`.
-       - Expect: cell moves up/down and still runs/output attaches correctly.
+       - Expect: cell moves up/down; rerun cell and output attaches correctly.
     5. Split/Duplicate/Delete
        - Split: `<leader>xs`
        - Duplicate: `<leader>yd`
@@ -72,6 +63,20 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Done (recent)
 
+- Cell spacing + containment polish:
+  - Cursor containment for `o`, `O`, `<CR>`, `gg`, `G`.
+  - Single internal blank-line spacing and `cell_gap_lines` stabilization.
+  - Insert/delete guards for marker/protected zones (`dd`, `x`, `D`, visual `d`, `<BS>`, `<Del>`, `p`).
+  - Soft strict containment with cell-aware `j/k` clamped within active cell.
+- `.ipynb` native workflow:
+  - `ftdetect` for `*.ipynb`.
+  - Auto-import on open and auto-export on save.
+  - Default filetypes include `"ipynb"`.
+- `.ipynb` round-trip tests (export/import) plus leading blank-code import normalization.
+- Render/index synchronization improvements to prevent boundary overlap and stale placement.
+- `<S-CR>` run-and-next fixes:
+  - logical insert placement after last non-empty content,
+  - guard against infinite empty trailing code-cell creation.
 - Merged cell-index-cache into `main`.
 - Stable cell IDs via extmarks.
 - Cell index cache with list + by_id.
