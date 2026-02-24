@@ -899,6 +899,9 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
       trim_cell_spacing(args.buf)
       index.mark_dirty(args.buf)
       index.attach(args.buf)
+      if nb.config.notebook_scrolloff and nb.config.notebook_scrolloff > 0 then
+        vim.api.nvim_set_option_value("scrolloff", nb.config.notebook_scrolloff, { win = 0 })
+      end
 
       local function jump_to_first_body()
         if not vim.api.nvim_buf_is_valid(args.buf) then

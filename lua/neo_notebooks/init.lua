@@ -25,6 +25,7 @@ M.config = {
   strict_containment = "soft",
   contain_line_nav = true,
   textwidth_in_cells = true,
+  notebook_scrolloff = 5,
   keymaps = {
     new_code = "<leader><leader>ac",
     new_markdown = "<leader><leader>am",
