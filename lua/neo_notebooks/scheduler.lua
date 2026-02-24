@@ -26,6 +26,12 @@ local function render_now(bufnr, entry)
   end
   local win = vim.fn.bufwinid(bufnr)
   if win == -1 then
+    local wins = vim.fn.win_findbuf(bufnr)
+    if wins and #wins > 0 then
+      win = wins[1]
+    end
+  end
+  if win == -1 then
     clear_entry(bufnr)
     return
   end
