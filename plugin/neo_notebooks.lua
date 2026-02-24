@@ -922,6 +922,9 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
       trim_cell_spacing(args.buf)
       index.mark_dirty(args.buf)
       index.attach(args.buf)
+      if nb.config.auto_render then
+        scheduler.request_render(args.buf, { immediate = true })
+      end
       if nb.config.notebook_scrolloff and nb.config.notebook_scrolloff > 0 then
         vim.api.nvim_set_option_value("scrolloff", nb.config.notebook_scrolloff, { win = 0 })
       end
