@@ -10,6 +10,7 @@ best-effort summary based on existing documentation and recent commits.
 - Added render scheduler for debounced redraws and spinner updates.
 - Added `:NeoNotebookCellIndexToggle` to toggle numeric cell index labels.
 - Improved cursor clamping to cell boundaries after navigation and run-and-next.
+- Changed default run-above/run-below mappings to `<leader>rk`/`<leader>rj`.
 
 ## Earlier (high-level)
 

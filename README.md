@@ -110,8 +110,8 @@ require("neo_notebooks").setup({
     toggle_output = "<leader>tt",
     select_cell = "<leader>vs",
     stats = "<leader>ns",
-    run_above = "<leader>rA",
-    run_below = "<leader>rB",
+    run_above = "<leader>rk",
+    run_below = "<leader>rj",
     toggle_auto_render = "<leader>tr",
     toggle_overlay = "<leader>to",
     help = "<leader>nh",
@@ -247,8 +247,8 @@ Note: `<M-...>` means the Meta key (typically `Alt` on most keyboards).
 - `<leader>rs` restart python session
 - `<leader>vs` select current cell body
 - `<leader>ns` show cell stats
-- `<leader>rA` run all code cells above
-- `<leader>rB` run all code cells below
+- `<leader>rk` run all code cells above
+- `<leader>rj` run all code cells below
 - `<leader>tr` toggle auto-render
 
 ### .ipynb import/export (basic)
