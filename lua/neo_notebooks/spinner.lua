@@ -113,4 +113,12 @@ function M.get_frame_or_last(bufnr, cell_id)
   return last_frames[key(bufnr, cell_id)]
 end
 
+function M.is_active(bufnr, cell_id)
+  bufnr = bufnr or 0
+  if not cell_id then
+    return false
+  end
+  return timers[key(bufnr, cell_id)] ~= nil
+end
+
 return M

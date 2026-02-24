@@ -348,7 +348,7 @@ local function render_cell(bufnr, ctx, cell, visible_idx, active, in_insert, cur
     local out_lines = out_entry and out_entry.lines or nil
     if out_lines and #out_lines > 0 then
       local spin = spinner.get_frame_or_last(bufnr, cell.id)
-      local reserve_spin = out_entry and out_entry.executing == true
+      local reserve_spin = spinner.is_active(bufnr, cell.id) or (out_entry and out_entry.executing == true)
       local out_block = output_block(out_lines, width, pad, "NeoNotebookOutput", spin, reserve_spin)
       for _, line in ipairs(out_block) do
         table.insert(bottom_lines, line)
