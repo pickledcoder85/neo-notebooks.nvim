@@ -729,10 +729,15 @@ function M.goto_line_first_nonblank_contained(bufnr)
   local line = state.line
   local text = vim.api.nvim_buf_get_lines(bufnr, line, line + 1, false)[1] or ""
   local first = text:find("%S")
-  local left_col = left_boundary_col(state.cell)
+  local left_col = nil
+  if state.cell and state.cell.layout and state.cell.layout.left_col then
+    left_col = state.cell.layout.left_col
+  else
+    left_col = left_boundary_col(state.cell) - 1
+  end
   local col = left_col
   if first then
-    col = math.max(left_col, first - 1)
+    col = left_col + (first - 1)
   end
   vim.api.nvim_win_set_cursor(0, { line + 1, col })
 end
