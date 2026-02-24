@@ -228,6 +228,13 @@ local function parse_cmd(cmd)
   return { cmd }
 end
 
+local function resolve_bufnr(bufnr)
+  if not bufnr or bufnr == 0 then
+    return vim.api.nvim_get_current_buf()
+  end
+  return bufnr
+end
+
 local function is_job_alive(job_id)
   if not job_id then
     return false
@@ -324,7 +331,7 @@ local function handle_response(session, resp)
 end
 
 local function ensure_session(bufnr)
-  bufnr = bufnr or 0
+  bufnr = resolve_bufnr(bufnr)
   local session = sessions[bufnr]
   if session and is_job_alive(session.job) then
     return session
@@ -389,7 +396,7 @@ local function ensure_session(bufnr)
 end
 
 function M.stop_session(bufnr)
-  bufnr = bufnr or 0
+  bufnr = resolve_bufnr(bufnr)
   local session = sessions[bufnr]
   if not session then
     return
@@ -403,6 +410,7 @@ end
 
 local function build_request(bufnr, line, opts)
   opts = opts or {}
+  bufnr = resolve_bufnr(bufnr)
   local code, err = cells.get_cell_code(bufnr, line)
   if err then
     vim.notify(err, vim.log.levels.WARN)
@@ -479,7 +487,7 @@ local function make_queue_drainer(session)
 end
 
 function M.enqueue_cell(bufnr, line, opts)
-  bufnr = bufnr or 0
+  bufnr = resolve_bufnr(bufnr)
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
   opts = opts or {}
   local req = build_request(bufnr, line, opts)
