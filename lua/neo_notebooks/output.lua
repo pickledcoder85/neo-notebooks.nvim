@@ -98,8 +98,8 @@ function M.clear_by_id(bufnr, cell_id)
   local timing_store = get_timing_store(bufnr)
   timing_store[cell_id] = nil
   set_timing_store(bufnr, timing_store)
-  local render = require("neo_notebooks.render")
-  render.render_cells(bufnr, { cell_id })
+  local scheduler = require("neo_notebooks.scheduler")
+  scheduler.request_render(bufnr, { immediate = true, cell_ids = { cell_id } })
 end
 
 function M.get_lines(bufnr, cell_id)
@@ -222,8 +222,8 @@ function M.show_inline(bufnr, cell, lines, opts)
           store[cell.id] = existing
           set_buf_var(bufnr, "neo_notebooks_output_store", store)
         end
-        local render = require("neo_notebooks.render")
-        render.render_cells(bufnr, { cell.id })
+        local scheduler = require("neo_notebooks.scheduler")
+        scheduler.request_render(bufnr, { immediate = true, cell_ids = { cell.id } })
       end
       if vim.g.neo_notebooks_debug_output then
         vim.notify("show_inline skipped (same output)", vim.log.levels.INFO)
@@ -257,8 +257,8 @@ function M.show_inline(bufnr, cell, lines, opts)
   if vim.g.neo_notebooks_debug_output then
     vim.notify("show_inline render_outputs", vim.log.levels.INFO)
   end
-  local render = require("neo_notebooks.render")
-  render.render_cells(bufnr, { cell.id })
+  local scheduler = require("neo_notebooks.scheduler")
+  scheduler.request_render(bufnr, { immediate = true, cell_ids = { cell.id } })
 end
 
 function M.update_executing_line(bufnr, cell_id, frame)
