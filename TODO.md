@@ -62,6 +62,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
 - True floating-cell UI mode (editable floats synced to hidden buffer).
 - Improved markdown rendering (headings, emphasis).
 - Optional markdown cell rendering polish (conceal/emphasis; Tree-sitter-based).
+- Fix undo (`u`) keeping cursor position within current cell (avoid jump to buffer end).
 - Optional fun keymap: insert a new code cell containing a mini terminal snake game.
   - Game runs inline within the cell boundaries.
   - Random apple placement.
