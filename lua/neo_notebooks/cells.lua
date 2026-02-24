@@ -102,6 +102,10 @@ function M.insert_cell_below(bufnr, line, cell_type)
   bufnr = bufnr or 0
   local marker = "# %% [" .. normalize_cell_type(cell_type) .. "]"
   local insert_line = line + 1
+  local cell = M.get_cell_at_line(bufnr, line)
+  if cell and cell.finish then
+    insert_line = cell.finish + 1
+  end
   vim.api.nvim_buf_set_lines(bufnr, insert_line, insert_line, false, { marker, "" })
   local index = require("neo_notebooks.index")
   index.mark_dirty(bufnr)

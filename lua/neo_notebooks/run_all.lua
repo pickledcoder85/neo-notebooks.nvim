@@ -7,6 +7,9 @@ local M = {}
 
 function M.run_all(bufnr)
   bufnr = bufnr or 0
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
   local list = cells.get_cells(bufnr)
   for _, cell in ipairs(list) do
     if cell.type == "code" then

@@ -43,9 +43,10 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Next
 
-- Incremental index updates (avoid full rebuilds on every edit).
+- True dirty-range index updates (avoid full-buffer cell scans where possible).
+  - Robustness-first: keep full rebuild fallback whenever partial updates are unsafe.
+- Partial cell rerendering (redraw affected cells only, not full notebook).
 - Stabilize cell IDs across marker edits and deletions.
-- Execution queue (serialize outputs for run-all/above/below).
 - Output collapse/expand per cell.
 - Add a UI action menu (Telescope-style picker).
 
@@ -60,6 +61,12 @@ This file tracks project scope and the order of work. Items can be moved as prio
 - Optional inline image rendering via kitty protocol.
 - True floating-cell UI mode (editable floats synced to hidden buffer).
 - Improved markdown rendering (headings, emphasis).
+- Optional markdown cell rendering polish (conceal/emphasis; Tree-sitter-based).
+- Optional fun keymap: insert a new code cell containing a mini terminal snake game.
+  - Game runs inline within the cell boundaries.
+  - Random apple placement.
+  - Movement controls via `h/j/k/l`.
+  - `<Esc>` exits game mode and restores the cell to a normal editable code cell.
 
 ## Done (recent)
 
@@ -74,6 +81,9 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Default filetypes include `"ipynb"`.
 - `.ipynb` round-trip tests (export/import) plus leading blank-code import normalization.
 - Render/index synchronization improvements to prevent boundary overlap and stale placement.
+- Lazy index invalidation + changedtick-aware rebuilds.
+- Debounced per-buffer render scheduler for high-frequency events.
+- Execution queue for serialized per-buffer runs (run cell / run-all / above / below).
 - `<S-CR>` run-and-next fixes:
   - logical insert placement after last non-empty content,
   - guard against infinite empty trailing code-cell creation.

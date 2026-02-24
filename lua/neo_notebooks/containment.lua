@@ -22,6 +22,7 @@ function M.get_cell(bufnr, line)
     start = entry.start,
     finish = entry.finish,
     border = entry.border,
+    layout = entry.layout,
   }
 end
 

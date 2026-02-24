@@ -33,6 +33,9 @@ end
 
 function M.run_above(bufnr, line)
   bufnr = bufnr or 0
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
   local list = cells.get_cells(bufnr)
   for _, cell in ipairs(list) do
@@ -44,10 +47,15 @@ end
 
 function M.run_below(bufnr, line)
   bufnr = bufnr or 0
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+  local current = cells.get_cell_at_line(bufnr, line)
+  local current_start = current and current.start or line
   local list = cells.get_cells(bufnr)
   for _, cell in ipairs(list) do
-    if cell.type == "code" and cell.start > line then
+    if cell.type == "code" and cell.start >= current_start then
       run_cell(bufnr, cell)
     end
   end

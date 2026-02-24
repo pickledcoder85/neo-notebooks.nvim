@@ -153,7 +153,7 @@ local function format_duration(duration_ms)
   return string.format("%dm%.0fs", minutes, rem)
 end
 
-local function output_block(lines, width, pad, hl, spin)
+local function output_block(lines, width, pad, hl, spin, reserve_spin)
   local block = {}
   local function border(left, right)
     return string.rep(" ", pad) .. cell_border(width, left, right)
@@ -165,14 +165,15 @@ local function output_block(lines, width, pad, hl, spin)
 
   local inner_width = math.max(0, width - 2)
   for i, line in ipairs(lines) do
-    if spin and i == 1 then
-      line = spin .. " " .. line
-    end
     local timing_label = nil
     local timing_leading = nil
     if i == 1 and line:find("^%s*%[") and line:find("%]$") then
       timing_label = line:match("(%[[^%]]+%])")
       timing_leading = line:match("^(%s*)") or ""
+    end
+    if not timing_label and i == 1 and (spin or reserve_spin) then
+      local frame = spin or " "
+      line = frame .. " " .. line
     end
     if timing_label then
       local used = vim.fn.strdisplaywidth(timing_leading) + vim.fn.strdisplaywidth(timing_label)
@@ -278,6 +279,10 @@ local function update_tail_pad(bufnr, cells_list)
       tail_pad = #out_lines + 2
     end
   end
+  local min_pad = config.notebook_scrolloff or 0
+  if min_pad > 0 then
+    tail_pad = math.max(tail_pad, min_pad)
+  end
   if tail_pad > 0 then
     ensure_tail_pad(bufnr, tail_pad)
   else
@@ -342,8 +347,14 @@ local function render_cell(bufnr, ctx, cell, visible_idx, active, in_insert, cur
     local out_entry = output.get_entry(bufnr, cell.id)
     local out_lines = out_entry and out_entry.lines or nil
     if out_lines and #out_lines > 0 then
-      local spin = spinner.get_frame(bufnr, cell.id)
-      local out_block = output_block(out_lines, width, pad, "NeoNotebookOutput", spin)
+      local executing = out_entry and out_entry.executing == true
+      local spin = nil
+      local reserve_spin = false
+      if not executing then
+        spin = spinner.get_frame_or_last(bufnr, cell.id)
+        reserve_spin = spinner.is_active(bufnr, cell.id)
+      end
+      local out_block = output_block(out_lines, width, pad, "NeoNotebookOutput", spin, reserve_spin)
       for _, line in ipairs(out_block) do
         table.insert(bottom_lines, line)
       end

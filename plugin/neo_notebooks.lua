@@ -206,10 +206,12 @@ vim.api.nvim_create_user_command("NeoNotebookRender", function()
   render.render(0)
 end, {})
 
+
 vim.api.nvim_create_user_command("NeoNotebookCellNew", function(opts)
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local insert_line = cells.insert_cell_below(0, line, opts.args)
   vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
+  actions.clamp_cursor_to_cell_left(0, { force = true })
   render_if_enabled(0)
   vim.cmd("startinsert")
 end, { nargs = "?", complete = function() return { "code", "markdown" } end })
@@ -230,7 +232,7 @@ local function run_cell_with_output(line, cell)
     cell.finish = entry.finish
   end
   if nb.config.output == "inline" then
-    exec.run_cell(0, line, {
+    exec.run_cell(bufnr, line, {
       on_output = function(lines, cell_id, duration_ms)
         output.show_inline(bufnr, {
           id = cell_id or cell.id,
@@ -242,7 +244,7 @@ local function run_cell_with_output(line, cell)
       cell_id = cell.id,
     })
   else
-    exec.run_cell(0, line)
+    exec.run_cell(bufnr, line)
   end
 end
 
@@ -386,7 +388,7 @@ vim.api.nvim_create_user_command("NeoNotebookCellMoveDown", function()
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookRunAll", function()
-  run_all.run_all(0)
+  run_all.run_all(vim.api.nvim_get_current_buf())
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookRestart", function()
@@ -406,11 +408,11 @@ vim.api.nvim_create_user_command("NeoNotebookStats", function()
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookRunAbove", function()
-  run_subset.run_above(0)
+  run_subset.run_above(vim.api.nvim_get_current_buf())
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookRunBelow", function()
-  run_subset.run_below(0)
+  run_subset.run_below(vim.api.nvim_get_current_buf())
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookHelp", function()
@@ -585,6 +587,7 @@ set_default_keymaps = function(bufnr)
       local line = vim.api.nvim_win_get_cursor(0)[1] - 1
       local insert_line = cells.insert_cell_below(0, line, "code")
       vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
+      actions.clamp_cursor_to_cell_left(0, { force = true })
       render_if_enabled(0)
       vim.cmd("startinsert")
     end, opts)
@@ -595,6 +598,7 @@ set_default_keymaps = function(bufnr)
       local line = vim.api.nvim_win_get_cursor(0)[1] - 1
       local insert_line = cells.insert_cell_below(0, line, "markdown")
       vim.api.nvim_win_set_cursor(0, { insert_line + 2, 0 })
+      actions.clamp_cursor_to_cell_left(0, { force = true })
       render_if_enabled(0)
       vim.cmd("startinsert")
     end, opts)
@@ -821,6 +825,9 @@ set_default_keymaps = function(bufnr)
       vim.keymap.set("n", "k", function()
         actions.move_line_up_contained(bufnr, vim.v.count1)
       end, opts)
+      vim.keymap.set("n", "_", function()
+        actions.goto_line_first_nonblank_contained(bufnr)
+      end, opts)
     end
     vim.keymap.set("n", "<CR>", function()
       actions.handle_enter_normal(bufnr)
@@ -896,6 +903,12 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
       trim_cell_spacing(args.buf)
       index.mark_dirty(args.buf)
       index.attach(args.buf)
+      if nb.config.auto_render then
+        scheduler.request_render(args.buf, { immediate = true })
+      end
+      if nb.config.notebook_scrolloff and nb.config.notebook_scrolloff > 0 then
+        vim.api.nvim_set_option_value("scrolloff", nb.config.notebook_scrolloff, { win = 0 })
+      end
 
       local function jump_to_first_body()
         if not vim.api.nvim_buf_is_valid(args.buf) then
@@ -926,6 +939,14 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
           jump_to_first_body()
         end
       end)
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd({ "WinEnter" }, {
+  callback = function(args)
+    if should_enable(args.buf) and nb.config.auto_render then
+      scheduler.request_render(args.buf, { immediate = true })
     end
   end,
 })
