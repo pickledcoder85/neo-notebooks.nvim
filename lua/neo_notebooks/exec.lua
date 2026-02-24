@@ -512,23 +512,4 @@ function M.run_cell(bufnr, line, opts)
   M.enqueue_cell(bufnr, line, opts)
 end
 
-function M.debug_state()
-  local out = {}
-  for bufnr, session in pairs(sessions) do
-    local pending_count = 0
-    for _ in pairs(session.pending or {}) do
-      pending_count = pending_count + 1
-    end
-    table.insert(out, {
-      bufnr = bufnr,
-      job = session.job,
-      job_alive = is_job_alive(session.job),
-      active_request_id = session.active_request_id,
-      queue_len = session.queue and #session.queue or 0,
-      pending = pending_count,
-    })
-  end
-  return out
-end
-
 return M

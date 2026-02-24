@@ -250,7 +250,7 @@ Note: `<M-...>` means the Meta key (typically `Alt` on most keyboards).
 - `<leader>vs` select current cell body
 - `<leader>ns` show cell stats
 - `<leader>rk` run all code cells above
-- `<leader>rj` run all code cells below
+- `<leader>rj` run current + below code cells
 - `<leader>tr` toggle auto-render
 
 ### .ipynb import/export (basic)
