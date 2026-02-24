@@ -39,13 +39,15 @@ This document summarizes implementation choices and the evolution of core featur
 - The Lua side sends JSON lines: `{ "id": n, "code": "..." }`.
 - The Python side executes code in a shared `globals_dict` so state persists across cells.
 - If the last statement is an expression, it is evaluated and printed (Jupyter-like).
+- A per-buffer FIFO queue in `exec.lua` serializes requests so only one cell executes
+  at a time; the next queued request starts when the previous response is handled.
 
 ## Output handling
 
 - Output defaults to inline `virt_lines` under the cell.
 - Floating output is still available by setting `output = "float"`.
 - Floating output buffers are `nofile` and `bufhidden=wipe` and close on `q` or `<Esc>`.
-- While a cell is executing, a spinner is rendered in the sign column.
+- While a cell is executing, a spinner is rendered on the first inline output row.
 - While a cell runs, the output area shows a placeholder line.
 - After execution, the inline output prepends a right-aligned timing line.
 - Execution duration is measured around the request/response boundary and stored per cell ID.
@@ -104,6 +106,8 @@ This document summarizes implementation choices and the evolution of core featur
 - `NeoNotebookRunAbove` runs code cells above the cursor.
 - `NeoNotebookRunBelow` runs code cells below the cursor.
 - `NeoNotebookAutoRenderToggle` toggles auto-rendering.
+- `run_all` / `run_above` / `run_below` now benefit from serialized execution via the
+  shared execution queue, preventing overlapping requests/output races.
 
 ## Output rendering
 
@@ -155,8 +159,9 @@ This document summarizes implementation choices and the evolution of core featur
 ## Cell index cache
 
 - The plugin stores a per-buffer cache of cell ranges to avoid repeated parsing.
-- The cache is rebuilt on buffer changes, with incremental line-delta updates
-  applied when edits do not touch marker lines.
+- Buffer mutations mark the cache dirty; reads rebuild lazily only when needed.
+- Cache validity is also guarded by `changedtick`.
+- When edits do not touch marker lines, incremental line-delta updates are applied.
 - Cache format: `list` (ordered) and `by_id` (O(1) lookup).
 - Each cell has a stable `cell_id` stored as an extmark on the marker line.
 - Each cell entry stores `body_len` for positioning math.
@@ -169,6 +174,13 @@ This document summarizes implementation choices and the evolution of core featur
   immediate redraws on every event.
 - Scheduler requests can target specific cell IDs to redraw only affected cells,
   falling back to full renders when needed.
+
+## Render scheduling
+
+- `lua/neo_notebooks/scheduler.lua` coalesces bursty render requests per buffer.
+- Text-change hooks and spinner ticks request debounced renders instead of forcing
+  immediate redraws on every event.
+- Immediate redraws are still used where UX requires direct feedback.
 
 ## Tests
 

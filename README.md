@@ -36,7 +36,7 @@ print("hello")
 - `:NeoNotebookRunAll` runs all code cells.
 - `:NeoNotebookRestart` restarts the Python session and clears outputs.
 - `:NeoNotebookOutputToggle` toggles output mode between inline and floating.
-- A spinner appears in the sign column while a cell is executing.
+- While a cell is executing, a spinner animates on the first inline output row.
 - While a cell runs, an inline placeholder output shows `cell executing...`.
 - After execution, inline output includes a right-aligned timing line (e.g. `[8.56ms]`).
 - Moving cells preserves outputs by stable cell ID.
@@ -127,13 +127,23 @@ require("neo_notebooks").setup({
 - Cells are separated by lines like `# %% [code]` or `# %% [markdown]`.
 - Virtual borders are rendered using virtual lines; output is inline by default.
 - The last expression in a code cell is printed automatically (Jupyter-like).
+- Cell execution is serialized per buffer via an internal FIFO queue (including
+  run-all/above/below), so outputs land in predictable order.
 - This is a minimal experimental baseline and intended to be expanded.
 
 ### Cell index cache
 
-The plugin maintains a per-buffer cell index cache and rebuilds it on buffer changes to speed up lookups.
+The plugin maintains a per-buffer cell index cache with lazy invalidation.
+Buffer mutations mark the cache as dirty, and reads rebuild only when needed.
+The cache also tracks buffer `changedtick` to avoid stale reads.
 The cache stores both an ordered list and an ID map for O(1) access.
 Each cell has a stable `cell_id` stored as an extmark on the marker line.
+
+### Render scheduling
+
+High-frequency updates (text changes and execution spinner ticks) are coalesced by a
+small per-buffer render scheduler. This reduces redundant full redraws during bursts
+of edits while keeping output and borders in sync.
 
 ### Rich output (optional)
 
