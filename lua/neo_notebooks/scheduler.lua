@@ -24,16 +24,23 @@ local function render_now(bufnr, entry)
     clear_entry(bufnr)
     return
   end
-  local render = require("neo_notebooks.render")
-  if entry and entry.full == false and entry.cell_ids then
-    local ids = {}
-    for id in pairs(entry.cell_ids) do
-      table.insert(ids, id)
-    end
-    render.render_cells(bufnr, ids)
-  else
-    render.render(bufnr)
+  local win = vim.fn.bufwinid(bufnr)
+  if win == -1 then
+    clear_entry(bufnr)
+    return
   end
+  local render = require("neo_notebooks.render")
+  vim.api.nvim_win_call(win, function()
+    if entry and entry.full == false and entry.cell_ids then
+      local ids = {}
+      for id in pairs(entry.cell_ids) do
+        table.insert(ids, id)
+      end
+      render.render_cells(bufnr, ids)
+    else
+      render.render(bufnr)
+    end
+  end)
   clear_entry(bufnr)
 end
 
