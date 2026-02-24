@@ -164,7 +164,7 @@ function M.delete_cell(bufnr, line)
     local body_line = math.min(next_cell.start + 1, next_cell.finish)
     vim.api.nvim_win_set_cursor(0, { body_line + 1, 0 })
   end
-  M.clamp_cursor_to_cell_left(bufnr)
+  M.clamp_cursor_to_cell_left(bufnr, { force = true, clamp_to_line = true })
 end
 
 function M.yank_cell(bufnr, line)
