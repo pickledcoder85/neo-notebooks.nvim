@@ -321,9 +321,18 @@ local function handle_response(session, resp)
         resolved = cell.id
       end
     end
-    spinner.stop(pending.bufnr, resolved)
-    if resolved then
-      output.clear_by_id(pending.bufnr, resolved)
+    local newer = false
+    if resolved and pending.gen and session.cell_generation then
+      local current = session.cell_generation[resolved]
+      if current and current ~= pending.gen then
+        newer = true
+      end
+    end
+    if not newer then
+      spinner.stop(pending.bufnr, resolved)
+      if resolved then
+        output.clear_by_id(pending.bufnr, resolved)
+      end
     end
     session.pending[id] = nil
     if session.active_request_id == id then
@@ -400,6 +409,7 @@ local function ensure_session(bufnr)
     queue = {},
     active_request_id = nil,
     drain_queue = nil,
+    cell_generation = {},
   }
 
   session.job = vim.fn.jobstart(cmd, {
@@ -505,6 +515,11 @@ local function dispatch_request(session, req)
     code_hash = req.code_hash,
     started_at = vim.loop.hrtime(),
   }
+  if req.cell_id then
+    local gen = (session.cell_generation[req.cell_id] or 0) + 1
+    session.cell_generation[req.cell_id] = gen
+    session.pending[id].gen = gen
+  end
   session.active_request_id = id
   if req.cell_id then
     spinner.start(req.bufnr, req.cell_id, req.line)
@@ -571,7 +586,6 @@ function M.enqueue_cell(bufnr, line, opts)
         spinner.stop(bufnr, req.cell_id)
         pending.interrupted = true
         session.active_request_id = nil
-        output.clear_by_id(bufnr, req.cell_id)
       end
     end
   end
