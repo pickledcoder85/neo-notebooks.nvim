@@ -305,8 +305,20 @@ local function handle_response(session, resp)
     return
   end
   local trace = resp.trace or ""
-  if pending.interrupted and trace:find("KeyboardInterrupt", 1, true) then
-    spinner.stop(pending.bufnr, pending.cell_id)
+  local err = resp.err or ""
+  if pending.interrupted and (trace:find("KeyboardInterrupt", 1, true) or err:find("KeyboardInterrupt", 1, true)) then
+    local resolved = pending.cell_id
+    if not resolved and pending.line then
+      local index = require("neo_notebooks.index")
+      local cell = index.find_cell(pending.bufnr, pending.line)
+      if cell then
+        resolved = cell.id
+      end
+    end
+    spinner.stop(pending.bufnr, resolved)
+    if resolved then
+      output.clear_by_id(pending.bufnr, resolved)
+    end
     session.pending[id] = nil
     if session.active_request_id == id then
       session.active_request_id = nil
