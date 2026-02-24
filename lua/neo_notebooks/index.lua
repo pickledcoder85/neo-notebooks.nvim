@@ -9,13 +9,17 @@ local function current_tick(bufnr)
   return vim.api.nvim_buf_get_changedtick(bufnr)
 end
 
+local meta_store = {}
+
 local function get_meta(bufnr)
-  local meta = vim.b[bufnr].neo_notebooks_index_meta
+  local meta = meta_store[bufnr]
   if not meta then
     meta = {}
-    vim.b[bufnr].neo_notebooks_index_meta = meta
+    meta_store[bufnr] = meta
   end
-  meta.orphans = meta.orphans or {}
+  if meta.orphans == nil then
+    meta.orphans = {}
+  end
   return meta
 end
 
@@ -41,17 +45,28 @@ local function build_index(bufnr, prev_state, orphans)
     end
     local chosen = nil
     if orphans and #orphans > 0 then
-      local best_i = nil
-      local best_dist = nil
+      local exact_i = nil
       for i, orphan in ipairs(orphans) do
-        local dist = math.abs(line - orphan.line)
-        if best_dist == nil or dist < best_dist then
-          best_dist = dist
-          best_i = i
+        if orphan.line == line then
+          exact_i = i
+          break
         end
       end
-      if best_i then
-        chosen = table.remove(orphans, best_i).id
+      if exact_i then
+        chosen = table.remove(orphans, exact_i).id
+      else
+        local best_i = nil
+        local best_dist = nil
+        for i, orphan in ipairs(orphans) do
+          local dist = math.abs(line - orphan.line)
+          if best_dist == nil or dist < best_dist then
+            best_dist = dist
+            best_i = i
+          end
+        end
+        if best_i then
+          chosen = table.remove(orphans, best_i).id
+        end
       end
     end
     if chosen then
@@ -207,6 +222,7 @@ function M.attach(bufnr)
       if vim.b[bufnr] then
         vim.b[bufnr].neo_notebooks_index_attached = false
       end
+      meta_store[bufnr] = nil
     end,
   })
 end

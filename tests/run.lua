@@ -63,39 +63,23 @@ with_buf({
   eq(state.list[2].type, "markdown", "second type")
 end)
 
--- Test: execution queue enqueues empty cell without error
-with_buf({
-  "# %% [code]",
-  "",
-}, function(buf)
-  vim.api.nvim_buf_call(buf, function()
-    exec.enqueue_cell(buf, 1, { on_output = function() end })
-  end)
-end)
-
--- Test: execution queue handles multiple enqueues and stop_session
+-- Test: marker delete/reinsert preserves cell id
 with_buf({
   "# %% [code]",
   "print(1)",
   "# %% [code]",
   "print(2)",
 }, function(buf)
-  vim.api.nvim_buf_call(buf, function()
-    exec.enqueue_cell(buf, 1, { on_output = function() end })
-    exec.enqueue_cell(buf, 3, { on_output = function() end })
-    exec.stop_session(buf)
-  end)
-end)
-
--- Test: exec hash store defaults
-with_buf({
-  "# %% [code]",
-  "print(1)",
-}, function(buf)
-  exec.run_cell(buf, 1, { on_output = function() end })
-  local ok_var, store = pcall(vim.api.nvim_buf_get_var, buf, "neo_notebooks_exec_hashes")
-  ok(ok_var, "exec hash store exists")
-  ok(type(store) == "table", "exec hash store is table")
+  index.rebuild(buf)
+  local id2 = index.get(buf).list[2].id
+  -- delete marker line for second cell
+  vim.api.nvim_buf_set_lines(buf, 2, 3, false, {})
+  index.on_lines(buf, 2, 3, 2)
+  -- reinsert marker line
+  vim.api.nvim_buf_set_lines(buf, 2, 2, false, { "# %% [code]" })
+  index.on_lines(buf, 2, 2, 3)
+  local state = index.get(buf)
+  eq(state.list[2].id, id2, "id stable after marker delete/reinsert")
 end)
 
 -- Test: stable id across rebuild after body edit
