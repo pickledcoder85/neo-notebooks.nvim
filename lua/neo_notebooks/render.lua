@@ -278,6 +278,10 @@ local function update_tail_pad(bufnr, cells_list)
       tail_pad = #out_lines + 2
     end
   end
+  local min_pad = config.notebook_scrolloff or 0
+  if min_pad > 0 then
+    tail_pad = math.max(tail_pad, min_pad)
+  end
   if tail_pad > 0 then
     ensure_tail_pad(bufnr, tail_pad)
   else
