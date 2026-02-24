@@ -9,6 +9,7 @@ function M.restart(bufnr)
   local cursor = vim.api.nvim_win_get_cursor(win)
   exec.stop_session(bufnr)
   output.clear_all(bufnr)
+  pcall(vim.api.nvim_buf_set_var, bufnr, "neo_notebooks_exec_hashes", {})
   vim.schedule(function()
     if vim.api.nvim_win_is_valid(win) then
       vim.api.nvim_win_set_cursor(win, cursor)
