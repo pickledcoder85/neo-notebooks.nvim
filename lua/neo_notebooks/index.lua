@@ -15,6 +15,7 @@ local function get_meta(bufnr)
     meta = {}
     vim.b[bufnr].neo_notebooks_index_meta = meta
   end
+  meta.orphans = meta.orphans or {}
   return meta
 end
 
@@ -26,7 +27,7 @@ local function set_state(bufnr, state)
   meta.marker_dirty = false
 end
 
-local function build_index(bufnr)
+local function build_index(bufnr, prev_state, orphans)
   bufnr = bufnr or 0
   local list = cells.get_cells(bufnr)
   local index = { list = {}, by_id = {} }
@@ -37,6 +38,24 @@ local function build_index(bufnr)
     local marks = vim.api.nvim_buf_get_extmarks(bufnr, M.ns, { line, 0 }, { line, -1 }, { details = false })
     if #marks > 0 then
       return marks[1][1]
+    end
+    local chosen = nil
+    if orphans and #orphans > 0 then
+      local best_i = nil
+      local best_dist = nil
+      for i, orphan in ipairs(orphans) do
+        local dist = math.abs(line - orphan.line)
+        if best_dist == nil or dist < best_dist then
+          best_dist = dist
+          best_i = i
+        end
+      end
+      if best_i then
+        chosen = table.remove(orphans, best_i).id
+      end
+    end
+    if chosen then
+      return vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, { id = chosen })
     end
     return vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {})
   end
@@ -134,16 +153,19 @@ function M.get(bufnr)
   local meta = get_meta(bufnr)
   local stale = (not state) or meta.dirty or (meta.tick ~= current_tick(bufnr))
   if stale then
-    state = build_index(bufnr)
+    state = build_index(bufnr, state, meta.orphans)
     set_state(bufnr, state)
+    meta.orphans = {}
   end
   return state
 end
 
 function M.rebuild(bufnr)
   bufnr = bufnr or 0
-  local state = build_index(bufnr)
+  local meta = get_meta(bufnr)
+  local state = build_index(bufnr, vim.b[bufnr].neo_notebooks_index, meta.orphans)
   set_state(bufnr, state)
+  meta.orphans = {}
   return state
 end
 
@@ -203,6 +225,16 @@ function M.on_lines(bufnr, firstline, lastline, new_lastline)
   local marker_touched = has_marker_in_range(state, firstline, lastline)
     or has_marker_in_new_lines(bufnr, firstline, new_lastline)
   if marker_touched then
+    local orphans = meta.orphans or {}
+    for _, cell in ipairs(state.list) do
+      if cell.start >= firstline and cell.start < lastline then
+        local line = vim.api.nvim_buf_get_lines(bufnr, cell.start, cell.start + 1, false)[1]
+        if not line or not line:match(MARKER_PATTERN) then
+          table.insert(orphans, { id = cell.id, line = cell.start, type = cell.type })
+        end
+      end
+    end
+    meta.orphans = orphans
     meta.dirty = true
     meta.marker_dirty = true
     meta.dirty_cell_ids = nil
