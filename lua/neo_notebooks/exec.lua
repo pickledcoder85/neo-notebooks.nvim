@@ -167,15 +167,21 @@ def handle(obj):
                             print(repr(value))
             else:
                 exec(compile(tree, "<cell>", "exec"), globals_dict)
+        except KeyboardInterrupt:
+            ok = False
+            trace = ""
+            interrupted = True
         except Exception:
             ok = False
             trace = traceback.format_exc()
+            interrupted = False
     resp = {
         "id": obj.get("id"),
         "ok": ok,
         "out": out_buf.getvalue(),
         "err": err_buf.getvalue(),
         "trace": trace,
+        "interrupted": interrupted if 'interrupted' in locals() else False,
     }
     sys.stdout.write(json.dumps(resp) + "\n")
     sys.stdout.flush()
@@ -306,7 +312,7 @@ local function handle_response(session, resp)
   end
   local trace = resp.trace or ""
   local err = resp.err or ""
-  if pending.interrupted and (trace:find("KeyboardInterrupt", 1, true) or err:find("KeyboardInterrupt", 1, true)) then
+  if resp.interrupted == true or (pending.interrupted and (trace:find("KeyboardInterrupt", 1, true) or err:find("KeyboardInterrupt", 1, true))) then
     local resolved = pending.cell_id
     if not resolved and pending.line then
       local index = require("neo_notebooks.index")
