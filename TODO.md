@@ -44,6 +44,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
 ## Next
 
 - True dirty-range index updates (avoid full-buffer cell scans where possible).
+  - Robustness-first: keep full rebuild fallback whenever partial updates are unsafe.
 - Partial cell rerendering (redraw affected cells only, not full notebook).
 - Stabilize cell IDs across marker edits and deletions.
 - Output collapse/expand per cell.
