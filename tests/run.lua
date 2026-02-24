@@ -41,6 +41,7 @@ local output = require("neo_notebooks.output")
 local render = require("neo_notebooks.render")
 local index_mod = require("neo_notebooks.index")
 local ipynb = require("neo_notebooks.ipynb")
+local exec = require("neo_notebooks.exec")
 local nb = require("neo_notebooks")
 
 -- Test: default strict containment mode is soft
@@ -60,6 +61,30 @@ with_buf({
   ok(state.by_id[state.list[1].id], "by_id has entry")
   eq(state.list[1].type, "code", "first type")
   eq(state.list[2].type, "markdown", "second type")
+end)
+
+-- Test: execution queue enqueues empty cell without error
+with_buf({
+  "# %% [code]",
+  "",
+}, function(buf)
+  vim.api.nvim_buf_call(buf, function()
+    exec.enqueue_cell(buf, 1, { on_output = function() end })
+  end)
+end)
+
+-- Test: execution queue handles multiple enqueues and stop_session
+with_buf({
+  "# %% [code]",
+  "print(1)",
+  "# %% [code]",
+  "print(2)",
+}, function(buf)
+  vim.api.nvim_buf_call(buf, function()
+    exec.enqueue_cell(buf, 1, { on_output = function() end })
+    exec.enqueue_cell(buf, 3, { on_output = function() end })
+    exec.stop_session(buf)
+  end)
 end)
 
 -- Test: stable id across rebuild after body edit
