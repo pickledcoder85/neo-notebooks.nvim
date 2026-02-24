@@ -732,7 +732,7 @@ function M.goto_line_first_nonblank_contained(bufnr)
   local first = text:find("%S")
   local col = left_col
   if first then
-    col = math.max(left_col, first - 1)
+    col = left_col + (first - 1)
   end
   vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
   vim.api.nvim_win_set_cursor(0, { line + 1, col })
