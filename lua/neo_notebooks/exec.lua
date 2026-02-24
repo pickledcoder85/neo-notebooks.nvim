@@ -304,6 +304,18 @@ local function handle_response(session, resp)
   if not pending then
     return
   end
+  local trace = resp.trace or ""
+  if pending.interrupted and trace:find("KeyboardInterrupt", 1, true) then
+    spinner.stop(pending.bufnr, pending.cell_id)
+    session.pending[id] = nil
+    if session.active_request_id == id then
+      session.active_request_id = nil
+    end
+    if session.drain_queue then
+      session.drain_queue()
+    end
+    return
+  end
   local duration_ms = nil
   if pending.started_at then
     duration_ms = (vim.loop.hrtime() - pending.started_at) / 1e6
@@ -539,8 +551,9 @@ function M.enqueue_cell(bufnr, line, opts)
           pcall(vim.loop.kill, pid, "sigint")
         end
         spinner.stop(bufnr, req.cell_id)
-        session.pending[active_id] = nil
+        pending.interrupted = true
         session.active_request_id = nil
+        output.clear_by_id(bufnr, req.cell_id)
       end
     end
   end
