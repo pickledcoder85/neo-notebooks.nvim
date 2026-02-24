@@ -66,7 +66,9 @@ function M.setup(opts)
   if opts.keymaps and M.config.keymaps ~= false then
     opts.keymaps = vim.tbl_extend("force", M.config.keymaps or {}, opts.keymaps)
   end
-  M.config = vim.tbl_extend("force", M.config, opts)
+  for key, value in pairs(opts) do
+    M.config[key] = value
+  end
   if M._on_setup then
     M._on_setup()
   end

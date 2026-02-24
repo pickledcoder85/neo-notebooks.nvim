@@ -283,6 +283,23 @@ local function handle_response(session, resp)
   if not pending then
     return
   end
+  local duration_ms = nil
+  if pending.started_at then
+    duration_ms = (vim.loop.hrtime() - pending.started_at) / 1e6
+  end
+  if duration_ms then
+    local timing_id = pending.cell_id
+    if not timing_id and pending.line then
+      local index = require("neo_notebooks.index")
+      local cell = index.find_cell(pending.bufnr, pending.line)
+      if cell then
+        timing_id = cell.id
+      end
+    end
+    if timing_id then
+      output.set_timing(pending.bufnr, timing_id, duration_ms)
+    end
+  end
   spinner.stop(pending.bufnr, pending.cell_id)
   session.pending[id] = nil
   local output = format_output(resp)
@@ -293,7 +310,7 @@ local function handle_response(session, resp)
       end)
     end
     vim.schedule(function()
-      pending.on_output(output, pending.cell_id)
+      pending.on_output(output, pending.cell_id, duration_ms)
     end)
   else
     open_output_window(output)
@@ -422,6 +439,8 @@ function M.run_cell(bufnr, line, opts)
     bufnr = bufnr,
     on_output = opts.on_output,
     cell_id = cell_id,
+    line = line,
+    started_at = vim.loop.hrtime(),
   }
   if cell_id then
     spinner.start(bufnr, cell_id, line)

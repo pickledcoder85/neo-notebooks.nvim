@@ -15,6 +15,7 @@ local run_subset = require("neo_notebooks.run_subset")
 local help = require("neo_notebooks.help")
 local editor = require("neo_notebooks.editor")
 local index = require("neo_notebooks.index")
+local scheduler = require("neo_notebooks.scheduler")
 
 local set_default_keymaps
 
@@ -221,15 +222,22 @@ end, {})
 
 local function run_cell_with_output(line, cell)
   local bufnr = vim.api.nvim_get_current_buf()
+  local index = require("neo_notebooks.index")
+  local entry = index.find_cell(bufnr, line)
+  if entry and not cell.id then
+    cell.id = entry.id
+    cell.start = entry.start
+    cell.finish = entry.finish
+  end
   if nb.config.output == "inline" then
     exec.run_cell(0, line, {
-      on_output = function(lines, cell_id)
+      on_output = function(lines, cell_id, duration_ms)
         output.show_inline(bufnr, {
           id = cell_id or cell.id,
           start = cell.start,
           finish = cell.finish,
           type = cell.type,
-        }, lines)
+        }, lines, { duration_ms = duration_ms })
       end,
       cell_id = cell.id,
     })
@@ -261,6 +269,7 @@ vim.api.nvim_create_user_command("NeoNotebookCellRunAndNext", function()
       local max_line = vim.api.nvim_buf_line_count(0)
       local target = math.min(next_cell.start + 2, max_line)
       vim.api.nvim_win_set_cursor(0, { target, 0 })
+      actions.clamp_cursor_to_cell_left(0, { force = true })
     else
       local insert_base = logical_cell_insert_base(0, cell)
       local insert_line = cells.insert_cell_below(0, insert_base, "code")
@@ -268,6 +277,7 @@ vim.api.nvim_create_user_command("NeoNotebookCellRunAndNext", function()
       local target = math.min(insert_line + 2, max_line)
       vim.api.nvim_win_set_cursor(0, { target, 0 })
       render_if_enabled(0)
+      actions.clamp_cursor_to_cell_left(0, { force = true })
       vim.cmd("startinsert")
     end
     return
@@ -278,6 +288,7 @@ vim.api.nvim_create_user_command("NeoNotebookCellRunAndNext", function()
     local max_line = vim.api.nvim_buf_line_count(0)
     local target = math.min(cell.start + 2, max_line)
     vim.api.nvim_win_set_cursor(0, { target, 0 })
+    actions.clamp_cursor_to_cell_left(0, { force = true })
     vim.cmd("startinsert")
     return
   end
@@ -288,6 +299,7 @@ vim.api.nvim_create_user_command("NeoNotebookCellRunAndNext", function()
     local max_line = vim.api.nvim_buf_line_count(0)
     local target = math.min(next_cell.start + 2, max_line)
     vim.api.nvim_win_set_cursor(0, { target, 0 })
+    actions.clamp_cursor_to_cell_left(0, { force = true })
   else
     local insert_base = logical_cell_insert_base(0, cell)
     local insert_line = cells.insert_cell_below(0, insert_base, "code")
@@ -295,6 +307,7 @@ vim.api.nvim_create_user_command("NeoNotebookCellRunAndNext", function()
     local target = math.min(insert_line + 2, max_line)
     vim.api.nvim_win_set_cursor(0, { target, 0 })
     render_if_enabled(0)
+    actions.clamp_cursor_to_cell_left(0)
     vim.cmd("startinsert")
   end
 end, {})
@@ -309,6 +322,11 @@ end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookAutoRenderToggle", function()
   actions.toggle_auto_render()
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookCellIndexToggle", function()
+  actions.toggle_cell_index()
+  render_if_enabled(0)
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookCellNext", function()
@@ -525,7 +543,8 @@ vim.api.nvim_create_autocmd("BufReadPost", {
       ensure_top_padding(args.buf)
       vim.b[args.buf].neo_notebooks_skip_initial = true
       set_default_keymaps(args.buf)
-      index.rebuild(args.buf)
+      index.mark_dirty(args.buf)
+      index.attach(args.buf)
       render_if_enabled(args.buf)
     end)
   end,
@@ -858,8 +877,13 @@ vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
   callback = function(args)
     if should_enable(args.buf) then
       actions.consume_pending_virtual_indent(args.buf)
-      index.rebuild(args.buf)
-      render_if_enabled(args.buf)
+      index.on_text_changed(args.buf)
+      local dirty_cells = index.consume_dirty_cells(args.buf)
+      if dirty_cells then
+        scheduler.request_render(args.buf, { debounce_ms = 20, cell_ids = dirty_cells })
+      else
+        scheduler.request_render(args.buf, { debounce_ms = 20 })
+      end
     end
   end,
 })
@@ -870,7 +894,8 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
     if should_enable(args.buf) then
       ensure_top_padding(args.buf)
       trim_cell_spacing(args.buf)
-      index.rebuild(args.buf)
+      index.mark_dirty(args.buf)
+      index.attach(args.buf)
 
       local function jump_to_first_body()
         if not vim.api.nvim_buf_is_valid(args.buf) then
@@ -931,9 +956,9 @@ vim.api.nvim_create_autocmd({ "InsertLeave" }, {
     end
     vim.b[args.buf].neo_notebooks_pending_virtual_indent = nil
     trim_cell_spacing(args.buf)
-    index.rebuild(args.buf)
+    index.on_text_changed(args.buf)
     actions.clamp_cursor_to_cell_left(args.buf)
-    render_if_enabled(args.buf)
+    scheduler.request_render(args.buf, { immediate = true })
   end,
 })
 
@@ -945,6 +970,7 @@ vim.api.nvim_create_autocmd({ "BufLeave", "BufWipeout" }, {
 
 vim.api.nvim_create_autocmd({ "BufWipeout" }, {
   callback = function(args)
+    scheduler.cancel(args.buf)
     exec.stop_session(args.buf)
     output.clear_all(args.buf)
   end,

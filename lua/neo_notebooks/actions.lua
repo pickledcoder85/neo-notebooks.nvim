@@ -86,10 +86,10 @@ function M.duplicate_cell(bufnr, line)
 
   vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, lines)
   local index = require("neo_notebooks.index")
-  index.rebuild(bufnr)
+  index.mark_dirty(bufnr)
   local new_start = insert_at
   vim.api.nvim_win_set_cursor(0, { new_start + 2, 0 })
-  vim.cmd("startinsert")
+  M.clamp_cursor_to_cell_left(bufnr)
 end
 
 function M.split_cell(bufnr, line)
@@ -116,7 +116,7 @@ function M.split_cell(bufnr, line)
     output.clear_by_id(bufnr, cell.id)
   end
   local index = require("neo_notebooks.index")
-  index.rebuild(bufnr)
+  index.mark_dirty(bufnr)
   vim.api.nvim_win_set_cursor(0, { line + 2, 0 })
   vim.cmd("startinsert")
 end
@@ -154,12 +154,17 @@ function M.delete_cell(bufnr, line)
   end
   vim.api.nvim_buf_set_lines(bufnr, cell.start, cell.finish + 1, false, {})
   local index = require("neo_notebooks.index")
-  index.rebuild(bufnr)
+  index.mark_dirty(bufnr)
   local line_count = vim.api.nvim_buf_line_count(bufnr)
   local target = math.max(1, cell.start + 1)
   target = math.min(target, math.max(1, line_count))
   vim.api.nvim_win_set_cursor(0, { target, 0 })
-  vim.cmd("startinsert")
+  local next_cell = cells.get_cell_at_line(bufnr, math.max(0, target - 1))
+  if next_cell then
+    local body_line = math.min(next_cell.start + 1, next_cell.finish)
+    vim.api.nvim_win_set_cursor(0, { body_line + 1, 0 })
+  end
+  M.clamp_cursor_to_cell_left(bufnr)
 end
 
 function M.yank_cell(bufnr, line)
@@ -181,7 +186,7 @@ end
 
 local function move_once(bufnr, direction)
   local index = require("neo_notebooks.index")
-  local state = index.rebuild(bufnr)
+  local state = index.get(bufnr)
   local list = state.list
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local idx = nil
@@ -220,7 +225,7 @@ local function move_once(bufnr, direction)
   local max_line = vim.api.nvim_buf_line_count(bufnr)
   local target = math.min(insert_at + 2, max_line)
   vim.api.nvim_win_set_cursor(0, { target, 0 })
-  index.rebuild(bufnr)
+  index.mark_dirty(bufnr)
 end
 
 function M.move_cell_up(bufnr, line, count)
@@ -242,7 +247,7 @@ end
 function M.move_cell_top(bufnr)
   bufnr = bufnr or 0
   local index = require("neo_notebooks.index")
-  local state = index.rebuild(bufnr)
+  local state = index.get(bufnr)
   local list = state.list
   if #list == 0 then
     return
@@ -269,13 +274,13 @@ function M.move_cell_top(bufnr)
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
   vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
-  index.rebuild(bufnr)
+  index.mark_dirty(bufnr)
 end
 
 function M.move_cell_bottom(bufnr)
   bufnr = bufnr or 0
   local index = require("neo_notebooks.index")
-  local state = index.rebuild(bufnr)
+  local state = index.get(bufnr)
   local list = state.list
   if #list == 0 then
     return
@@ -302,7 +307,7 @@ function M.move_cell_bottom(bufnr)
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
   vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
-  index.rebuild(bufnr)
+  index.mark_dirty(bufnr)
 end
 
 function M.toggle_output_mode()
@@ -333,6 +338,12 @@ function M.toggle_auto_render()
   vim.notify(string.format("NeoNotebook: auto_render = %s", tostring(nb.config.auto_render)), vim.log.levels.INFO)
 end
 
+function M.toggle_cell_index()
+  local nb = require("neo_notebooks")
+  nb.config.show_cell_index = not nb.config.show_cell_index
+  vim.notify(string.format("NeoNotebook: show_cell_index = %s", tostring(nb.config.show_cell_index)), vim.log.levels.INFO)
+end
+
 function M.open_line_below(bufnr)
   bufnr = bufnr or 0
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
@@ -346,7 +357,7 @@ function M.open_line_below(bufnr)
   end
   vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
   local index = require("neo_notebooks.index")
-  index.rebuild(bufnr)
+  index.on_text_changed(bufnr)
   local target_col = left_boundary_col(cell)
   vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
   vim.api.nvim_win_set_cursor(0, { insert_at + 1, 0 })
@@ -363,7 +374,7 @@ function M.open_line_above(bufnr)
   local insert_at = containment.clamped_insert_at(cell, line)
   vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
   local index = require("neo_notebooks.index")
-  index.rebuild(bufnr)
+  index.on_text_changed(bufnr)
   local target_col = left_boundary_col(cell)
   vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
   vim.api.nvim_win_set_cursor(0, { insert_at + 1, 0 })
@@ -443,8 +454,9 @@ function M.guard_delete_in_insert(bufnr)
   return decision_keys(bufnr, decision)
 end
 
-function M.clamp_cursor_to_cell_left(bufnr)
+function M.clamp_cursor_to_cell_left(bufnr, opts)
   bufnr = bufnr or 0
+  opts = opts or {}
   local cursor = vim.api.nvim_win_get_cursor(0)
   local line = cursor[1] - 1
   local col = cursor[2]
@@ -454,11 +466,11 @@ function M.clamp_cursor_to_cell_left(bufnr)
   end
   cell = containment.ensure_body_line(bufnr, cell)
   local text = vim.api.nvim_buf_get_lines(bufnr, line, line + 1, false)[1] or ""
-  if text ~= "" then
+  if text ~= "" and not opts.force then
     return
   end
   local target_col = left_boundary_col(cell)
-  if col < target_col then
+  if opts.force or col < target_col then
     vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
     vim.api.nvim_win_set_cursor(0, { line + 1, 0 })
     vim.cmd("normal! " .. tostring(target_col + 1) .. "|")
@@ -605,7 +617,7 @@ function M.handle_paste_below(bufnr)
     local insert_at = math.min(state.line + 1, cell.finish + 1)
     vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
     local index = require("neo_notebooks.index")
-    index.rebuild(bufnr)
+    index.on_text_changed(bufnr)
     vim.api.nvim_win_set_cursor(0, { insert_at, 0 })
   end
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("p", true, false, true), "n", true)

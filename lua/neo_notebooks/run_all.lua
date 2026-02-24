@@ -11,15 +11,22 @@ function M.run_all(bufnr)
   for _, cell in ipairs(list) do
     if cell.type == "code" then
       local line = cell.start + 1
+      local index = require("neo_notebooks.index")
+      local entry = index.find_cell(bufnr, line)
+      if entry then
+        cell.id = entry.id
+        cell.start = entry.start
+        cell.finish = entry.finish
+      end
       if config.output == "inline" then
         exec.run_cell(bufnr, line, {
-          on_output = function(lines, cell_id)
+          on_output = function(lines, cell_id, duration_ms)
             output.show_inline(bufnr, {
               id = cell_id or cell.id,
               start = cell.start,
               finish = cell.finish,
               type = cell.type,
-            }, lines)
+            }, lines, { duration_ms = duration_ms })
           end,
           cell_id = cell.id,
         })

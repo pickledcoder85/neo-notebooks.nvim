@@ -38,12 +38,14 @@ print("hello")
 - `:NeoNotebookOutputToggle` toggles output mode between inline and floating.
 - A spinner appears in the sign column while a cell is executing.
 - While a cell runs, an inline placeholder output shows `cell executing...`.
+- After execution, inline output includes a right-aligned timing line (e.g. `[8.56ms]`).
 - Moving cells preserves outputs by stable cell ID.
 - `:NeoNotebookCellSelect` selects the current cell body.
 - `:NeoNotebookStats` shows a cell count summary.
 - `:NeoNotebookRunAbove` runs all code cells above the cursor.
 - `:NeoNotebookRunBelow` runs all code cells below the cursor.
 - `:NeoNotebookAutoRenderToggle` toggles auto-rendering.
+- `:NeoNotebookCellIndexToggle` toggles numeric cell index labels on borders.
 - `:NeoNotebookHelp` shows a quick help window.
 - `:NeoNotebookCellEdit` opens the current cell in a floating editor.
 - `:NeoNotebookCellSave` saves the floating editor back to the buffer.

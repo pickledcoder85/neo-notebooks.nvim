@@ -19,6 +19,58 @@ local function get_store(bufnr)
   return get_buf_var(bufnr, "neo_notebooks_output_store", {})
 end
 
+local function format_duration(duration_ms)
+  if type(duration_ms) ~= "number" then
+    return nil
+  end
+  local seconds = duration_ms / 1000
+  if seconds < 1 then
+    return string.format("%.0fms", duration_ms)
+  end
+  if seconds < 10 then
+    return string.format("%.2fs", seconds)
+  end
+  if seconds < 60 then
+    return string.format("%.1fs", seconds)
+  end
+  local minutes = math.floor(seconds / 60)
+  local rem = seconds - (minutes * 60)
+  return string.format("%dm%.0fs", minutes, rem)
+end
+
+local function with_timing(lines, duration_ms)
+  local timing = format_duration(duration_ms)
+  if not timing then
+    return lines
+  end
+  local label = "[" .. timing .. "]"
+  local config = require("neo_notebooks").config
+  local win_width = vim.api.nvim_win_get_width(0)
+  local ratio = config.cell_width_ratio or 0.9
+  local width = math.floor(win_width * ratio)
+  width = math.max(config.cell_min_width or 60, width)
+  width = math.min(config.cell_max_width or win_width, width)
+  width = math.min(width, win_width)
+  width = math.max(10, width)
+  local inner_width = math.max(0, width - 2)
+  local label_width = vim.fn.strdisplaywidth(label)
+  local left_pad = math.max(0, inner_width - label_width)
+  local timing_line = string.rep(" ", left_pad) .. label
+  local merged = { timing_line }
+  for _, line in ipairs(lines) do
+    table.insert(merged, line)
+  end
+  return merged
+end
+
+local function get_timing_store(bufnr)
+  return get_buf_var(bufnr, "neo_notebooks_output_timing", {})
+end
+
+local function set_timing_store(bufnr, store)
+  set_buf_var(bufnr, "neo_notebooks_output_timing", store)
+end
+
 function M.clear_cell(bufnr, cell_start)
   bufnr = bufnr or 0
   local index = require("neo_notebooks.index")
@@ -32,6 +84,7 @@ function M.clear_all(bufnr)
   bufnr = bufnr or 0
   vim.api.nvim_buf_clear_namespace(bufnr, M.ns, 0, -1)
   set_buf_var(bufnr, "neo_notebooks_output_store", {})
+  set_buf_var(bufnr, "neo_notebooks_output_timing", {})
 end
 
 function M.clear_by_id(bufnr, cell_id)
@@ -42,7 +95,11 @@ function M.clear_by_id(bufnr, cell_id)
   local store = get_store(bufnr)
   store[cell_id] = nil
   set_buf_var(bufnr, "neo_notebooks_output_store", store)
-  M.render_outputs(bufnr)
+  local timing_store = get_timing_store(bufnr)
+  timing_store[cell_id] = nil
+  set_timing_store(bufnr, timing_store)
+  local render = require("neo_notebooks.render")
+  render.render_cells(bufnr, { cell_id })
 end
 
 function M.get_lines(bufnr, cell_id)
@@ -56,6 +113,34 @@ function M.get_lines(bufnr, cell_id)
     return entry.lines
   end
   return nil
+end
+
+function M.get_entry(bufnr, cell_id)
+  bufnr = bufnr or 0
+  if not cell_id then
+    return nil
+  end
+  local store = get_store(bufnr)
+  return store[cell_id]
+end
+
+function M.set_timing(bufnr, cell_id, duration_ms)
+  bufnr = bufnr or 0
+  if not cell_id then
+    return
+  end
+  local store = get_timing_store(bufnr)
+  store[cell_id] = duration_ms
+  set_timing_store(bufnr, store)
+end
+
+function M.get_timing(bufnr, cell_id)
+  bufnr = bufnr or 0
+  if not cell_id then
+    return nil
+  end
+  local store = get_timing_store(bufnr)
+  return store[cell_id]
 end
 
 function M.has_ansi(lines)
@@ -72,7 +157,7 @@ function M.has_ansi(lines)
   return count > 0, count
 end
 
-function M.show_inline(bufnr, cell, lines)
+function M.show_inline(bufnr, cell, lines, opts)
   if vim.g.neo_notebooks_debug_output then
     vim.notify("show_inline called: " .. tostring(#lines) .. " lines (buf " .. tostring(bufnr) .. ")", vim.log.levels.INFO)
   end
@@ -87,7 +172,7 @@ function M.show_inline(bufnr, cell, lines)
 
   if not cell.id then
     local index = require("neo_notebooks.index")
-    local state = index.rebuild(bufnr)
+    local state = index.get(bufnr)
     for _, entry in ipairs(state.list) do
       if entry.start == cell.start then
         cell.id = entry.id
@@ -98,7 +183,7 @@ function M.show_inline(bufnr, cell, lines)
 
   if not cell.id then
     local index = require("neo_notebooks.index")
-    local state = index.rebuild(bufnr)
+    local state = index.get(bufnr)
     for _, entry in ipairs(state.list) do
       if entry.start == cell.start and entry.finish == cell.finish then
         cell.id = entry.id
@@ -124,14 +209,36 @@ function M.show_inline(bufnr, cell, lines)
     local store = get_store(bufnr)
     local existing = store[cell.id]
     local existing_lines = existing and existing.lines or nil
-    if vim.deep_equal(existing_lines, lines) then
+    opts = opts or {}
+    local render_lines = lines
+    if opts.duration_ms then
+      render_lines = with_timing(lines, opts.duration_ms)
+    end
+    if vim.deep_equal(existing_lines, render_lines) then
+      if opts.duration_ms then
+        M.set_timing(bufnr, cell.id, opts.duration_ms)
+        if existing then
+          existing.duration_ms = opts.duration_ms
+          store[cell.id] = existing
+          set_buf_var(bufnr, "neo_notebooks_output_store", store)
+        end
+        local render = require("neo_notebooks.render")
+        render.render_cells(bufnr, { cell.id })
+      end
       if vim.g.neo_notebooks_debug_output then
         vim.notify("show_inline skipped (same output)", vim.log.levels.INFO)
       end
       return
     end
-    store[cell.id] = { lines = lines, len = #lines }
+    store[cell.id] = {
+      lines = render_lines,
+      len = #render_lines,
+      duration_ms = opts.duration_ms,
+    }
     set_buf_var(bufnr, "neo_notebooks_output_store", store)
+    if opts.duration_ms then
+      M.set_timing(bufnr, cell.id, opts.duration_ms)
+    end
     if vim.g.neo_notebooks_debug_output then
       vim.notify("show_inline stored output for cell_id " .. tostring(cell.id), vim.log.levels.INFO)
     end
@@ -140,7 +247,8 @@ function M.show_inline(bufnr, cell, lines)
   if vim.g.neo_notebooks_debug_output then
     vim.notify("show_inline render_outputs", vim.log.levels.INFO)
   end
-  M.render_outputs(bufnr)
+  local render = require("neo_notebooks.render")
+  render.render_cells(bufnr, { cell.id })
 end
 
 function M.render_block(bufnr, cell, lines)

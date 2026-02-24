@@ -3,6 +3,29 @@ local cells = require("neo_notebooks.cells")
 local M = {}
 M.ns = vim.api.nvim_create_namespace("neo_notebooks_cell_ids")
 
+local MARKER_PATTERN = "^# %%%% %[(%w+)%]%s*$"
+
+local function current_tick(bufnr)
+  return vim.api.nvim_buf_get_changedtick(bufnr)
+end
+
+local function get_meta(bufnr)
+  local meta = vim.b[bufnr].neo_notebooks_index_meta
+  if not meta then
+    meta = {}
+    vim.b[bufnr].neo_notebooks_index_meta = meta
+  end
+  return meta
+end
+
+local function set_state(bufnr, state)
+  vim.b[bufnr].neo_notebooks_index = state
+  local meta = get_meta(bufnr)
+  meta.tick = current_tick(bufnr)
+  meta.dirty = false
+  meta.marker_dirty = false
+end
+
 local function build_index(bufnr)
   bufnr = bufnr or 0
   local list = cells.get_cells(bufnr)
@@ -45,12 +68,74 @@ local function build_index(bufnr)
   return index
 end
 
+local function has_marker_in_range(state, firstline, lastline)
+  if not state or not state.list then
+    return false
+  end
+  for _, cell in ipairs(state.list) do
+    if cell.start >= firstline and cell.start < lastline then
+      return true
+    end
+  end
+  return false
+end
+
+local function has_marker_in_new_lines(bufnr, firstline, new_lastline)
+  if new_lastline <= firstline then
+    return false
+  end
+  local lines = vim.api.nvim_buf_get_lines(bufnr, firstline, new_lastline, false)
+  for _, line in ipairs(lines) do
+    if line:match(MARKER_PATTERN) then
+      return true
+    end
+  end
+  return false
+end
+
+local function clear_layout(cell)
+  cell.layout = nil
+end
+
+local function apply_delta(state, firstline, lastline, delta)
+  if not state or not state.list or delta == 0 then
+    return
+  end
+  for _, cell in ipairs(state.list) do
+    if cell.start >= lastline then
+      cell.start = cell.start + delta
+      cell.finish = cell.finish + delta
+      clear_layout(cell)
+    elseif cell.finish >= lastline then
+      cell.finish = cell.finish + delta
+      if cell.finish < cell.start then
+        cell.finish = cell.start
+      end
+      clear_layout(cell)
+    end
+  end
+end
+
+local function find_cell_in_state(state, line)
+  if not state or not state.list or #state.list == 0 then
+    return nil
+  end
+  for _, cell in ipairs(state.list) do
+    if line >= cell.start and line <= cell.finish then
+      return cell
+    end
+  end
+  return state.list[#state.list]
+end
+
 function M.get(bufnr)
   bufnr = bufnr or 0
   local state = vim.b[bufnr].neo_notebooks_index
-  if not state then
+  local meta = get_meta(bufnr)
+  local stale = (not state) or meta.dirty or (meta.tick ~= current_tick(bufnr))
+  if stale then
     state = build_index(bufnr)
-    vim.b[bufnr].neo_notebooks_index = state
+    set_state(bufnr, state)
   end
   return state
 end
@@ -58,8 +143,16 @@ end
 function M.rebuild(bufnr)
   bufnr = bufnr or 0
   local state = build_index(bufnr)
-  vim.b[bufnr].neo_notebooks_index = state
+  set_state(bufnr, state)
   return state
+end
+
+function M.mark_dirty(bufnr)
+  bufnr = bufnr or 0
+  local meta = get_meta(bufnr)
+  meta.dirty = true
+  meta.marker_dirty = true
+  meta.dirty_cell_ids = nil
 end
 
 function M.find_cell(bufnr, line)
@@ -71,6 +164,97 @@ function M.find_cell(bufnr, line)
     end
   end
   return state.list[#state.list]
+end
+
+function M.is_attached(bufnr)
+  bufnr = bufnr or 0
+  return vim.b[bufnr] and vim.b[bufnr].neo_notebooks_index_attached == true
+end
+
+function M.attach(bufnr)
+  bufnr = bufnr or 0
+  if M.is_attached(bufnr) then
+    return
+  end
+  vim.b[bufnr].neo_notebooks_index_attached = true
+  vim.api.nvim_buf_attach(bufnr, false, {
+    on_lines = function(_, _, _, firstline, lastline, new_lastline)
+      M.on_lines(bufnr, firstline, lastline, new_lastline)
+    end,
+    on_detach = function()
+      if vim.b[bufnr] then
+        vim.b[bufnr].neo_notebooks_index_attached = false
+      end
+    end,
+  })
+end
+
+function M.on_lines(bufnr, firstline, lastline, new_lastline)
+  bufnr = bufnr or 0
+  local meta = get_meta(bufnr)
+  if meta.dirty then
+    return
+  end
+  local state = vim.b[bufnr].neo_notebooks_index
+  if not state or not state.list then
+    meta.dirty = true
+    return
+  end
+  local marker_touched = has_marker_in_range(state, firstline, lastline)
+    or has_marker_in_new_lines(bufnr, firstline, new_lastline)
+  if marker_touched then
+    meta.dirty = true
+    meta.marker_dirty = true
+    meta.dirty_cell_ids = nil
+    return
+  end
+  meta.dirty_cell_ids = meta.dirty_cell_ids or {}
+  local primary = find_cell_in_state(state, firstline)
+  if primary and primary.id then
+    meta.dirty_cell_ids[primary.id] = true
+  end
+  local last_line = math.max(firstline, lastline - 1)
+  if last_line ~= firstline then
+    local secondary = find_cell_in_state(state, last_line)
+    if secondary and secondary.id then
+      meta.dirty_cell_ids[secondary.id] = true
+    end
+  end
+  local delta = new_lastline - lastline
+  if delta ~= 0 then
+    apply_delta(state, firstline, lastline, delta)
+  end
+  meta.tick = current_tick(bufnr)
+  meta.dirty = false
+  meta.marker_dirty = false
+end
+
+function M.on_text_changed(bufnr)
+  bufnr = bufnr or 0
+  if not M.is_attached(bufnr) then
+    M.mark_dirty(bufnr)
+  end
+end
+
+function M.consume_dirty_cells(bufnr)
+  bufnr = bufnr or 0
+  local meta = get_meta(bufnr)
+  if meta.dirty or meta.marker_dirty then
+    return nil
+  end
+  local set = meta.dirty_cell_ids
+  if not set then
+    return nil
+  end
+  meta.dirty_cell_ids = nil
+  local list = {}
+  for id in pairs(set) do
+    table.insert(list, id)
+  end
+  if #list == 0 then
+    return nil
+  end
+  return list
 end
 
 function M.get_by_id(bufnr, id)

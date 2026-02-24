@@ -42,7 +42,7 @@ function M.ensure_body_line(bufnr, cell)
   local insert_at = cell.start + 1
   vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
   local index = require("neo_notebooks.index")
-  index.rebuild(bufnr)
+  index.on_text_changed(bufnr)
   return M.get_cell(bufnr, insert_at)
 end
 

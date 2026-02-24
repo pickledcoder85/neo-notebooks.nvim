@@ -8,15 +8,19 @@ local function key(bufnr, cell_id)
   return tostring(bufnr) .. ":" .. tostring(cell_id)
 end
 
-local function rerender(bufnr)
+local function rerender(bufnr, cell_id)
   if not vim.api.nvim_buf_is_valid(bufnr) then
     return
   end
-  local ok, render = pcall(require, "neo_notebooks.render")
-  if not ok or not render or not render.render then
+  local ok, scheduler = pcall(require, "neo_notebooks.scheduler")
+  if not ok or not scheduler then
     return
   end
-  pcall(render.render, bufnr)
+  if cell_id then
+    scheduler.request_render(bufnr, { debounce_ms = 16, cell_ids = { cell_id } })
+  else
+    scheduler.request_render(bufnr, { debounce_ms = 16 })
+  end
 end
 
 function M.start(bufnr, cell_id, line)
@@ -41,7 +45,7 @@ function M.start(bufnr, cell_id, line)
       return
     end
     entry.frame = frames[frame]
-    rerender(bufnr)
+    rerender(bufnr, cell_id)
     frame = frame % #frames + 1
   end
 
@@ -63,7 +67,7 @@ function M.stop(bufnr, cell_id)
     entry.timer:close()
   end
   timers[key(bufnr, cell_id)] = nil
-  rerender(bufnr)
+  rerender(bufnr, cell_id)
 end
 
 function M.stop_all(bufnr)

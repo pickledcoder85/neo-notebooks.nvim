@@ -47,6 +47,8 @@ This document summarizes implementation choices and the evolution of core featur
 - Floating output buffers are `nofile` and `bufhidden=wipe` and close on `q` or `<Esc>`.
 - While a cell is executing, a spinner is rendered in the sign column.
 - While a cell runs, the output area shows a placeholder line.
+- After execution, the inline output prepends a right-aligned timing line.
+- Execution duration is measured around the request/response boundary and stored per cell ID.
 
 ## Markdown preview
 
@@ -153,10 +155,20 @@ This document summarizes implementation choices and the evolution of core featur
 ## Cell index cache
 
 - The plugin stores a per-buffer cache of cell ranges to avoid repeated parsing.
-- The cache is rebuilt on buffer changes.
+- The cache is rebuilt on buffer changes, with incremental line-delta updates
+  applied when edits do not touch marker lines.
 - Cache format: `list` (ordered) and `by_id` (O(1) lookup).
 - Each cell has a stable `cell_id` stored as an extmark on the marker line.
 - Each cell entry stores `body_len` for positioning math.
+- If marker lines are touched or inserted, the index falls back to a full rebuild.
+
+## Render scheduling
+
+- `lua/neo_notebooks/scheduler.lua` coalesces bursty render requests per buffer.
+- Text-change hooks and spinner ticks request debounced renders instead of forcing
+  immediate redraws on every event.
+- Scheduler requests can target specific cell IDs to redraw only affected cells,
+  falling back to full renders when needed.
 
 ## Tests
 

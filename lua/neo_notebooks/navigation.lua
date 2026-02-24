@@ -1,5 +1,6 @@
 local cells = require("neo_notebooks.cells")
 local config = require("neo_notebooks").config
+local actions = require("neo_notebooks.actions")
 
 local M = {}
 
@@ -20,6 +21,7 @@ local function move_to_cell_start(bufnr, cell)
   local target = cell.start + 1
   ensure_line_exists(bufnr, target)
   vim.api.nvim_win_set_cursor(0, { target + 1, 0 })
+  actions.clamp_cursor_to_cell_left(bufnr, { force = true })
   if config.auto_insert_on_jump then
     vim.cmd("startinsert")
   end
