@@ -234,6 +234,7 @@ function M.show_inline(bufnr, cell, lines, opts)
       lines = render_lines,
       len = #render_lines,
       duration_ms = opts.duration_ms,
+      executing = opts.executing == true,
     }
     set_buf_var(bufnr, "neo_notebooks_output_store", store)
     if opts.duration_ms then

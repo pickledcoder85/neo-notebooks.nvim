@@ -445,7 +445,7 @@ local function dispatch_request(session, req)
         start = cell.start,
         finish = cell.finish,
         type = cell.type,
-      }, { "cell executing..." })
+      }, { "cell executing..." }, { executing = true })
     end
   end
   local payload = vim.fn.json_encode({ id = id, code = req.code })
