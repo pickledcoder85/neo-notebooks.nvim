@@ -719,6 +719,26 @@ function M.move_line_up_contained(bufnr, count)
   end
 end
 
+function M.goto_line_first_nonblank_contained(bufnr)
+  bufnr = bufnr or 0
+  local state = containment.cursor_state(bufnr)
+  if not state.cell then
+    vim.cmd("normal! _")
+    return
+  end
+  local line = state.line
+  local left_col = left_boundary_col(state.cell)
+  local text = vim.api.nvim_buf_get_lines(bufnr, line, line + 1, false)[1] or ""
+  local first = text:find("%S")
+  local offset = 0
+  if first then
+    offset = first - 1
+  end
+  local col = left_col + offset
+  vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
+  vim.api.nvim_win_set_cursor(0, { line + 1, col })
+end
+
 function M.fold_cell(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
