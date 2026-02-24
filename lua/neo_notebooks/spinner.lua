@@ -48,6 +48,10 @@ function M.start(bufnr, cell_id, line)
     end
     entry.frame = frames[frame]
     last_frames[key(bufnr, cell_id)] = entry.frame
+    local ok_out, out = pcall(require, "neo_notebooks.output")
+    if ok_out and out then
+      out.update_executing_line(bufnr, cell_id, entry.frame)
+    end
     rerender(bufnr, cell_id)
     frame = frame % #frames + 1
   end

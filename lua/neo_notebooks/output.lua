@@ -230,11 +230,20 @@ function M.show_inline(bufnr, cell, lines, opts)
       end
       return
     end
+    local executing = opts.executing == true
+    local executing_line = nil
+    if executing and render_lines[1] then
+      local spinner = require("neo_notebooks.spinner")
+      local frame = spinner.get_frame_or_last(bufnr, cell.id) or " "
+      executing_line = render_lines[1]
+      render_lines[1] = frame .. " " .. executing_line
+    end
     store[cell.id] = {
       lines = render_lines,
       len = #render_lines,
       duration_ms = opts.duration_ms,
-      executing = opts.executing == true,
+      executing = executing,
+      executing_line = executing_line,
     }
     set_buf_var(bufnr, "neo_notebooks_output_store", store)
     if opts.duration_ms then
@@ -250,6 +259,22 @@ function M.show_inline(bufnr, cell, lines, opts)
   end
   local render = require("neo_notebooks.render")
   render.render_cells(bufnr, { cell.id })
+end
+
+function M.update_executing_line(bufnr, cell_id, frame)
+  bufnr = bufnr or 0
+  if not cell_id then
+    return
+  end
+  local store = get_store(bufnr)
+  local entry = store[cell_id]
+  if not entry or entry.executing ~= true or not entry.executing_line then
+    return
+  end
+  entry.lines = entry.lines or {}
+  entry.lines[1] = frame .. " " .. entry.executing_line
+  store[cell_id] = entry
+  set_buf_var(bufnr, "neo_notebooks_output_store", store)
 end
 
 function M.render_block(bufnr, cell, lines)
