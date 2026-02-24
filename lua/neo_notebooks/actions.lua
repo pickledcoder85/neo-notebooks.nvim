@@ -89,7 +89,7 @@ function M.duplicate_cell(bufnr, line)
   index.mark_dirty(bufnr)
   local new_start = insert_at
   vim.api.nvim_win_set_cursor(0, { new_start + 2, 0 })
-  M.clamp_cursor_to_cell_left(bufnr)
+  M.clamp_cursor_to_cell_left(bufnr, { force = true })
 end
 
 function M.split_cell(bufnr, line)
