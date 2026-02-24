@@ -38,14 +38,28 @@ local function format_duration(duration_ms)
   return string.format("%dm%.0fs", minutes, rem)
 end
 
-local function with_timing(lines, duration_ms)
+local function target_win_width(bufnr)
+  local win = vim.fn.bufwinid(bufnr)
+  if win == -1 then
+    local wins = vim.fn.win_findbuf(bufnr)
+    if wins and #wins > 0 then
+      win = wins[1]
+    end
+  end
+  if win ~= -1 then
+    return vim.api.nvim_win_get_width(win)
+  end
+  return vim.api.nvim_win_get_width(0)
+end
+
+local function with_timing(lines, duration_ms, bufnr)
   local timing = format_duration(duration_ms)
   if not timing then
     return lines
   end
   local label = "[" .. timing .. "]"
   local config = require("neo_notebooks").config
-  local win_width = vim.api.nvim_win_get_width(0)
+  local win_width = target_win_width(bufnr)
   local ratio = config.cell_width_ratio or 0.9
   local width = math.floor(win_width * ratio)
   width = math.max(config.cell_min_width or 60, width)
@@ -232,7 +246,7 @@ function M.show_inline(bufnr, cell, lines, opts)
     opts = opts or {}
     local render_lines = lines
     if opts.duration_ms then
-      render_lines = with_timing(lines, opts.duration_ms)
+      render_lines = with_timing(lines, opts.duration_ms, bufnr)
     end
     if vim.deep_equal(existing_lines, render_lines) then
       if opts.duration_ms then

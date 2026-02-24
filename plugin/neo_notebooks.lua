@@ -968,6 +968,14 @@ vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
   end,
 })
 
+vim.api.nvim_create_autocmd({ "WinEnter" }, {
+  callback = function(args)
+    if should_enable(args.buf) and nb.config.auto_render then
+      scheduler.request_render(args.buf, { immediate = true })
+    end
+  end,
+})
+
 vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
   pattern = "*.nn",
   callback = function(args)
