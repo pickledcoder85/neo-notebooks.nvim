@@ -87,6 +87,17 @@ with_buf({
   end)
 end)
 
+-- Test: exec hash store defaults
+with_buf({
+  "# %% [code]",
+  "print(1)",
+}, function(buf)
+  exec.run_cell(buf, 1, { on_output = function() end })
+  local ok_var, store = pcall(vim.api.nvim_buf_get_var, buf, "neo_notebooks_exec_hashes")
+  ok(ok_var, "exec hash store exists")
+  ok(type(store) == "table", "exec hash store is table")
+end)
+
 -- Test: stable id across rebuild after body edit
 with_buf({
   "# %% [code]",

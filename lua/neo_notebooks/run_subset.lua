@@ -37,9 +37,11 @@ function M.run_above(bufnr, line)
     bufnr = vim.api.nvim_get_current_buf()
   end
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+  local current = cells.get_cell_at_line(bufnr, line)
+  local upper_bound = current and current.start or line
   local list = cells.get_cells(bufnr)
   for _, cell in ipairs(list) do
-    if cell.type == "code" and cell.finish < line then
+    if cell.type == "code" and cell.finish < upper_bound then
       run_cell(bufnr, cell)
     end
   end

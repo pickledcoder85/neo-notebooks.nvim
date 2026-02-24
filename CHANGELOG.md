@@ -14,6 +14,7 @@ best-effort summary based on existing documentation and recent commits.
 - Added per-buffer execution queue to serialize runs within a notebook.
 - Added notebook-only `scrolloff` padding to keep context below the cursor.
 - `run_below` now includes the current cell.
+- Re-running a cell can interrupt the active execution when code has changed.
 
 ## Earlier (high-level)
 

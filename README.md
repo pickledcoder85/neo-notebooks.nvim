@@ -83,6 +83,8 @@ require("neo_notebooks").setup({
   contain_line_nav = true,
   textwidth_in_cells = true,
   notebook_scrolloff = 5,
+  interrupt_on_rerun = true,
+  skip_unchanged_rerun = true,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",
