@@ -89,7 +89,7 @@ function M.duplicate_cell(bufnr, line)
   index.mark_dirty(bufnr)
   local new_start = insert_at
   vim.api.nvim_win_set_cursor(0, { new_start + 2, 0 })
-  M.clamp_cursor_to_cell_left(bufnr, { force = true })
+  M.clamp_cursor_to_cell_left(bufnr, { force = true, clamp_to_line = true })
 end
 
 function M.split_cell(bufnr, line)
@@ -471,9 +471,21 @@ function M.clamp_cursor_to_cell_left(bufnr, opts)
   end
   local target_col = left_boundary_col(cell)
   if opts.force or col < target_col then
-    vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
-    vim.api.nvim_win_set_cursor(0, { line + 1, 0 })
-    vim.cmd("normal! " .. tostring(target_col + 1) .. "|")
+    if opts.clamp_to_line then
+      local text = vim.api.nvim_buf_get_lines(bufnr, line, line + 1, false)[1] or ""
+      local line_len = #text
+      local final_col = target_col
+      if line_len == 0 then
+        final_col = target_col
+      else
+        final_col = math.min(target_col, line_len - 1)
+      end
+      vim.api.nvim_win_set_cursor(0, { line + 1, final_col })
+    else
+      vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
+      vim.api.nvim_win_set_cursor(0, { line + 1, 0 })
+      vim.cmd("normal! " .. tostring(target_col + 1) .. "|")
+    end
   end
 end
 
