@@ -68,6 +68,13 @@ local function left_boundary_col(cell)
   return pad + 1
 end
 
+local function jump_to_cell_left(bufnr, cell, line)
+  local target_col = left_boundary_col(cell)
+  vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
+  vim.api.nvim_win_set_cursor(0, { line + 1, 0 })
+  vim.cmd("normal! " .. tostring(target_col + 1) .. "|")
+end
+
 function M.duplicate_cell(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
@@ -359,9 +366,7 @@ function M.open_line_below(bufnr)
   local index = require("neo_notebooks.index")
   index.on_text_changed(bufnr)
   local target_col = left_boundary_col(cell)
-  vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
-  vim.api.nvim_win_set_cursor(0, { insert_at + 1, 0 })
-  vim.cmd("normal! " .. tostring(target_col + 1) .. "|")
+  jump_to_cell_left(bufnr, cell, insert_at)
   mark_pending_virtual_indent(bufnr, insert_at, target_col)
   vim.cmd("startinsert")
 end
@@ -376,9 +381,7 @@ function M.open_line_above(bufnr)
   local index = require("neo_notebooks.index")
   index.on_text_changed(bufnr)
   local target_col = left_boundary_col(cell)
-  vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
-  vim.api.nvim_win_set_cursor(0, { insert_at + 1, 0 })
-  vim.cmd("normal! " .. tostring(target_col + 1) .. "|")
+  jump_to_cell_left(bufnr, cell, insert_at)
   mark_pending_virtual_indent(bufnr, insert_at, target_col)
   vim.cmd("startinsert")
 end
@@ -412,8 +415,7 @@ function M.handle_enter_insert(bufnr)
       return
     end
     local target_col = left_boundary_col(state.cell)
-    vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
-    vim.cmd("normal! " .. tostring(target_col + 1) .. "|")
+    jump_to_cell_left(bufnr, state.cell, state.line)
     mark_pending_virtual_indent(bufnr, state.line, target_col)
   end)
 end
@@ -726,16 +728,7 @@ function M.goto_line_first_nonblank_contained(bufnr)
     vim.cmd("normal! _")
     return
   end
-  local line = state.line
-  local text = vim.api.nvim_buf_get_lines(bufnr, line, line + 1, false)[1] or ""
-  local first = text:find("%S")
-  local left_col = left_boundary_col(state.cell)
-  local col = left_col
-  if first then
-    col = left_col + (first - 1)
-  end
-  vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
-  vim.api.nvim_win_set_cursor(0, { line + 1, col })
+  jump_to_cell_left(bufnr, state.cell, state.line)
 end
 
 function M.fold_cell(bufnr, line)
