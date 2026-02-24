@@ -6,6 +6,20 @@ local output = require("neo_notebooks.output")
 local M = {}
 
 local sessions = {}
+
+local function get_hash_store(bufnr)
+  local ok, value = pcall(vim.api.nvim_buf_get_var, bufnr, "neo_notebooks_exec_hashes")
+  if ok and type(value) == "table" then
+    return value
+  end
+  local empty = {}
+  vim.api.nvim_buf_set_var(bufnr, "neo_notebooks_exec_hashes", empty)
+  return empty
+end
+
+local function set_hash_store(bufnr, store)
+  vim.api.nvim_buf_set_var(bufnr, "neo_notebooks_exec_hashes", store)
+end
 local request_id = 0
 
 local PY_SERVER = [[
@@ -311,6 +325,11 @@ local function handle_response(session, resp)
   end
   spinner.stop(pending.bufnr, resolved_cell_id)
   session.pending[id] = nil
+  if resolved_cell_id and pending.code_hash then
+    local store = get_hash_store(pending.bufnr)
+    store[resolved_cell_id] = pending.code_hash
+    set_hash_store(pending.bufnr, store)
+  end
   local output = format_output(resp)
   if pending.on_output then
     if vim.g.neo_notebooks_debug_output then
@@ -437,6 +456,7 @@ local function build_request(bufnr, line, opts)
     bufnr = bufnr,
     line = line,
     code = code,
+    code_hash = vim.fn.sha256(code),
     on_output = opts.on_output,
     cell_id = cell_id,
   }
@@ -452,6 +472,7 @@ local function dispatch_request(session, req)
     on_output = req.on_output,
     cell_id = req.cell_id,
     line = req.line,
+    code_hash = req.code_hash,
     started_at = vim.loop.hrtime(),
   }
   session.active_request_id = id
@@ -501,10 +522,39 @@ function M.enqueue_cell(bufnr, line, opts)
   if not session then
     return
   end
+  local config = require("neo_notebooks").config
+  if req.cell_id and config.skip_unchanged_rerun then
+    local store = get_hash_store(bufnr)
+    if store[req.cell_id] and store[req.cell_id] == req.code_hash then
+      return
+    end
+  end
+  if req.cell_id and config.interrupt_on_rerun then
+    local active_id = session.active_request_id
+    local pending = active_id and session.pending and session.pending[active_id] or nil
+    if pending and pending.cell_id == req.cell_id then
+      if not config.skip_unchanged_rerun or pending.code_hash ~= req.code_hash then
+        local pid = vim.fn.jobpid(session.job)
+        if pid and pid > 0 then
+          pcall(vim.loop.kill, pid, "sigint")
+        end
+        spinner.stop(bufnr, req.cell_id)
+        session.pending[active_id] = nil
+        session.active_request_id = nil
+      end
+    end
+  end
   if not session.drain_queue then
     session.drain_queue = make_queue_drainer(session)
   end
-  table.insert(session.queue, req)
+  local pushed = false
+  if config.interrupt_on_rerun and session.active_request_id == nil then
+    table.insert(session.queue, 1, req)
+    pushed = true
+  end
+  if not pushed then
+    table.insert(session.queue, req)
+  end
   session.drain_queue()
 end
 

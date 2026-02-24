@@ -41,6 +41,9 @@ This document summarizes implementation choices and the evolution of core featur
 - If the last statement is an expression, it is evaluated and printed (Jupyter-like).
 - A per-buffer FIFO queue in `exec.lua` serializes requests so only one cell executes
   at a time; the next queued request starts when the previous response is handled.
+- If a cell is re-run with unchanged code, execution can be skipped. If the code
+  has changed and `interrupt_on_rerun` is enabled, the active request is interrupted
+  and the new run starts immediately.
 
 ## Output handling
 
