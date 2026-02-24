@@ -257,7 +257,7 @@ local function run_cell_with_output(line, cell)
     cell.finish = entry.finish
   end
   if nb.config.output == "inline" then
-    exec.run_cell(0, line, {
+    exec.run_cell(bufnr, line, {
       on_output = function(lines, cell_id, duration_ms)
         output.show_inline(bufnr, {
           id = cell_id or cell.id,
@@ -269,7 +269,7 @@ local function run_cell_with_output(line, cell)
       cell_id = cell.id,
     })
   else
-    exec.run_cell(0, line)
+    exec.run_cell(bufnr, line)
   end
 end
 
@@ -413,7 +413,7 @@ vim.api.nvim_create_user_command("NeoNotebookCellMoveDown", function()
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookRunAll", function()
-  run_all.run_all(0)
+  run_all.run_all(vim.api.nvim_get_current_buf())
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookRestart", function()
@@ -433,11 +433,11 @@ vim.api.nvim_create_user_command("NeoNotebookStats", function()
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookRunAbove", function()
-  run_subset.run_above(0)
+  run_subset.run_above(vim.api.nvim_get_current_buf())
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookRunBelow", function()
-  run_subset.run_below(0)
+  run_subset.run_below(vim.api.nvim_get_current_buf())
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookHelp", function()
