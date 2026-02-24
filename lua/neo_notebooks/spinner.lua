@@ -3,6 +3,7 @@ M.ns = vim.api.nvim_create_namespace("neo_notebooks_spinner")
 
 local frames = { "|", "/", "-", "\\" }
 local timers = {}
+local last_frames = {}
 
 local function key(bufnr, cell_id)
   return tostring(bufnr) .. ":" .. tostring(cell_id)
@@ -37,6 +38,7 @@ function M.start(bufnr, cell_id, line)
     timer = vim.loop.new_timer(),
   }
   timers[key(bufnr, cell_id)] = entry
+  last_frames[key(bufnr, cell_id)] = entry.frame
 
   local frame = 1
   local function tick()
@@ -45,6 +47,7 @@ function M.start(bufnr, cell_id, line)
       return
     end
     entry.frame = frames[frame]
+    last_frames[key(bufnr, cell_id)] = entry.frame
     rerender(bufnr, cell_id)
     frame = frame % #frames + 1
   end
@@ -96,6 +99,18 @@ function M.get_frame(bufnr, cell_id)
     return nil
   end
   return entry.frame
+end
+
+function M.get_frame_or_last(bufnr, cell_id)
+  bufnr = bufnr or 0
+  if not cell_id then
+    return nil
+  end
+  local entry = timers[key(bufnr, cell_id)]
+  if entry then
+    return entry.frame
+  end
+  return last_frames[key(bufnr, cell_id)]
 end
 
 return M
