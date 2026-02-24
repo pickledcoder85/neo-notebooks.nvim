@@ -71,6 +71,24 @@ local function set_timing_store(bufnr, store)
   set_buf_var(bufnr, "neo_notebooks_output_timing", store)
 end
 
+local function render_cell_in_window(bufnr, cell_id)
+  local render = require("neo_notebooks.render")
+  local win = vim.fn.bufwinid(bufnr)
+  if win == -1 then
+    local wins = vim.fn.win_findbuf(bufnr)
+    if wins and #wins > 0 then
+      win = wins[1]
+    end
+  end
+  if win ~= -1 then
+    vim.api.nvim_win_call(win, function()
+      render.render_cells(bufnr, { cell_id })
+    end)
+    return true
+  end
+  return false
+end
+
 function M.clear_cell(bufnr, cell_start)
   bufnr = bufnr or 0
   local index = require("neo_notebooks.index")
@@ -98,8 +116,10 @@ function M.clear_by_id(bufnr, cell_id)
   local timing_store = get_timing_store(bufnr)
   timing_store[cell_id] = nil
   set_timing_store(bufnr, timing_store)
-  local scheduler = require("neo_notebooks.scheduler")
-  scheduler.request_render(bufnr, { immediate = true, cell_ids = { cell_id } })
+  if not render_cell_in_window(bufnr, cell_id) then
+    local scheduler = require("neo_notebooks.scheduler")
+    scheduler.request_render(bufnr, { immediate = true, cell_ids = { cell_id } })
+  end
 end
 
 function M.get_lines(bufnr, cell_id)
@@ -222,8 +242,10 @@ function M.show_inline(bufnr, cell, lines, opts)
           store[cell.id] = existing
           set_buf_var(bufnr, "neo_notebooks_output_store", store)
         end
-        local scheduler = require("neo_notebooks.scheduler")
-        scheduler.request_render(bufnr, { immediate = true, cell_ids = { cell.id } })
+        if not render_cell_in_window(bufnr, cell.id) then
+          local scheduler = require("neo_notebooks.scheduler")
+          scheduler.request_render(bufnr, { immediate = true, cell_ids = { cell.id } })
+        end
       end
       if vim.g.neo_notebooks_debug_output then
         vim.notify("show_inline skipped (same output)", vim.log.levels.INFO)
@@ -257,8 +279,10 @@ function M.show_inline(bufnr, cell, lines, opts)
   if vim.g.neo_notebooks_debug_output then
     vim.notify("show_inline render_outputs", vim.log.levels.INFO)
   end
-  local scheduler = require("neo_notebooks.scheduler")
-  scheduler.request_render(bufnr, { immediate = true, cell_ids = { cell.id } })
+  if not render_cell_in_window(bufnr, cell.id) then
+    local scheduler = require("neo_notebooks.scheduler")
+    scheduler.request_render(bufnr, { immediate = true, cell_ids = { cell.id } })
+  end
 end
 
 function M.update_executing_line(bufnr, cell_id, frame)
