@@ -436,18 +436,6 @@ local function dispatch_request(session, req)
   request_id = request_id + 1
   local id = request_id
 
-  if req.cell_id and req.on_output then
-    local index = require("neo_notebooks.index")
-    local cell = index.get_by_id(req.bufnr, req.cell_id) or index.find_cell(req.bufnr, req.line)
-    if cell then
-      output.show_inline(req.bufnr, {
-        id = cell.id,
-        start = cell.start,
-        finish = cell.finish,
-        type = cell.type,
-      }, { "cell executing..." }, { executing = true })
-    end
-  end
   local payload = vim.fn.json_encode({ id = id, code = req.code })
   session.pending[id] = {
     bufnr = req.bufnr,
@@ -459,6 +447,18 @@ local function dispatch_request(session, req)
   session.active_request_id = id
   if req.cell_id then
     spinner.start(req.bufnr, req.cell_id, req.line)
+  end
+  if req.cell_id and req.on_output then
+    local index = require("neo_notebooks.index")
+    local cell = index.get_by_id(req.bufnr, req.cell_id) or index.find_cell(req.bufnr, req.line)
+    if cell then
+      output.show_inline(req.bufnr, {
+        id = cell.id,
+        start = cell.start,
+        finish = cell.finish,
+        type = cell.type,
+      }, { "cell executing..." }, { executing = true })
+    end
   end
   vim.fn.chansend(session.job, payload .. "\n")
 end
