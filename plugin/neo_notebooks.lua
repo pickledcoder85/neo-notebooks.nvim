@@ -226,6 +226,12 @@ vim.api.nvim_create_user_command("NeoNotebookSpinnerDebug", function()
   vim.notify(msg, vim.log.levels.INFO)
 end, {})
 
+vim.api.nvim_create_user_command("NeoNotebookExecDebug", function()
+  local exec = require("neo_notebooks.exec")
+  local state = exec.debug_state()
+  vim.notify(vim.inspect(state), vim.log.levels.INFO)
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookCellNew", function(opts)
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local insert_line = cells.insert_cell_below(0, line, opts.args)
