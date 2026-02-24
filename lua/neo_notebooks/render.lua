@@ -165,15 +165,15 @@ local function output_block(lines, width, pad, hl, spin, reserve_spin)
 
   local inner_width = math.max(0, width - 2)
   for i, line in ipairs(lines) do
-    if i == 1 and (spin or reserve_spin) then
-      local frame = spin or " "
-      line = frame .. " " .. line
-    end
     local timing_label = nil
     local timing_leading = nil
     if i == 1 and line:find("^%s*%[") and line:find("%]$") then
       timing_label = line:match("(%[[^%]]+%])")
       timing_leading = line:match("^(%s*)") or ""
+    end
+    if not timing_label and i == 1 and (spin or reserve_spin) then
+      local frame = spin or " "
+      line = frame .. " " .. line
     end
     if timing_label then
       local used = vim.fn.strdisplaywidth(timing_leading) + vim.fn.strdisplaywidth(timing_label)
