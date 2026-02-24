@@ -671,7 +671,14 @@ function M.move_line_down_contained(bufnr, count)
     target = math.min(target, bottom)
     target = math.max(state.body_start, target)
     local left_col = left_boundary_col(state.cell)
+    local text = vim.api.nvim_buf_get_lines(bufnr, target, target + 1, false)[1] or ""
+    local line_len = #text
     local col = math.max(state.col, left_col)
+    if line_len == 0 then
+      col = left_col
+    else
+      col = math.min(col, line_len - 1)
+    end
     vim.api.nvim_win_set_cursor(0, { target + 1, col })
   end
 end
@@ -688,7 +695,14 @@ function M.move_line_up_contained(bufnr, count)
     local target = state.line - 1
     target = math.max(state.body_start, target)
     local left_col = left_boundary_col(state.cell)
+    local text = vim.api.nvim_buf_get_lines(bufnr, target, target + 1, false)[1] or ""
+    local line_len = #text
     local col = math.max(state.col, left_col)
+    if line_len == 0 then
+      col = left_col
+    else
+      col = math.min(col, line_len - 1)
+    end
     vim.api.nvim_win_set_cursor(0, { target + 1, col })
   end
 end
