@@ -206,6 +206,26 @@ vim.api.nvim_create_user_command("NeoNotebookRender", function()
   render.render(0)
 end, {})
 
+vim.api.nvim_create_user_command("NeoNotebookSpinnerDebug", function()
+  local idx = require("neo_notebooks.index")
+  local spin = require("neo_notebooks.spinner")
+  local out = require("neo_notebooks.output")
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cell = idx.find_cell(0, line)
+  local id = cell and cell.id or nil
+  local entry = id and out.get_entry(0, id) or nil
+  local msg = string.format(
+    "SpinnerDebug: cell_id=%s spin_active=%s frame=%s executing=%s lines=%s auto_render=%s",
+    tostring(id),
+    tostring(id and spin.is_active(0, id) or false),
+    tostring(id and spin.get_frame_or_last(0, id) or nil),
+    tostring(entry and entry.executing or false),
+    tostring(entry and entry.lines and #entry.lines or 0),
+    tostring(require("neo_notebooks").config.auto_render)
+  )
+  vim.notify(msg, vim.log.levels.INFO)
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookCellNew", function(opts)
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local insert_line = cells.insert_cell_below(0, line, opts.args)
