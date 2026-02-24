@@ -727,14 +727,12 @@ function M.goto_line_first_nonblank_contained(bufnr)
     return
   end
   local line = state.line
-  local left_col = left_boundary_col(state.cell)
   local text = vim.api.nvim_buf_get_lines(bufnr, line, line + 1, false)[1] or ""
   local first = text:find("%S")
-  local col = left_col
+  local col = 0
   if first then
-    col = left_col + (first - 1)
+    col = first - 1
   end
-  vim.api.nvim_set_option_value("virtualedit", "all", { win = 0 })
   vim.api.nvim_win_set_cursor(0, { line + 1, col })
 end
 
