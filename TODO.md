@@ -12,7 +12,6 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Already added line-change dirty tracking + incremental delta updates + full rebuild fallback.
   - Next: expand safe partial rebuilds for multi-range edits and marker moves.
 - Partial cell rerendering (redraw affected cells only, not full notebook).
-- New-line padding strategy: pre-insert left-boundary spaces on `o`/`O`/`<CR>`, keep during insert for correct auto-indent, then trim on `InsertLeave`/save/run.
 - Output collapse/expand per cell.
 - Add a UI action menu (Telescope-style picker).
 
@@ -67,3 +66,4 @@ This file tracks project scope and the order of work. Items can be moved as prio
 - Manual validation checklist completed on `notebooks/test.ipynb`.
 - Dropped floating UI experiment branches.
 - blink.cmp auto-show suppression helper for notebook buffers.
+- New-line padding strategy: pre-insert left-boundary spaces on `o`/`O`/`<CR>`, keep during insert for correct auto-indent, then trim on `InsertLeave`/save/run.

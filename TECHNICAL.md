@@ -159,6 +159,8 @@ This document summarizes implementation choices and the evolution of core featur
 - `strict_containment = "soft"` enforces containment on edit-entry points (InsertEnter/Enter handlers).
 - `contain_line_nav` remaps `j/k` to stay within active cell editable bounds.
 - `textwidth_in_cells` sets `textwidth` to the cell inner width for soft line wrapping.
+- New-line insertions pre-pad with left-boundary spaces during insert to preserve auto-indent,
+  then trim padding on `InsertLeave` and before execution/export.
 
 ## Cell list enhancements
 

@@ -272,6 +272,7 @@ end
 vim.api.nvim_create_user_command("NeoNotebookCellRun", function()
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local cell = cells.get_cell_at_line(0, line)
+  actions.consume_pending_virtual_indent(0)
   run_cell_with_output(line, cell)
 end, {})
 
@@ -316,6 +317,7 @@ vim.api.nvim_create_user_command("NeoNotebookCellRunAndNext", function()
     return
   end
 
+  actions.consume_pending_virtual_indent(0)
   run_cell_with_output(line, cell)
 
   if next_cell then
@@ -409,6 +411,7 @@ vim.api.nvim_create_user_command("NeoNotebookCellMoveDown", function()
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookRunAll", function()
+  actions.consume_pending_virtual_indent(0)
   run_all.run_all(vim.api.nvim_get_current_buf())
 end, {})
 
@@ -429,10 +432,12 @@ vim.api.nvim_create_user_command("NeoNotebookStats", function()
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookRunAbove", function()
+  actions.consume_pending_virtual_indent(0)
   run_subset.run_above(vim.api.nvim_get_current_buf())
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookRunBelow", function()
+  actions.consume_pending_virtual_indent(0)
   run_subset.run_below(vim.api.nvim_get_current_buf())
 end, {})
 
@@ -484,6 +489,7 @@ vim.api.nvim_create_user_command("NeoNotebookExportIpynb", function(opts)
     vim.notify("Provide a .ipynb path", vim.log.levels.WARN)
     return
   end
+  actions.consume_pending_virtual_indent(0)
   local ok, err = ipynb.export_ipynb(path, 0)
   if not ok then
     vim.notify(err or "Export failed", vim.log.levels.ERROR)
@@ -907,7 +913,6 @@ vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "TextChanged", "Tex
 vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
   callback = function(args)
     if should_enable(args.buf) then
-      actions.consume_pending_virtual_indent(args.buf)
       index.on_text_changed(args.buf)
       local dirty_cells = index.consume_dirty_cells(args.buf)
       local hint = index.consume_render_hint(args.buf)
@@ -918,6 +923,14 @@ vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
       else
         scheduler.request_render(args.buf, { debounce_ms = immediate and 0 or 20, immediate = immediate })
       end
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd({ "InsertLeave" }, {
+  callback = function(args)
+    if should_enable(args.buf) then
+      actions.consume_pending_virtual_indent(args.buf)
     end
   end,
 })

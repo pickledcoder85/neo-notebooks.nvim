@@ -318,6 +318,7 @@ with_buf({
   vim.api.nvim_buf_call(buf, function()
     vim.api.nvim_win_set_cursor(0, { 2, 0 })
     actions.open_line_below(buf)
+    actions.consume_pending_virtual_indent(buf)
   end)
   local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
   eq(lines[4], "", "inserted line exists in first cell")
@@ -336,6 +337,7 @@ with_buf({
   vim.api.nvim_buf_call(buf, function()
     vim.api.nvim_win_set_cursor(0, { 3, 0 }) -- protected bottom line of first cell
     actions.open_line_below(buf)
+    actions.consume_pending_virtual_indent(buf)
   end)
   local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
   eq(lines[3], "", "original bottom line stays in place")
