@@ -59,6 +59,7 @@ This document summarizes implementation choices and the evolution of core featur
 - While a cell runs, the output area shows a placeholder line.
 - After execution, the inline output prepends a right-aligned timing line.
 - Execution duration is measured around the request/response boundary and stored per cell ID.
+- Spinner frames request immediate renders to avoid dropped updates.
 
 ## Markdown preview
 

@@ -910,11 +910,22 @@ vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
       actions.consume_pending_virtual_indent(args.buf)
       index.on_text_changed(args.buf)
       local dirty_cells = index.consume_dirty_cells(args.buf)
+      local hint = index.consume_render_hint(args.buf)
+      local insert_mode = vim.api.nvim_get_mode().mode:match("^i") ~= nil
+      local immediate = hint == "immediate" or insert_mode
       if dirty_cells then
-        scheduler.request_render(args.buf, { debounce_ms = 20, cell_ids = dirty_cells })
+        scheduler.request_render(args.buf, { debounce_ms = immediate and 0 or 20, immediate = immediate, cell_ids = dirty_cells })
       else
-        scheduler.request_render(args.buf, { debounce_ms = 20 })
+        scheduler.request_render(args.buf, { debounce_ms = immediate and 0 or 20, immediate = immediate })
       end
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd({ "InsertEnter", "InsertLeave" }, {
+  callback = function(args)
+    if should_enable(args.buf) and nb.config.auto_render then
+      scheduler.request_render(args.buf, { immediate = true })
     end
   end,
 })

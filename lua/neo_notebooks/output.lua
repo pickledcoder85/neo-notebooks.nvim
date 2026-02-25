@@ -117,6 +117,8 @@ function M.clear_all(bufnr)
   vim.api.nvim_buf_clear_namespace(bufnr, M.ns, 0, -1)
   set_buf_var(bufnr, "neo_notebooks_output_store", {})
   set_buf_var(bufnr, "neo_notebooks_output_timing", {})
+  local scheduler = require("neo_notebooks.scheduler")
+  scheduler.request_render(bufnr, { immediate = true })
 end
 
 function M.clear_by_id(bufnr, cell_id)
@@ -249,6 +251,28 @@ function M.show_inline(bufnr, cell, lines, opts)
       render_lines = with_timing(lines, opts.duration_ms, bufnr)
     end
     if vim.deep_equal(existing_lines, render_lines) then
+      if opts.executing then
+        local executing_line = nil
+        if render_lines[1] then
+          local spinner = require("neo_notebooks.spinner")
+          local frame = spinner.get_frame_or_last(bufnr, cell.id) or " "
+          executing_line = render_lines[1]
+          render_lines[1] = frame .. " " .. executing_line
+        end
+        store[cell.id] = {
+          lines = render_lines,
+          len = #render_lines,
+          duration_ms = opts.duration_ms,
+          executing = true,
+          executing_line = executing_line,
+        }
+        set_buf_var(bufnr, "neo_notebooks_output_store", store)
+        if not render_cell_in_window(bufnr, cell.id) then
+          local scheduler = require("neo_notebooks.scheduler")
+          scheduler.request_render(bufnr, { immediate = true, cell_ids = { cell.id } })
+        end
+        return
+      end
       if opts.duration_ms then
         M.set_timing(bufnr, cell.id, opts.duration_ms)
         if existing then

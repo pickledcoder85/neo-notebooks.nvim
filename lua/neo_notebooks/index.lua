@@ -20,6 +20,9 @@ local function get_meta(bufnr)
   if meta.orphans == nil then
     meta.orphans = {}
   end
+  if meta.render_hint == nil then
+    meta.render_hint = "debounce"
+  end
   return meta
 end
 
@@ -254,6 +257,7 @@ function M.on_lines(bufnr, firstline, lastline, new_lastline)
     meta.dirty = true
     meta.marker_dirty = true
     meta.dirty_cell_ids = nil
+    meta.render_hint = "immediate"
     return
   end
   meta.dirty_cell_ids = meta.dirty_cell_ids or {}
@@ -281,12 +285,14 @@ function M.on_lines(bufnr, firstline, lastline, new_lastline)
     meta.tick = current_tick(bufnr)
     meta.dirty = false
     meta.marker_dirty = false
+    meta.render_hint = "immediate"
     return
   end
   vim.b[bufnr].neo_notebooks_index = state
   meta.tick = current_tick(bufnr)
   meta.dirty = false
   meta.marker_dirty = false
+  meta.render_hint = "debounce"
 end
 
 function M.on_text_changed(bufnr)
@@ -315,6 +321,14 @@ function M.consume_dirty_cells(bufnr)
     return nil
   end
   return list
+end
+
+function M.consume_render_hint(bufnr)
+  bufnr = bufnr or 0
+  local meta = get_meta(bufnr)
+  local hint = meta.render_hint or "debounce"
+  meta.render_hint = "debounce"
+  return hint
 end
 
 function M.get_by_id(bufnr, id)

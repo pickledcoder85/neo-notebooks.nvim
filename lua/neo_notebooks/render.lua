@@ -155,6 +155,7 @@ end
 
 local function output_block(lines, width, pad, hl, spin, reserve_spin)
   local block = {}
+  local spinner = (spin or reserve_spin) and require("neo_notebooks.spinner") or nil
   local function border(left, right)
     return string.rep(" ", pad) .. cell_border(width, left, right)
   end
@@ -173,7 +174,9 @@ local function output_block(lines, width, pad, hl, spin, reserve_spin)
     end
     if not timing_label and i == 1 and (spin or reserve_spin) then
       local frame = spin or " "
-      line = frame .. " " .. line
+      if not (spinner and spinner.has_frame_prefix(line)) then
+        line = frame .. " " .. line
+      end
     end
     if timing_label then
       local used = vim.fn.strdisplaywidth(timing_leading) + vim.fn.strdisplaywidth(timing_label)
@@ -348,12 +351,8 @@ local function render_cell(bufnr, ctx, cell, visible_idx, active, in_insert, cur
     local out_lines = out_entry and out_entry.lines or nil
     if out_lines and #out_lines > 0 then
       local executing = out_entry and out_entry.executing == true
-      local spin = nil
-      local reserve_spin = false
-      if not executing then
-        spin = spinner.get_frame_or_last(bufnr, cell.id)
-        reserve_spin = spinner.is_active(bufnr, cell.id)
-      end
+      local spin = spinner.get_frame_or_last(bufnr, cell.id)
+      local reserve_spin = spinner.is_active(bufnr, cell.id)
       local out_block = output_block(out_lines, width, pad, "NeoNotebookOutput", spin, reserve_spin)
       for _, line in ipairs(out_block) do
         table.insert(bottom_lines, line)

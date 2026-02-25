@@ -5,11 +5,20 @@ local frames = { "|", "/", "-", "\\" }
 local timers = {}
 local last_frames = {}
 
+local function resolve_bufnr(bufnr)
+  if bufnr == nil or bufnr == 0 then
+    return vim.api.nvim_get_current_buf()
+  end
+  return bufnr
+end
+
 local function key(bufnr, cell_id)
+  bufnr = resolve_bufnr(bufnr)
   return tostring(bufnr) .. ":" .. tostring(cell_id)
 end
 
 local function rerender(bufnr, cell_id)
+  bufnr = resolve_bufnr(bufnr)
   if not vim.api.nvim_buf_is_valid(bufnr) then
     return
   end
@@ -18,14 +27,14 @@ local function rerender(bufnr, cell_id)
     return
   end
   if cell_id then
-    scheduler.request_render(bufnr, { debounce_ms = 16, cell_ids = { cell_id } })
+    scheduler.request_render(bufnr, { immediate = true, cell_ids = { cell_id } })
   else
-    scheduler.request_render(bufnr, { debounce_ms = 16 })
+    scheduler.request_render(bufnr, { immediate = true })
   end
 end
 
 function M.start(bufnr, cell_id, line)
-  bufnr = bufnr or 0
+  bufnr = resolve_bufnr(bufnr)
   if not cell_id then
     return
   end
@@ -61,7 +70,7 @@ function M.start(bufnr, cell_id, line)
 end
 
 function M.stop(bufnr, cell_id)
-  bufnr = bufnr or 0
+  bufnr = resolve_bufnr(bufnr)
   if not cell_id then
     return
   end
@@ -78,7 +87,7 @@ function M.stop(bufnr, cell_id)
 end
 
 function M.stop_all(bufnr)
-  bufnr = bufnr or 0
+  bufnr = resolve_bufnr(bufnr)
   local keys = {}
   for k, entry in pairs(timers) do
     if entry.bufnr == bufnr then
@@ -94,7 +103,7 @@ function M.stop_all(bufnr)
 end
 
 function M.get_frame(bufnr, cell_id)
-  bufnr = bufnr or 0
+  bufnr = resolve_bufnr(bufnr)
   if not cell_id then
     return nil
   end
@@ -106,7 +115,7 @@ function M.get_frame(bufnr, cell_id)
 end
 
 function M.get_frame_or_last(bufnr, cell_id)
-  bufnr = bufnr or 0
+  bufnr = resolve_bufnr(bufnr)
   if not cell_id then
     return nil
   end
@@ -118,11 +127,28 @@ function M.get_frame_or_last(bufnr, cell_id)
 end
 
 function M.is_active(bufnr, cell_id)
-  bufnr = bufnr or 0
+  bufnr = resolve_bufnr(bufnr)
   if not cell_id then
     return false
   end
   return timers[key(bufnr, cell_id)] ~= nil
+end
+
+function M.has_frame_prefix(text)
+  if not text or text == "" then
+    return false
+  end
+  local first = text:sub(1, 1)
+  local second = text:sub(2, 2)
+  if second ~= " " then
+    return false
+  end
+  for _, frame in ipairs(frames) do
+    if first == frame then
+      return true
+    end
+  end
+  return false
 end
 
 return M
