@@ -2,6 +2,11 @@
 
 This document summarizes implementation choices and the evolution of core features.
 
+## Documentation gate
+
+- Any merge into `main` must reconcile `README.md`, `TODO.md`, and `TECHNICAL.md` for
+  behavior/config/architecture changes.
+
 ## Architecture overview
 
 - `plugin/neo_notebooks.lua`
