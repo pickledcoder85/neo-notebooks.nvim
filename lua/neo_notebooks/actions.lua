@@ -26,6 +26,94 @@ local function decision_keys(bufnr, decision)
   return decision.keys or ""
 end
 
+local function guarded_delete_range(bufnr, start, target)
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  start = math.max(0, math.min(start, line_count - 1))
+  target = math.max(0, math.min(target, line_count - 1))
+  local dir = (target < start) and -1 or 1
+  local line = start
+  local deletes = {}
+  local clears = {}
+  local reason = nil
+  while true do
+    local text = vim.api.nvim_buf_get_lines(bufnr, line, line + 1, false)[1] or ""
+    if containment.marker_type(text) then
+      reason = "NeoNotebook: cannot delete cell marker line"
+      break
+    end
+    local ok, why = policy.can_delete_line(bufnr, line)
+    if ok then
+      table.insert(deletes, line)
+    else
+      local can_mutate = policy.can_mutate_line(bufnr, line)
+      if can_mutate then
+        table.insert(clears, line)
+      else
+        reason = why
+        break
+      end
+    end
+    if line == target then
+      break
+    end
+    line = line + dir
+  end
+
+  if #deletes == 0 and #clears == 0 then
+    if reason and reason ~= "" then
+      vim.notify(reason, vim.log.levels.WARN)
+    end
+    return false
+  end
+
+  if #clears > 0 then
+    table.sort(clears)
+    for _, l in ipairs(clears) do
+      vim.api.nvim_buf_set_lines(bufnr, l, l + 1, false, { "" })
+    end
+  end
+  if #deletes > 0 then
+    table.sort(deletes, function(a, b)
+      return a > b
+    end)
+    for _, l in ipairs(deletes) do
+      vim.api.nvim_buf_set_lines(bufnr, l, l + 1, false, {})
+    end
+  end
+  return true
+end
+
+function M.handle_delete_motion(bufnr)
+  bufnr = bufnr or 0
+  local count = 0
+  local key = vim.fn.getcharstr()
+  while key:match("%d") do
+    count = count * 10 + tonumber(key)
+    key = vim.fn.getcharstr()
+  end
+  if count == 0 then
+    count = 1
+  end
+
+  if key == "d" then
+    local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+    guarded_delete_range(bufnr, line, math.min(line + count - 1, vim.api.nvim_buf_line_count(bufnr) - 1))
+    M.clamp_cursor_to_cell_left(bufnr, { force = true, clamp_to_line = true })
+    return
+  end
+
+  if key == "j" or key == "k" then
+    local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+    local target = line + ((key == "j") and count or -count)
+    guarded_delete_range(bufnr, line, target)
+    M.clamp_cursor_to_cell_left(bufnr, { force = true, clamp_to_line = true })
+    return
+  end
+
+  local replay = "d" .. (count > 1 and tostring(count) or "") .. key
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(replay, true, false, true), "n", true)
+end
+
 local function mark_pending_virtual_indent(bufnr, line, pad)
   local pending = vim.b[bufnr].neo_notebooks_pending_virtual_indent or {}
   pending[tostring(line)] = pad
@@ -594,6 +682,16 @@ end
 function M.guard_delete_current_line(bufnr, count)
   bufnr = bufnr or 0
   local decision = policy.decide(bufnr, "delete_line", { count = count })
+  if decision.action == "block" then
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    local line = cursor[1] - 1
+    local can_mutate = policy.can_mutate_line(bufnr, line)
+    if can_mutate then
+      vim.api.nvim_buf_set_lines(bufnr, line, line + 1, false, { "" })
+      M.clamp_cursor_to_cell_left(bufnr, { force = true, clamp_to_line = true })
+      return ""
+    end
+  end
   return decision_keys(bufnr, decision)
 end
 

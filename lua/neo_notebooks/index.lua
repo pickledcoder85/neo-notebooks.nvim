@@ -271,6 +271,15 @@ function M.on_lines(bufnr, firstline, lastline, new_lastline)
   local delta = new_lastline - lastline
   if delta ~= 0 then
     apply_delta(state, firstline, lastline, delta)
+    meta.dirty_cell_ids = meta.dirty_cell_ids or {}
+    for _, cell in ipairs(state.list) do
+      if cell.start >= lastline then
+        meta.dirty_cell_ids[cell.id] = true
+      end
+    end
+    meta.dirty = true
+    meta.marker_dirty = true
+    return
   end
   meta.tick = current_tick(bufnr)
   meta.dirty = false

@@ -104,12 +104,27 @@ local function update_completion(bufnr)
   end
 
   local b = vim.b[bufnr]
+  if nb.config.suppress_completion_popup then
+    if b.neo_notebooks_completion_forced ~= true then
+      b.neo_notebooks_completion_prev = b.completion
+      b.neo_notebooks_completion_forced = true
+    end
+    b.completion = false
+    return
+  end
+
   if cell.type == "markdown" then
     if b.completion ~= false then
       b.neo_notebooks_completion_prev = b.completion
       b.completion = false
       b.neo_notebooks_completion_forced = true
     end
+    if b.neo_notebooks_prev_omnifunc == nil then
+      b.neo_notebooks_prev_omnifunc = vim.bo[bufnr].omnifunc
+      b.neo_notebooks_prev_completefunc = vim.bo[bufnr].completefunc
+    end
+    vim.bo[bufnr].omnifunc = ""
+    vim.bo[bufnr].completefunc = ""
   else
     if b.neo_notebooks_completion_forced then
       if b.neo_notebooks_completion_prev == nil then
@@ -119,6 +134,12 @@ local function update_completion(bufnr)
       end
       b.neo_notebooks_completion_prev = nil
       b.neo_notebooks_completion_forced = nil
+    end
+    if b.neo_notebooks_prev_omnifunc ~= nil then
+      vim.bo[bufnr].omnifunc = b.neo_notebooks_prev_omnifunc
+      vim.bo[bufnr].completefunc = b.neo_notebooks_prev_completefunc or ""
+      b.neo_notebooks_prev_omnifunc = nil
+      b.neo_notebooks_prev_completefunc = nil
     end
   end
 end
@@ -844,6 +865,9 @@ set_default_keymaps = function(bufnr)
     vim.keymap.set("n", "dd", function()
       return actions.guard_delete_current_line(bufnr)
     end, { silent = true, buffer = bufnr, expr = true, replace_keycodes = false })
+    vim.keymap.set("n", "d", function()
+      actions.handle_delete_motion(bufnr)
+    end, { silent = true, buffer = bufnr })
     vim.keymap.set("n", "p", function()
       actions.handle_paste_below(bufnr)
     end, opts)

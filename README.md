@@ -67,6 +67,7 @@ require("neo_notebooks").setup({
   auto_insert_first_cell = true,
   overlay_preview = false,
   suppress_completion_in_markdown = true,
+  suppress_completion_popup = false,
   auto_insert_on_jump = false,
   border_hl_code = "NeoNotebookBorderCode",
   border_hl_markdown = "NeoNotebookBorderMarkdown",
@@ -220,6 +221,24 @@ require("neo_notebooks").setup({ suppress_completion_in_markdown = true })
 ```
 
 This sets `vim.b.completion = false` when entering markdown cells and restores the previous value in code cells.
+
+### blink.cmp popup suppression in notebooks
+
+If you use `blink.cmp` and want to keep completion while disabling the popup menu in notebooks, add this to your `blink.cmp` config:
+
+```lua
+completion = {
+  menu = {
+    auto_show = require("neo_notebooks").blink_cmp_auto_show,
+  },
+}
+```
+
+If you want to disable completion entirely in notebooks, set:
+
+```lua
+require("neo_notebooks").setup({ suppress_completion_popup = true })
+```
 
 ### Keymaps (defaults)
 

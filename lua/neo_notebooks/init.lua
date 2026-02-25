@@ -10,6 +10,7 @@ M.config = {
   auto_insert_first_cell = true,
   overlay_preview = false,
   suppress_completion_in_markdown = true,
+  suppress_completion_popup = false,
   auto_insert_on_jump = false,
   border_hl_code = "NeoNotebookBorderCode",
   border_hl_markdown = "NeoNotebookBorderMarkdown",
@@ -75,6 +76,37 @@ function M.setup(opts)
   if M._on_setup then
     M._on_setup()
   end
+end
+
+function M.is_notebook_buf(bufnr)
+  bufnr = bufnr or 0
+  if vim.b[bufnr] and vim.b[bufnr].neo_notebooks_enabled then
+    return true
+  end
+  local allowed = M.config.filetypes
+  if allowed and #allowed > 0 then
+    local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
+    local ok = false
+    for _, item in ipairs(allowed) do
+      if ft == item then
+        ok = true
+        break
+      end
+    end
+    if not ok then
+      return false
+    end
+  end
+  if M.config.require_markers then
+    local cells = require("neo_notebooks.cells")
+    return cells.has_markers(bufnr)
+  end
+  return true
+end
+
+function M.blink_cmp_auto_show(ctx)
+  local bufnr = (ctx and ctx.bufnr) or 0
+  return not M.is_notebook_buf(bufnr)
 end
 
 return M
