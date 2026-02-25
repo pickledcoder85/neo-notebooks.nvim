@@ -4,49 +4,14 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Now
 
-- Verify inline output behavior for `<leader>r` and `<S-CR>` after merge on real notebooks.
-- Reconcile floating UI experiments vs. mainline behavior (keep experimental or drop).
-- Verify output blocks render attached to cell bottom (no overlap), including after moves and reruns.
-- Decide whether to preserve outputs on cell move (currently clears all outputs) now that alignment is more stable.
-- Manual validation checklist (main, `notebooks/test.ipynb`):
-  - Setup:
-    1. `git checkout main`
-    2. Open `notebooks/test.ipynb` in Neovim.
-  - Expected behaviors to test:
-    1. Cell navigation
-       - Press `<C-n>` and `<C-p>`.
-       - Expect: jumps to the first line of the cell body in normal mode.
-    2. Run a cell
-       - Put cursor inside a code cell.
-       - Press `<leader>r`.
-       - Expect: output appears inline beneath the cell.
-    3. Shift+Enter
-       - In a code cell: `<S-CR>`
-       - Expect: runs the cell, then jumps to next cell if it exists, otherwise creates a new code cell and enters insert mode.
-       - In a markdown cell: `<S-CR>`
-       - Expect: jumps to next cell if it exists, otherwise creates a new code cell and enters insert mode.
-    4. Move cells
-       - Put cursor in a cell and run `<M-k>` or `<M-j>`.
-       - Expect: cell moves up/down; rerun cell and output attaches correctly.
-    5. Split/Duplicate/Delete
-       - Split: `<leader>xs`
-       - Duplicate: `<leader>yd`
-       - Delete: `<leader>dd`
-       - Expect: structure updates correctly; navigation still works.
-    6. Output placement after moves
-       - Run a cell, then move it.
-       - Run again.
-       - Expect: output appears under the moved cell (not the old location).
-    7. Stats
-       - `<leader>ns`
-       - Expect: correct counts of code vs markdown cells.
+- No active “Now” items. Pick from **Next**.
 
 ## Next
 
-- True dirty-range index updates (avoid full-buffer cell scans where possible).
-  - Robustness-first: keep full rebuild fallback whenever partial updates are unsafe.
+- Finish dirty-range index updates (reduce full-buffer scans where safe).
+  - Already added line-change dirty tracking + full rebuild fallback.
+  - Next: expand safe partial rebuilds for multi-range edits and marker moves.
 - Partial cell rerendering (redraw affected cells only, not full notebook).
-- Stabilize cell IDs across marker edits and deletions.
 - Output collapse/expand per cell.
 - Add a UI action menu (Telescope-style picker).
 
@@ -94,3 +59,10 @@ This file tracks project scope and the order of work. Items can be moved as prio
 - Output placement tied to cell IDs.
 - Extended headless tests.
 - Shift+Enter jumps to next cell if it exists.
+- Stable cell IDs across marker edits and deletions.
+- Delete motions guard `d{motion}` inside cell boundaries.
+- Render rebuild on line-count changes to prevent border overlap.
+- Output preservation on cell move (stable).
+- Manual validation checklist completed on `notebooks/test.ipynb`.
+- Dropped floating UI experiment branches.
+- blink.cmp auto-show suppression helper for notebook buffers.
