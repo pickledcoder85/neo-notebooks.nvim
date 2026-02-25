@@ -95,6 +95,25 @@ with_buf({
   eq(state.list[1].id, id, "id stable after edit")
 end)
 
+-- Test: line insert without marker touch updates ranges without rebuild
+with_buf({
+  "# %% [code]",
+  "print(1)",
+  "# %% [code]",
+  "print(2)",
+}, function(buf)
+  local state = index.rebuild(buf)
+  local first = state.list[1]
+  local second = state.list[2]
+  -- insert a line inside first cell body (before second marker)
+  vim.api.nvim_buf_set_lines(buf, 2, 2, false, { "print(1.5)" })
+  index.on_lines(buf, 2, 2, 3)
+  local updated = index.get(buf)
+  eq(updated.list[1].id, first.id, "id stable after insert")
+  eq(updated.list[2].id, second.id, "second id stable after insert")
+  eq(updated.list[2].start, second.start + 1, "second start shifted after insert")
+end)
+
 -- Test: get_cell_at_line uses index
 with_buf({
   "# %% [code]",

@@ -277,10 +277,13 @@ function M.on_lines(bufnr, firstline, lastline, new_lastline)
         meta.dirty_cell_ids[cell.id] = true
       end
     end
-    meta.dirty = true
-    meta.marker_dirty = true
+    vim.b[bufnr].neo_notebooks_index = state
+    meta.tick = current_tick(bufnr)
+    meta.dirty = false
+    meta.marker_dirty = false
     return
   end
+  vim.b[bufnr].neo_notebooks_index = state
   meta.tick = current_tick(bufnr)
   meta.dirty = false
   meta.marker_dirty = false

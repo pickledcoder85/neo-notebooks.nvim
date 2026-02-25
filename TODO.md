@@ -9,7 +9,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
 ## Next
 
 - Finish dirty-range index updates (reduce full-buffer scans where safe).
-  - Already added line-change dirty tracking + full rebuild fallback.
+  - Already added line-change dirty tracking + incremental delta updates + full rebuild fallback.
   - Next: expand safe partial rebuilds for multi-range edits and marker moves.
 - Partial cell rerendering (redraw affected cells only, not full notebook).
 - Output collapse/expand per cell.
