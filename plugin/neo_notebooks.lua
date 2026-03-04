@@ -406,6 +406,10 @@ vim.api.nvim_create_user_command("NeoNotebookOutputClearAll", function()
   actions.clear_all_output(0)
 end, {})
 
+vim.api.nvim_create_user_command("NeoNotebookOutputCollapseToggle", function()
+  actions.toggle_output_collapse(0)
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookCellDelete", function()
   actions.delete_cell(0)
 end, {})
@@ -794,6 +798,12 @@ set_default_keymaps = function(bufnr)
   if maps.toggle_output then
     vim.keymap.set("n", maps.toggle_output, function()
       actions.toggle_output_mode()
+    end, opts)
+  end
+
+  if maps.toggle_output_collapse then
+    vim.keymap.set("n", maps.toggle_output_collapse, function()
+      actions.toggle_output_collapse(0)
     end, opts)
   end
 

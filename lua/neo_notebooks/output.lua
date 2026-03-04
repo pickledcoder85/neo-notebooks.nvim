@@ -160,6 +160,53 @@ function M.get_entry(bufnr, cell_id)
   return store[cell_id]
 end
 
+function M.get_collapsed_line(entry)
+  if not entry then
+    return nil
+  end
+  local count = entry.len or (entry.lines and #entry.lines) or 0
+  if count == 1 then
+    return "output collapsed (1 line)"
+  end
+  return string.format("output collapsed (%d lines)", count)
+end
+
+function M.set_collapsed(bufnr, cell_id, collapsed)
+  bufnr = bufnr or 0
+  if not cell_id then
+    return false
+  end
+  local store = get_store(bufnr)
+  local entry = store[cell_id]
+  if not entry then
+    return false
+  end
+  entry.collapsed = collapsed == true
+  store[cell_id] = entry
+  set_buf_var(bufnr, "neo_notebooks_output_store", store)
+  if not render_cell_in_window(bufnr, cell_id) then
+    local scheduler = require("neo_notebooks.scheduler")
+    scheduler.request_render(bufnr, { immediate = true, cell_ids = { cell_id } })
+  end
+  return true
+end
+
+function M.toggle_collapse(bufnr, cell_id)
+  bufnr = bufnr or 0
+  if not cell_id then
+    return nil
+  end
+  local entry = M.get_entry(bufnr, cell_id)
+  if not entry then
+    return nil
+  end
+  local next_state = not entry.collapsed
+  if M.set_collapsed(bufnr, cell_id, next_state) then
+    return next_state
+  end
+  return nil
+end
+
 function M.set_timing(bufnr, cell_id, duration_ms)
   bufnr = bufnr or 0
   if not cell_id then
@@ -304,6 +351,7 @@ function M.show_inline(bufnr, cell, lines, opts)
       duration_ms = opts.duration_ms,
       executing = executing,
       executing_line = executing_line,
+      collapsed = existing and existing.collapsed or false,
     }
     set_buf_var(bufnr, "neo_notebooks_output_store", store)
     if opts.duration_ms then

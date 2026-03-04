@@ -5,6 +5,7 @@ best-effort summary based on existing documentation and recent commits.
 
 ## Unreleased
 
+- Added per-cell output collapse/expand toggle.
 - Improved dirty-range index updates (multi-cell dirty marking and in-place marker type edits).
 - Added tests covering dirty-range updates and marker-type edits.
 - Insert-mode padding is now preserved for auto-indent, then trimmed on exit/run.

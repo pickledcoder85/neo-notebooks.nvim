@@ -353,7 +353,14 @@ local function render_cell(bufnr, ctx, cell, visible_idx, active, in_insert, cur
       local executing = out_entry and out_entry.executing == true
       local spin = spinner.get_frame_or_last(bufnr, cell.id)
       local reserve_spin = spinner.is_active(bufnr, cell.id)
-      local out_block = output_block(out_lines, width, pad, "NeoNotebookOutput", spin, reserve_spin)
+      local render_lines = out_lines
+      if out_entry and out_entry.collapsed then
+        local collapsed = output.get_collapsed_line(out_entry)
+        if collapsed then
+          render_lines = { collapsed }
+        end
+      end
+      local out_block = output_block(render_lines, width, pad, "NeoNotebookOutput", spin, reserve_spin)
       for _, line in ipairs(out_block) do
         table.insert(bottom_lines, line)
       end

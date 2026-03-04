@@ -40,6 +40,7 @@ print("hello")
 - `:NeoNotebookCellFoldToggle` toggles fold for the current cell.
 - `:NeoNotebookOutputClear` clears inline output for the current cell.
 - `:NeoNotebookOutputClearAll` clears inline output for all cells.
+- `:NeoNotebookOutputCollapseToggle` toggles collapsed output for the current cell.
 - `:NeoNotebookCellDelete` deletes the current cell.
 - `:NeoNotebookCellYank` yanks the current cell to the default register.
 - `:NeoNotebookCellMoveUp` moves the current cell up.
@@ -123,6 +124,7 @@ require("neo_notebooks").setup({
     run_all = "<leader>ra",
     restart = "<leader>rs",
     toggle_output = "<leader>tt",
+    toggle_output_collapse = nil,
     select_cell = "<leader>vs",
     stats = "<leader>ns",
     run_above = "<leader>rk",

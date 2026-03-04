@@ -53,6 +53,9 @@ function M.show()
     "  :NeoNotebookStats          show stats",
     "  :NeoNotebookImportIpynb    import ipynb",
     "  :NeoNotebookExportIpynb    export ipynb",
+    "  :NeoNotebookOutputClear    clear output for cell",
+    "  :NeoNotebookOutputClearAll clear output for all cells",
+    "  :NeoNotebookOutputCollapseToggle toggle output collapse",
     "",
     "Keymaps:",
   }
@@ -84,6 +87,7 @@ function M.show()
   add("run all", maps.run_all)
   add("restart", maps.restart)
   add("toggle output", maps.toggle_output)
+  add("toggle output collapse", maps.toggle_output_collapse)
   add("select cell", maps.select_cell)
   add("stats", maps.stats)
   add("run above", maps.run_above)

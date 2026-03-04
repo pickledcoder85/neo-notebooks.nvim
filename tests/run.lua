@@ -225,6 +225,27 @@ with_buf({
   render.render(buf)
 end)
 
+-- Test: output collapse toggles per cell
+with_buf({
+  "# %% [code]",
+  "print(1)",
+}, function(buf)
+  local state = index.rebuild(buf)
+  local cell = state.list[1]
+  output.show_inline(buf, { id = cell.id, start = cell.start, finish = cell.finish, type = cell.type }, { "line1", "line2" })
+  local entry = output.get_entry(buf, cell.id)
+  ok(entry and entry.collapsed ~= true, "output starts expanded")
+  local collapsed = output.toggle_collapse(buf, cell.id)
+  ok(collapsed == true, "output collapsed")
+  entry = output.get_entry(buf, cell.id)
+  ok(entry and entry.collapsed == true, "collapsed state stored")
+  render.render(buf)
+  local expanded = output.toggle_collapse(buf, cell.id)
+  ok(expanded == false, "output expanded")
+  entry = output.get_entry(buf, cell.id)
+  ok(entry and entry.collapsed == false, "expanded state stored")
+end)
+
 -- Test: move operations preserve output lines by cell id
 with_buf({
   "# %% [code]",

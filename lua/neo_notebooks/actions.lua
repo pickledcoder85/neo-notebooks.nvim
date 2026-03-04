@@ -235,6 +235,30 @@ function M.clear_all_output(bufnr)
   output.clear_all(bufnr)
 end
 
+function M.toggle_output_collapse(bufnr, line)
+  bufnr = bufnr or 0
+  line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cell = cells.get_cell_at_line(bufnr, line)
+  if cell.id then
+    local index = require("neo_notebooks.index")
+    local entry = index.get_by_id(bufnr, cell.id)
+    if entry then
+      cell.start = entry.start
+    end
+  end
+  local entry = cell.id and output.get_entry(bufnr, cell.id) or nil
+  if not entry then
+    vim.notify("NeoNotebook: no output to collapse", vim.log.levels.WARN)
+    return
+  end
+  local next_state = output.toggle_collapse(bufnr, cell.id)
+  if next_state == nil then
+    return
+  end
+  local label = next_state and "collapsed" or "expanded"
+  vim.notify("NeoNotebook: output " .. label, vim.log.levels.INFO)
+end
+
 function M.delete_cell(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1

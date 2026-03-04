@@ -44,6 +44,7 @@ M.config = {
     toggle_fold = "<leader>zz",
     clear_output = "<leader>co",
     clear_all_output = "<leader>cO",
+    toggle_output_collapse = nil,
     delete_cell = "<leader>dd",
     yank_cell = "<leader>yy",
     move_up = "<M-k>",
