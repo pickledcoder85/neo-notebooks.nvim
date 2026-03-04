@@ -12,13 +12,10 @@ This file tracks project scope and the order of work. Items can be moved as prio
 ## Later
 
 - Full `.ipynb` metadata + outputs support.
-- Kernel-backed execution (minimal Jupyter client with text/plain only), with optional kitty image output.
 - Optional execution dependency awareness:
   - Detect likely upstream cell dependencies and warn on reordered runs.
   - Offer targeted "run required predecessors" before executing a moved cell.
   - Keep default behavior globally scoped for lightweight workflows.
-- Optional inline image rendering via kitty protocol.
-- True floating-cell UI mode (editable floats synced to hidden buffer).
 - Improved markdown rendering (headings, emphasis).
 - Optional markdown cell rendering polish (conceal/emphasis; Tree-sitter-based).
 - Fix undo (`u`) keeping cursor position within current cell (avoid jump to buffer end).
@@ -27,6 +24,10 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Random apple placement.
   - Movement controls via `h/j/k/l`.
   - `<Esc>` exits game mode and restores the cell to a normal editable code cell.
+
+## Lowest priority
+
+- Kernel-backed execution (minimal Jupyter client with text/plain only), with optional kitty image output.
 
 ## Done (recent)
 
