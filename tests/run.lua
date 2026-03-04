@@ -114,6 +114,61 @@ with_buf({
   eq(updated.list[2].start, second.start + 1, "second start shifted after insert")
 end)
 
+-- Test: marker type edit updates cell type without full rebuild
+with_buf({
+  "# %% [code]",
+  "print(1)",
+  "# %% [code]",
+  "print(2)",
+}, function(buf)
+  local state = index.rebuild(buf)
+  local marks = vim.api.nvim_buf_get_extmarks(buf, index_mod.ns, { 0, 0 }, { -1, -1 }, {})
+  ok(#marks > 0, "marker extmark exists")
+  local first_id = marks[1][1]
+  vim.api.nvim_buf_set_lines(buf, 0, 1, false, { "# %% [markdown]" })
+  vim.api.nvim_buf_set_lines(buf, 1, 1, false, { "" })
+  index.on_lines(buf, 0, 1, 1)
+  local updated_state = vim.b[buf].neo_notebooks_index
+  eq(updated_state.list[1].id, first_id, "id stable after marker type change")
+  eq(updated_state.list[1].type, "markdown", "marker type updated in place")
+  local marks_after = vim.api.nvim_buf_get_extmarks(buf, index_mod.ns, { 0, 0 }, { -1, -1 }, {})
+  local seen = {}
+  for _, mark in ipairs(marks_after) do
+    seen[mark[1]] = true
+  end
+  ok(seen[first_id], "extmark id stable after marker type change")
+end)
+
+-- Test: dirty set accumulates multiple touched cells
+with_buf({
+  "# %% [code]",
+  "line1",
+  "",
+  "# %% [code]",
+  "line2",
+  "",
+  "# %% [code]",
+  "line3",
+}, function(buf)
+  local state = index.rebuild(buf)
+  local ids = {
+    state.list[1].id,
+    state.list[2].id,
+    state.list[3].id,
+  }
+  vim.api.nvim_buf_set_lines(buf, 1, 2, false, { "a" })
+  index.on_lines(buf, 1, 2, 2)
+  vim.api.nvim_buf_set_lines(buf, 4, 5, false, { "b" })
+  index.on_lines(buf, 4, 5, 5)
+  local dirty = index.consume_dirty_cells(buf)
+  ok(dirty and #dirty >= 2, "dirty set contains all touched cells")
+  local seen = {}
+  for _, id in ipairs(dirty) do
+    seen[id] = true
+  end
+  ok(seen[ids[1]] and seen[ids[2]], "touched cells marked dirty")
+end)
+
 -- Test: get_cell_at_line uses index
 with_buf({
   "# %% [code]",

@@ -297,15 +297,16 @@ function M.on_lines(bufnr, firstline, lastline, new_lastline)
     meta.dirty = true
     return
   end
+  local delta = new_lastline - lastline
   local marker_in_range = has_marker_in_range(state, firstline, lastline)
-  local inserted_markers = has_marker_in_new_lines(bufnr, firstline, new_lastline)
+  local inserted_markers = delta > 0 and has_marker_in_new_lines(bufnr, firstline, new_lastline)
   local marker_touched = marker_in_range or inserted_markers
   if marker_touched then
-    local delta = new_lastline - lastline
     if not inserted_markers and delta == 0 then
       meta.dirty_cell_ids = meta.dirty_cell_ids or {}
       local ok = update_marker_types_in_range(bufnr, state, meta.dirty_cell_ids, firstline, lastline)
       if ok then
+        mark_dirty_cells_in_range(state, meta.dirty_cell_ids, firstline, lastline)
         vim.b[bufnr].neo_notebooks_index = state
         meta.tick = current_tick(bufnr)
         meta.dirty = false
@@ -333,7 +334,6 @@ function M.on_lines(bufnr, firstline, lastline, new_lastline)
   meta.dirty_cell_ids = meta.dirty_cell_ids or {}
   local range_last = math.max(lastline, new_lastline)
   mark_dirty_cells_in_range(state, meta.dirty_cell_ids, firstline, range_last)
-  local delta = new_lastline - lastline
   if delta ~= 0 then
     apply_delta(state, firstline, lastline, delta)
     meta.dirty_cell_ids = meta.dirty_cell_ids or {}
