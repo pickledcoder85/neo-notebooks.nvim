@@ -15,6 +15,9 @@ This document summarizes implementation choices and the evolution of core featur
   - Review the plan for simplification/optimization.
   - Update the plan accordingly.
   - Move to a feature branch (if not already) and implement the updated plan.
+- Never merge and delete a feature branch until manual testing has been completed
+  and explicitly approved. After implementing a revised feature plan, provide a
+  manual test checklist for approval before merging/deleting the branch.
 
 ## Architecture overview
 
