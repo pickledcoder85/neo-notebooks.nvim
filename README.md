@@ -41,6 +41,33 @@ print("hello")
 - `:NeoNotebookOutputClear` clears inline output for the current cell.
 - `:NeoNotebookOutputClearAll` clears inline output for all cells.
 - `:NeoNotebookOutputCollapseToggle` toggles collapsed output for the current cell.
+- `:NeoNotebookOutputPrint` prints the current cell output to `:messages`.
+- Typed outputs are supported (text + image/png).
+- `image_renderer = "auto" | "kitty" | "none"` controls image rendering backend.
+- `image_protocol = "auto" | "kitty" | "none"` controls kitty graphics usage/detection.
+- `image_render_target = "pane" | "inline"` controls whether images render in a right-side pane (default) or inline.
+- `image_pane_tty = "/dev/pts/XX"` optional explicit TTY for the image pane. If unset and running inside tmux, a right split pane is created automatically.
+- If no pane is configured, the plugin auto-creates a right tmux pane on first image render and reuses it for the rest of the session. Use `:NeoNotebookImagePaneReset` to force a new pane.
+- If you are running inside tmux and Ghostty, set `image_protocol = "kitty"` if auto-detection doesn't pick it up.
+- For tmux, enable passthrough so Kitty graphics reach Ghostty: `set -g allow-passthrough on`.
+- `image_pane_tmux_percent = number` percent width for auto-created tmux image pane (default 25).
+- `image_pane_spacing_lines = number` blank lines inserted between rendered images in the pane (default 1).
+- `image_size_mode = "pane"|"default"` when set to `"pane"`, size images to the tmux pane using `pane_width`/`pane_height`.
+- `image_pane_margin_cols = number` columns to subtract from pane width (default 2).
+- `image_pane_margin_rows = number` rows to subtract from pane height (default 5).
+- `image_pane_sizes = {25,33,50}` toggle sizes for `<leader>pt` (percent of window width).
+- `image_pane_statusline = true` append an image pane size indicator to the statusline.
+- `image_pane_tmp_dir = "/tmp/neo_notebooks-images"` directory for saved image files.
+- `image_pane_mode = "page"|"stack"` set to `"page"` to show one image at a time.
+- `image_pane_preserve_aspect = true` preserve image aspect ratio when fitting to pane.
+- `image_pane_cell_ratio = 2.0` cell height/width ratio used for aspect correction.
+- `image_max_rows = number` caps image height in rows (default 30).
+- `image_default_rows = number` default image height in rows when no metadata is available (default 6).
+- `image_default_cols = number` default image width in cols when no metadata is available (default 12).
+- `image_size_mode = "default" | "metadata"` controls whether we always use the default size (default) or use image metadata for sizing.
+  - `image_fallback = "placeholder"` shows a notice when images cannot render.
+  - `mpl_backend = "Agg"` forces a non-GUI backend for inline capture (prevents popup windows).
+  - `plt.show()` is intercepted to signal an inline capture without a GUI popup.
 - `:NeoNotebookCellDelete` deletes the current cell.
 - `:NeoNotebookCellYank` yanks the current cell to the default register.
 - `:NeoNotebookCellMoveUp` moves the current cell up.
@@ -73,6 +100,27 @@ require("neo_notebooks").setup({
   python_cmd = "python3",
   auto_render = true,
   output = "inline",
+  image_renderer = "auto",
+  image_protocol = "auto",
+  image_render_target = "pane",
+  image_pane_tty = nil,
+  image_pane_tmux_percent = 25,
+  image_pane_spacing_lines = 1,
+  image_size_mode = "pane",
+  image_pane_margin_cols = 2,
+  image_pane_margin_rows = 5,
+  image_pane_sizes = { 25, 33, 50 },
+  image_pane_statusline = true,
+  image_pane_tmp_dir = "/tmp/neo_notebooks-images",
+  image_pane_mode = "page",
+  image_pane_preserve_aspect = true,
+  image_pane_cell_ratio = 2.0,
+  image_max_rows = 30,
+  image_default_rows = 6,
+  image_default_cols = 12,
+  image_size_mode = "default",
+  image_fallback = "placeholder",
+  mpl_backend = "Agg",
   filetypes = { "neo_notebook", "ipynb" },
   auto_open_ipynb = true,
   require_markers = false,
@@ -269,6 +317,12 @@ require("neo_notebooks").setup({ suppress_completion_popup = true })
 - `<leader>zz` toggle fold for current cell
 - `<leader>co` clear output for current cell
 - `<leader>cO` clear output for all cells
+- `<leader>oi` clear image output for current cell
+- `<leader>oI` clear image pane
+- `<leader>pt` toggle image pane size (25/33/50% default)
+- `<leader>pc` collapse/close image pane
+- `<leader>pn` next image (page mode)
+- `<leader>pp` previous image (page mode)
 - `<leader>dd` delete current cell
 - `<leader>yy` yank current cell
 - `<M-k>` move cell up (accepts counts, e.g. `3<M-k>`)
@@ -278,7 +332,15 @@ require("neo_notebooks").setup({ suppress_completion_popup = true })
 - `j` / `k` stay inside the active cell body when `soft_contain=true` and `contain_line_nav=true`
   (use `<C-n>` / `<C-p>` to move between cells)
 
+If you use a custom statusline (e.g. lualine), add the component:
+
+```
+require("neo_notebooks.image_pane").statusline()
+```
+
 Note: `<M-...>` means the Meta key (typically `Alt` on most keyboards).
+
+When the pane is collapsed with `<leader>pc`, new images are saved to disk and not auto-rendered until the pane is reopened (use `<leader>pt` or `:NeoNotebookImagePaneTest` to reopen).
 - `<leader>ra` run all code cells
 - `<leader>rs` restart python session
 - `<leader>vs` select current cell body

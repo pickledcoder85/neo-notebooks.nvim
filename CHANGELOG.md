@@ -6,6 +6,10 @@ best-effort summary based on existing documentation and recent commits.
 ## Unreleased
 
 - Added per-cell output collapse/expand toggle (default: `<leader>of`).
+- Added typed output support with custom kitty image rendering to a tmux image pane (auto-created when TMUX is available, or via explicit TTY).
+- Added image pane size toggle (`<leader>pt`), collapse (`<leader>pc`), and statusline size indicator.
+- Matplotlib backend defaults to `Agg` to prevent GUI popups during inline capture.
+- `plt.show()` is intercepted to trigger inline image capture without GUI.
 - Clearing output now clears execution hashes so re-running produces output.
 - Improved dirty-range index updates (multi-cell dirty marking and in-place marker type edits).
 - Added tests covering dirty-range updates and marker-type edits.

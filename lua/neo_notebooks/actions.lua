@@ -239,6 +239,26 @@ function M.clear_all_output(bufnr)
   output.clear_all(bufnr)
 end
 
+function M.print_output(bufnr, line)
+  bufnr = bufnr or 0
+  line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cell = cells.get_cell_at_line(bufnr, line)
+  if cell.id then
+    local index = require("neo_notebooks.index")
+    local entry = index.get_by_id(bufnr, cell.id)
+    if entry then
+      cell.start = entry.start
+    end
+  end
+  local lines = cell.id and output.get_display_lines(bufnr, cell.id) or nil
+  if not lines or #lines == 0 then
+    vim.notify("NeoNotebook: no output to print", vim.log.levels.WARN)
+    return
+  end
+  local text = table.concat(lines, "\n")
+  vim.notify(text, vim.log.levels.INFO)
+end
+
 function M.toggle_output_collapse(bufnr, line)
   bufnr = bufnr or 0
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1

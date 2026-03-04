@@ -48,17 +48,6 @@ local function has_filetype(bufnr)
   return false
 end
 
-local function should_enable(bufnr)
-  bufnr = bufnr or 0
-  if not has_filetype(bufnr) then
-    return false
-  end
-  if nb.config.require_markers then
-    return cells.has_markers(bufnr)
-  end
-  return true
-end
-
 local function buffer_is_empty(bufnr)
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   if #lines == 0 then
@@ -70,8 +59,36 @@ local function buffer_is_empty(bufnr)
   return false
 end
 
+local function is_notebook_path(bufnr)
+  local name = vim.api.nvim_buf_get_name(bufnr)
+  if name == "" then
+    return false
+  end
+  if name:match("%.ipynb$") or name:match("%.nn$") then
+    return true
+  end
+  return false
+end
+
+local function should_enable(bufnr)
+  bufnr = bufnr or 0
+  if not is_notebook_path(bufnr) and not (vim.b[bufnr] and (vim.b[bufnr].neo_notebooks_enabled or vim.b[bufnr].neo_notebooks_is_ipynb)) then
+    return false
+  end
+  if not has_filetype(bufnr) then
+    return false
+  end
+  if nb.config.require_markers then
+    return cells.has_markers(bufnr)
+  end
+  return true
+end
+
 local function ensure_initial_markdown_cell(bufnr)
   if not nb.config.auto_insert_first_cell then
+    return
+  end
+  if not is_notebook_path(bufnr) and not (vim.b[bufnr] and vim.b[bufnr].neo_notebooks_is_ipynb) then
     return
   end
   if vim.b[bufnr] and vim.b[bufnr].neo_notebooks_skip_initial then
@@ -266,13 +283,13 @@ local function run_cell_with_output(line, cell)
   end
   if nb.config.output == "inline" then
     exec.run_cell(bufnr, line, {
-      on_output = function(lines, cell_id, duration_ms)
-        output.show_inline(bufnr, {
+      on_output = function(payload, cell_id, duration_ms)
+        output.show_payload(bufnr, {
           id = cell_id or cell.id,
           start = cell.start,
           finish = cell.finish,
           type = cell.type,
-        }, lines, { duration_ms = duration_ms })
+        }, payload, { duration_ms = duration_ms })
       end,
       cell_id = cell.id,
     })
@@ -408,6 +425,40 @@ end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookOutputCollapseToggle", function()
   actions.toggle_output_collapse(0)
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookOutputPrint", function()
+  actions.print_output(0)
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookImageClear", function()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cell = cells.get_cell_at_line(bufnr, line)
+  if not cell or not cell.id then
+    return
+  end
+  output.clear_images(bufnr, cell.id)
+  scheduler.request_render(bufnr, { immediate = true, cell_ids = { cell.id } })
+end, {})
+
+vim.api.nvim_create_user_command("NeoNotebookImagePaneTest", function(opts)
+  local path = opts.args
+  if path == "" then
+    path = vim.fn.getcwd() .. "/mainecoon"
+  end
+  path = vim.fn.fnamemodify(path, ":p")
+  local pane = require("neo_notebooks.image_pane")
+  pane.open()
+  local ok = pane.render_file(path, "Image Test")
+  if not ok then
+    vim.notify("NeoNotebook: image pane test failed", vim.log.levels.WARN)
+  end
+end, { nargs = "?" })
+
+vim.api.nvim_create_user_command("NeoNotebookImagePaneReset", function()
+  require("neo_notebooks.image_pane").reset()
+  vim.notify("NeoNotebook: image pane reset", vim.log.levels.INFO)
 end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookCellDelete", function()
@@ -741,6 +792,47 @@ set_default_keymaps = function(bufnr)
     end, opts)
   end
 
+  if maps.clear_image then
+    vim.keymap.set("n", maps.clear_image, function()
+      local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+      local cell = cells.get_cell_at_line(0, line)
+      if cell and cell.id then
+        output.clear_images(0, cell.id)
+        scheduler.request_render(0, { immediate = true, cell_ids = { cell.id } })
+      end
+    end, opts)
+  end
+
+  if maps.clear_image_pane then
+    vim.keymap.set("n", maps.clear_image_pane, function()
+      require("neo_notebooks.image_pane").clear()
+    end, opts)
+  end
+
+  if maps.image_pane_toggle_size then
+    vim.keymap.set("n", maps.image_pane_toggle_size, function()
+      require("neo_notebooks.image_pane").toggle_size()
+    end, opts)
+  end
+
+  if maps.image_pane_collapse then
+    vim.keymap.set("n", maps.image_pane_collapse, function()
+      require("neo_notebooks.image_pane").collapse()
+    end, opts)
+  end
+
+  if maps.image_pane_next then
+    vim.keymap.set("n", maps.image_pane_next, function()
+      require("neo_notebooks.image_pane").next()
+    end, opts)
+  end
+
+  if maps.image_pane_prev then
+    vim.keymap.set("n", maps.image_pane_prev, function()
+      require("neo_notebooks.image_pane").prev()
+    end, opts)
+  end
+
   if maps.clear_all_output then
     vim.keymap.set("n", maps.clear_all_output, function()
       actions.clear_all_output(0)
@@ -930,10 +1022,15 @@ end
 
 vim.api.nvim_create_autocmd({ "FileType" }, {
   callback = function(args)
-    ensure_initial_markdown_cell(args.buf)
-    if nb.config.overlay_preview and should_enable(args.buf) then
-      overlay.enable(args.buf)
+    if should_enable(args.buf) then
+      ensure_initial_markdown_cell(args.buf)
+      if nb.config.overlay_preview then
+        overlay.enable(args.buf)
+      end
+      return
     end
+    render.clear(args.buf)
+    output.clear(args.buf)
   end,
 })
 
