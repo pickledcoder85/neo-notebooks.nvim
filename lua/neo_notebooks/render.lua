@@ -153,7 +153,7 @@ local function format_duration(duration_ms)
   return string.format("%dm%.0fs", minutes, rem)
 end
 
-local function output_block(lines, width, pad, hl, spin, reserve_spin)
+local function output_block(lines, width, pad, hl, spin, reserve_spin, has_image)
   local block = {}
   local spinner = (spin or reserve_spin) and require("neo_notebooks.spinner") or nil
   local function border(left, right)
@@ -206,7 +206,11 @@ local function output_block(lines, width, pad, hl, spin, reserve_spin)
     table.insert(block, row)
     ::continue::
   end
-  table.insert(block, { { border("╰", "╯"), hl } })
+  if not has_image then
+    table.insert(block, { { border("╰", "╯"), hl } })
+  else
+    table.insert(block, { { border("╰", "╯"), hl } })
+  end
   return block
 end
 
@@ -360,7 +364,7 @@ local function render_cell(bufnr, ctx, cell, visible_idx, active, in_insert, cur
           render_lines = { collapsed }
         end
       end
-      local out_block = output_block(render_lines, width, pad, "NeoNotebookOutput", spin, reserve_spin)
+      local out_block = output_block(render_lines, width, pad, "NeoNotebookOutput", spin, reserve_spin, out_entry and out_entry.has_image)
       for _, line in ipairs(out_block) do
         table.insert(bottom_lines, line)
       end
@@ -415,6 +419,10 @@ local function render_cell(bufnr, ctx, cell, visible_idx, active, in_insert, cur
     bottom_opts.virt_text_win_col = lang_col
   end
   vim.api.nvim_buf_set_extmark(bufnr, M.ns, finish_line, 0, bottom_opts)
+
+  if cell.type == "code" then
+    -- Images are rendered in a separate pane; no inline rendering here.
+  end
 
   if config.vertical_borders then
     local text_pad = string.rep(" ", pad + 1)

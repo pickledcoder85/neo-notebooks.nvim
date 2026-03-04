@@ -23,7 +23,7 @@ end
 local request_id = 0
 
 local PY_SERVER = [[
-import sys, json, traceback, io, contextlib, ast
+import sys, json, traceback, io, contextlib, ast, base64, os
 
 try:
     from rich.console import Console
@@ -41,6 +41,8 @@ globals_dict["__neo_notebooks_rich_max_cols"] = 20
 globals_dict["__neo_notebooks_rich_tip_shown"] = False
 globals_dict["__neo_notebooks_debug_ansi"] = False
 globals_dict["__neo_notebooks_force_rich_console"] = True
+globals_dict["__neo_notebooks_show_called"] = False
+globals_dict["__neo_notebooks_mpl_patched"] = False
 
 def neo_rich(enable=None):
     if enable is None:
@@ -88,6 +90,69 @@ def _maybe_patch_rich_console():
     _rc.Console = _patched_console
     _rc.__neo_notebooks_patched = True
 
+# Ensure a non-GUI backend when configured (prevents blocking show() calls).
+_mpl_backend = os.environ.get("MPLBACKEND")
+if _mpl_backend:
+    try:
+        import matplotlib
+        matplotlib.use(_mpl_backend)
+    except Exception:
+        pass
+
+def _maybe_patch_matplotlib_show():
+    if globals_dict.get("__neo_notebooks_mpl_patched", False):
+        return
+    try:
+        import matplotlib.pyplot as plt
+    except Exception:
+        return
+    def _neo_show(*args, **kwargs):
+        globals_dict["__neo_notebooks_show_called"] = True
+        return None
+    try:
+        plt.show = _neo_show
+        globals_dict["__neo_notebooks_mpl_patched"] = True
+    except Exception:
+        return
+
+# Ensure a non-GUI backend when configured (prevents blocking show() calls).
+_mpl_backend = os.environ.get("MPLBACKEND")
+if _mpl_backend:
+    try:
+        import matplotlib
+        matplotlib.use(_mpl_backend)
+    except Exception:
+        pass
+
+def _capture_matplotlib_png():
+    try:
+        import matplotlib.pyplot as plt
+    except Exception:
+        return None
+    try:
+        fignums = plt.get_fignums()
+    except Exception:
+        return None
+    if not fignums:
+        return None
+    try:
+        fig = plt.figure(fignums[-1])
+        if fig is None:
+            return None
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", bbox_inches="tight")
+        png = buf.getvalue()
+        if not png:
+            return None
+        width, height = fig.canvas.get_width_height()
+        return {
+            "type": "image/png",
+            "data": base64.b64encode(png).decode("ascii"),
+            "meta": { "width": width, "height": height },
+        }
+    except Exception:
+        return None
+
 def _is_pandas_obj(value):
     mod = getattr(value.__class__, "__module__", "")
     return mod.startswith("pandas")
@@ -134,6 +199,8 @@ def handle(obj):
     out_buf = io.StringIO()
     err_buf = io.StringIO()
     _maybe_patch_rich_console()
+    globals_dict["__neo_notebooks_show_called"] = False
+    _maybe_patch_matplotlib_show()
     ok = True
     trace = ""
     with contextlib.redirect_stdout(out_buf), contextlib.redirect_stderr(err_buf):
@@ -175,12 +242,28 @@ def handle(obj):
             ok = False
             trace = traceback.format_exc()
             interrupted = False
+    items = []
+    out_val = out_buf.getvalue()
+    err_val = err_buf.getvalue()
+    trace_val = trace
+    if out_val:
+        items.append({ "type": "text/plain", "data": out_val })
+    if err_val:
+        items.append({ "type": "text/plain", "data": err_val, "meta": { "stream": "stderr" } })
+    if trace_val:
+        items.append({ "type": "text/plain", "data": trace_val, "meta": { "stream": "traceback" } })
+    png_item = None
+    if ok:
+        png_item = _capture_matplotlib_png()
+    if png_item:
+        items.append(png_item)
     resp = {
         "id": obj.get("id"),
         "ok": ok,
-        "out": out_buf.getvalue(),
-        "err": err_buf.getvalue(),
-        "trace": trace,
+        "out": out_val,
+        "err": err_val,
+        "trace": trace_val,
+        "items": items,
         "interrupted": interrupted if 'interrupted' in locals() else False,
     }
     sys.stdout.write(json.dumps(resp) + "\n")
@@ -300,6 +383,14 @@ local function format_output(resp)
   return output
 end
 
+local function format_payload(resp)
+  local lines = format_output(resp)
+  if resp.items and type(resp.items) == "table" then
+    return { lines = lines, items = resp.items }
+  end
+  return lines
+end
+
 local function handle_response(session, resp)
   if not resp or type(resp) ~= "table" then
     return
@@ -369,7 +460,7 @@ local function handle_response(session, resp)
     store[resolved_cell_id] = pending.code_hash
     set_hash_store(pending.bufnr, store)
   end
-  local output = format_output(resp)
+  local output = format_payload(resp)
   if pending.on_output then
     if vim.g.neo_notebooks_debug_output then
       vim.schedule(function()
@@ -380,7 +471,11 @@ local function handle_response(session, resp)
       pending.on_output(output, resolved_cell_id, duration_ms)
     end)
   else
-    open_output_window(output)
+    if type(output) == "table" and output.lines then
+      open_output_window(output.lines)
+    else
+      open_output_window(output)
+    end
   end
   if session.active_request_id == id then
     session.active_request_id = nil
@@ -413,6 +508,13 @@ local function ensure_session(bufnr)
   }
 
   session.job = vim.fn.jobstart(cmd, {
+    env = (function()
+      local env = {}
+      if config.mpl_backend and config.mpl_backend ~= "" then
+        env.MPLBACKEND = config.mpl_backend
+      end
+      return env
+    end)(),
     stdout_buffered = false,
     on_stdout = function(_, data)
       if not data then

@@ -8,11 +8,6 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Next
 
-- Typed output pipeline (MIME-aware):
-  - Python runner returns typed outputs: `text`, `image/png`, optional `text/html`, `application/json`.
-  - Output schema: list of `{ type, data, meta }` entries.
-  - Neovim renderer chooses output strategy per type.
-  - Terminal capability detection (kitty graphics) with fallback modes.
 
 ## Later
 
@@ -35,6 +30,15 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Done (recent)
 
+- Typed output pipeline (MIME-aware):
+  - Python runner returns typed outputs: `text/plain`, `image/png`.
+  - Output schema: list of `{ type, data, meta }` entries.
+  - Neovim renderer chooses output strategy per type with kitty graphics fallback.
+- Tmux image pane rendering (kitty protocol):
+  - Auto pane open/close toggle and size toggle (25/33/50%).
+  - Page mode with next/prev paging to avoid scrollback limitations.
+  - Temp-file image storage with fallback path output when pane is closed.
+  - Pane resize redraw + aspect ratio preservation for images.
 - Output collapse/expand per cell.
 - Partial cell rerendering (redraw affected cells only, not full notebook).
 - Layout fixes:

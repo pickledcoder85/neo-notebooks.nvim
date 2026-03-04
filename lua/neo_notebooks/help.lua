@@ -56,6 +56,7 @@ function M.show()
     "  :NeoNotebookOutputClear    clear output for cell",
     "  :NeoNotebookOutputClearAll clear output for all cells",
     "  :NeoNotebookOutputCollapseToggle toggle output collapse",
+    "  :NeoNotebookOutputPrint    print output for cell",
     "",
     "Keymaps:",
   }

@@ -68,6 +68,7 @@ This document summarizes implementation choices and the evolution of core featur
 - Floating output is still available by setting `output = "float"`.
 - Floating output buffers are `nofile` and `bufhidden=wipe` and close on `q` or `<Esc>`.
 - Output blocks can be collapsed/expanded per cell.
+- Typed outputs are supported (text + image/png), with custom kitty graphics rendering in a dedicated image pane. When running inside tmux, the pane is created automatically and targeted via its TTY.
 - While a cell is executing, a spinner is rendered on the first inline output row.
 - While a cell runs, the output area shows a placeholder line.
 - After execution, the inline output prepends a right-aligned timing line.

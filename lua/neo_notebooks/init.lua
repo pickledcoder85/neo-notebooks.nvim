@@ -4,6 +4,26 @@ M.config = {
   python_cmd = "python3",
   auto_render = true,
   output = "inline",
+  image_renderer = "auto",
+  image_protocol = "auto",
+  image_max_rows = 30,
+  image_default_rows = 6,
+  image_default_cols = 12,
+  image_render_target = "pane",
+  image_pane_tty = nil,
+  image_pane_tmux_percent = 25,
+  image_pane_spacing_lines = 1,
+  image_pane_sizes = { 25, 33, 50 },
+  image_size_mode = "pane",
+  image_pane_margin_cols = 2,
+  image_pane_margin_rows = 5,
+  image_pane_tmp_dir = "/tmp/neo_notebooks-images",
+  image_pane_mode = "page",
+  image_pane_preserve_aspect = true,
+  image_pane_cell_ratio = 2.0,
+  image_pane_statusline = true,
+  image_fallback = "placeholder",
+  mpl_backend = "Agg",
   filetypes = { "neo_notebook", "ipynb" },
   auto_open_ipynb = true,
   require_markers = false,
@@ -45,6 +65,12 @@ M.config = {
     clear_output = "<leader>co",
     clear_all_output = "<leader>cO",
     toggle_output_collapse = "<leader>of",
+    clear_image = "<leader>oi",
+    clear_image_pane = "<leader>oI",
+    image_pane_toggle_size = "<leader>pt",
+    image_pane_collapse = "<leader>pc",
+    image_pane_next = "<leader>pn",
+    image_pane_prev = "<leader>pp",
     delete_cell = "<leader>dd",
     yank_cell = "<leader>yy",
     move_up = "<M-k>",
@@ -73,6 +99,20 @@ function M.setup(opts)
   end
   for key, value in pairs(opts) do
     M.config[key] = value
+  end
+  if M.config.image_pane_statusline then
+    if not _G.NeoNotebookImagePaneStatus then
+      _G.NeoNotebookImagePaneStatus = function()
+        return require("neo_notebooks.image_pane").statusline()
+      end
+    end
+    if not vim.g.neo_notebooks_statusline_added then
+      vim.g.neo_notebooks_statusline_added = true
+      local marker = "NeoNotebookImagePaneStatus"
+      if vim.o.statusline and not vim.o.statusline:find(marker, 1, true) then
+        vim.o.statusline = vim.o.statusline .. " %{v:lua.NeoNotebookImagePaneStatus()}"
+      end
+    end
   end
   if M._on_setup then
     M._on_setup()

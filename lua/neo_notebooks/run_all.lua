@@ -23,13 +23,13 @@ function M.run_all(bufnr)
       end
       if config.output == "inline" then
         exec.run_cell(bufnr, line, {
-          on_output = function(lines, cell_id, duration_ms)
-            output.show_inline(bufnr, {
+          on_output = function(payload, cell_id, duration_ms)
+            output.show_payload(bufnr, {
               id = cell_id or cell.id,
               start = cell.start,
               finish = cell.finish,
               type = cell.type,
-            }, lines, { duration_ms = duration_ms })
+            }, payload, { duration_ms = duration_ms })
           end,
           cell_id = cell.id,
         })
