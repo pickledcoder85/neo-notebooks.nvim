@@ -2,6 +2,17 @@
 
 Experimental Neovim plugin that recreates core Jupyter-like behavior with cell markers, per-cell execution, and a simple virtual cell outline.
 
+## Who this is for (and who it isn't)
+
+This plugin is a good fit if:
+- You prefer editing in Neovim but need a notebook-like workflow for exploration, MVPs, or personal projects.
+- You want a lightweight, Neovim-native compromise before moving work into a more robust notebook stack.
+- You value fast iteration, simple setup, and readable notebooks over full Jupyter feature parity.
+
+This plugin may not be a fit if:
+- You need full Jupyter kernel compatibility, rich outputs (plots/HTML/LaTeX/images), or collaborative notebook features.
+- You rely on browser-based notebook UIs or multi-kernel workflows.
+
 ## Quick start
 
 1. Add this repo to your Neovim runtime path or plugin manager.
@@ -73,7 +84,7 @@ require("neo_notebooks").setup({
   border_hl_markdown = "NeoNotebookBorderMarkdown",
   show_cell_index = true,
   vertical_borders = true,
-  cell_width_ratio = 0.9,
+  cell_width_ratio = 0.75,
   cell_min_width = 60,
   cell_max_width = 140,
   top_padding = 1,

@@ -450,14 +450,18 @@ function M.open_line_below(bufnr)
   if insert_at <= line then
     insert_at = math.min(line + 1, cell.finish + 1)
   end
-  local pad = left_boundary_col(cell)
-  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { string.rep(" ", pad) })
+  local pad = math.max(0, left_boundary_col(cell))
+  local line_text = string.rep(" ", pad)
+  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { line_text })
   local index = require("neo_notebooks.index")
   index.on_text_changed(bufnr)
   local scheduler = require("neo_notebooks.scheduler")
   scheduler.request_render(bufnr, { immediate = true })
   vim.api.nvim_win_set_cursor(0, { insert_at + 1, pad })
   mark_pending_virtual_indent(bufnr, insert_at, pad)
+  if vim.g.neo_notebooks_debug_pad then
+    vim.notify(string.format("PadDebug(open_below): pad=%d line=%s", pad, line_text:gsub(" ", "·")), vim.log.levels.INFO)
+  end
   vim.cmd("startinsert")
 end
 
@@ -467,14 +471,18 @@ function M.open_line_above(bufnr)
   local cell = containment.get_cell(bufnr, line)
   cell = containment.ensure_body_line(bufnr, cell)
   local insert_at = containment.clamped_insert_at(cell, line)
-  local pad = left_boundary_col(cell)
-  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { string.rep(" ", pad) })
+  local pad = math.max(0, left_boundary_col(cell))
+  local line_text = string.rep(" ", pad)
+  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { line_text })
   local index = require("neo_notebooks.index")
   index.on_text_changed(bufnr)
   local scheduler = require("neo_notebooks.scheduler")
   scheduler.request_render(bufnr, { immediate = true })
   vim.api.nvim_win_set_cursor(0, { insert_at + 1, pad })
   mark_pending_virtual_indent(bufnr, insert_at, pad)
+  if vim.g.neo_notebooks_debug_pad then
+    vim.notify(string.format("PadDebug(open_above): pad=%d line=%s", pad, line_text:gsub(" ", "·")), vim.log.levels.INFO)
+  end
   vim.cmd("startinsert")
 end
 
@@ -506,12 +514,19 @@ function M.handle_enter_insert(bufnr)
     if not state.cell then
       return
     end
-    local pad = left_boundary_col(state.cell)
+    local pad = math.max(0, left_boundary_col(state.cell))
     local text = vim.api.nvim_buf_get_lines(bufnr, state.line, state.line + 1, false)[1] or ""
     if text == "" then
-      vim.api.nvim_buf_set_lines(bufnr, state.line, state.line + 1, false, { string.rep(" ", pad) })
+      local line_text = string.rep(" ", pad)
+      vim.api.nvim_buf_set_lines(bufnr, state.line, state.line + 1, false, { line_text })
+      if vim.g.neo_notebooks_debug_pad then
+        vim.notify(string.format("PadDebug(<CR>): pad=%d line=%s", pad, line_text:gsub(" ", "·")), vim.log.levels.INFO)
+      end
     end
-    vim.api.nvim_win_set_cursor(0, { state.line + 1, pad })
+    local updated = vim.api.nvim_buf_get_lines(bufnr, state.line, state.line + 1, false)[1] or ""
+    local leading = #(updated:match("^(%s*)") or "")
+    local col = math.max(pad, leading)
+    vim.api.nvim_win_set_cursor(0, { state.line + 1, col })
     mark_pending_virtual_indent(bufnr, state.line, pad)
   end)
 end

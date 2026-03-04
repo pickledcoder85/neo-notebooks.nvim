@@ -18,6 +18,18 @@ local index = require("neo_notebooks.index")
 local scheduler = require("neo_notebooks.scheduler")
 
 local set_default_keymaps
+local set_python_filetype
+
+set_python_filetype = function(bufnr)
+  bufnr = bufnr or 0
+  local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
+  if ft == "python" then
+    return
+  end
+  vim.api.nvim_buf_call(bufnr, function()
+    vim.cmd("setfiletype python")
+  end)
+end
 
 local function has_filetype(bufnr)
   if vim.b[bufnr] and vim.b[bufnr].neo_notebooks_enabled then
@@ -520,6 +532,19 @@ vim.api.nvim_create_user_command("NeoNotebookOutputHasAnsi", function()
   end
 end, {})
 
+vim.api.nvim_create_user_command("PadDebug", function()
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local cfg = require("neo_notebooks").config
+  local win = vim.api.nvim_win_get_width(0)
+  local width = math.floor(win * (cfg.cell_width_ratio or 0.9))
+  width = math.max(cfg.cell_min_width or 60, width)
+  width = math.min(cfg.cell_max_width or win, width)
+  width = math.min(width, win)
+  local pad = math.max(0, math.floor((win - width) / 2))
+  local text = vim.api.nvim_get_current_line():gsub(" ", "·")
+  vim.notify(string.format("PadDebug: pad=%d col=%d line=%s", pad, vim.api.nvim_win_get_cursor(0)[2], text), vim.log.levels.INFO)
+end, {})
+
 vim.api.nvim_create_user_command("NeoNotebookAnsiSample", function()
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1
   local cell = cells.get_cell_at_line(0, line)
@@ -562,7 +587,7 @@ vim.api.nvim_create_autocmd("BufReadPost", {
       vim.api.nvim_buf_set_option(args.buf, "modifiable", true)
       vim.b[args.buf].neo_notebooks_is_ipynb = true
       vim.b[args.buf].neo_notebooks_enabled = true
-      vim.api.nvim_set_option_value("filetype", "python", { buf = args.buf })
+      set_python_filetype(args.buf)
       local ok, err = ipynb.import_ipynb(path, args.buf)
       if not ok then
         vim.b[args.buf].neo_notebooks_skip_initial = false
@@ -935,6 +960,14 @@ vim.api.nvim_create_autocmd({ "InsertLeave" }, {
   end,
 })
 
+vim.api.nvim_create_autocmd({ "VimResized", "WinResized" }, {
+  callback = function(args)
+    if should_enable(args.buf) and nb.config.auto_render then
+      scheduler.request_render(args.buf, { immediate = true })
+    end
+  end,
+})
+
 vim.api.nvim_create_autocmd({ "InsertEnter", "InsertLeave" }, {
   callback = function(args)
     if should_enable(args.buf) and nb.config.auto_render then
@@ -943,7 +976,7 @@ vim.api.nvim_create_autocmd({ "InsertEnter", "InsertLeave" }, {
   end,
 })
 
-vim.api.nvim_create_autocmd({ "BufEnter", "FileType" }, {
+vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter", "FileType" }, {
   callback = function(args)
     set_default_keymaps(args.buf)
     if should_enable(args.buf) then
@@ -1003,7 +1036,7 @@ vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
   pattern = "*.nn",
   callback = function(args)
     vim.b[args.buf].neo_notebooks_enabled = true
-    vim.api.nvim_set_option_value("filetype", "python", { buf = args.buf })
+    set_python_filetype(args.buf)
   end,
 })
 vim.api.nvim_create_autocmd({ "InsertEnter" }, {

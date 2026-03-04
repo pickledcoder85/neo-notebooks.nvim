@@ -411,12 +411,17 @@ local function render_cell(bufnr, ctx, cell, visible_idx, active, in_insert, cur
 
   if config.vertical_borders then
     local text_pad = string.rep(" ", pad + 1)
+    local pending = vim.b[bufnr] and vim.b[bufnr].neo_notebooks_pending_virtual_indent or nil
     local start_line = math.min(math.max(cell.start, 0), math.max(line_count - 1, 0))
     local end_line = math.min(math.max(render_finish, 0), math.max(line_count - 1, 0))
     if start_line <= end_line then
       for line = start_line, end_line do
+        local inline_pad = text_pad
+        if pending and pending[tostring(line)] then
+          inline_pad = ""
+        end
         vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
-          virt_text = { { text_pad, hl } },
+          virt_text = { { inline_pad, hl } },
           virt_text_pos = "inline",
           right_gravity = false,
           priority = 120,

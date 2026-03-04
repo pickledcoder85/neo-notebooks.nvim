@@ -78,6 +78,11 @@ This document summarizes implementation choices and the evolution of core featur
 - When enabled, the plugin sets `vim.b.completion = false` inside markdown cells.
 - The previous buffer-local completion setting is restored when returning to code cells.
 
+## Filetype handling
+
+- `.ipynb` and `.nn` buffers set `filetype=python` using `:setfiletype` to trigger
+  `FileType` autocommands for LSP/indent configuration.
+
 ## Cell border highlighting
 
 - Borders use `border_hl` (default `NeoNotebookBorder`).
