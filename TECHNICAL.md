@@ -179,6 +179,7 @@ This document summarizes implementation choices and the evolution of core featur
 - Cache validity is also guarded by `changedtick`.
 - When edits do not touch marker lines, incremental line-delta updates are applied and
   the updated index is re-assigned to the buffer to persist mutations.
+- Marker line edits that keep valid markers update cell types in-place without a full rebuild.
 - Cache format: `list` (ordered) and `by_id` (O(1) lookup).
 - Each cell has a stable `cell_id` stored as an extmark on the marker line.
 - Each cell entry stores `body_len` for positioning math.

@@ -110,7 +110,7 @@ local function has_marker_in_range(state, firstline, lastline)
     return false
   end
   for _, cell in ipairs(state.list) do
-    if cell.start >= firstline and cell.start < lastline then
+    if cell.border ~= false and cell.start >= firstline and cell.start < lastline then
       return true
     end
   end
@@ -163,6 +163,62 @@ local function find_cell_in_state(state, line)
     end
   end
   return state.list[#state.list]
+end
+
+local function normalize_cell_type(cell_type)
+  if not cell_type or cell_type == "" then
+    return "code"
+  end
+  cell_type = cell_type:lower()
+  if cell_type ~= "code" and cell_type ~= "markdown" then
+    return "code"
+  end
+  return cell_type
+end
+
+local function mark_dirty_cells_in_range(state, dirty_set, firstline, lastline)
+  if not state or not state.list or not dirty_set then
+    return
+  end
+  if lastline <= firstline then
+    return
+  end
+  local range_start = firstline
+  local range_end = lastline - 1
+  for _, cell in ipairs(state.list) do
+    if cell.finish < range_start then
+      goto continue
+    end
+    if cell.start > range_end then
+      break
+    end
+    if cell.id then
+      dirty_set[cell.id] = true
+    end
+    ::continue::
+  end
+end
+
+local function update_marker_types_in_range(bufnr, state, dirty_set, firstline, lastline)
+  if not state or not state.list then
+    return false
+  end
+  local touched = false
+  for _, cell in ipairs(state.list) do
+    if cell.border ~= false and cell.start >= firstline and cell.start < lastline then
+      local line = vim.api.nvim_buf_get_lines(bufnr, cell.start, cell.start + 1, false)[1]
+      local cell_type = line and line:match(MARKER_PATTERN) or nil
+      if not cell_type then
+        return false
+      end
+      cell.type = normalize_cell_type(cell_type)
+      if cell.id then
+        dirty_set[cell.id] = true
+      end
+      touched = true
+    end
+  end
+  return touched
 end
 
 function M.get(bufnr)
@@ -241,12 +297,26 @@ function M.on_lines(bufnr, firstline, lastline, new_lastline)
     meta.dirty = true
     return
   end
-  local marker_touched = has_marker_in_range(state, firstline, lastline)
-    or has_marker_in_new_lines(bufnr, firstline, new_lastline)
+  local marker_in_range = has_marker_in_range(state, firstline, lastline)
+  local inserted_markers = has_marker_in_new_lines(bufnr, firstline, new_lastline)
+  local marker_touched = marker_in_range or inserted_markers
   if marker_touched then
+    local delta = new_lastline - lastline
+    if not inserted_markers and delta == 0 then
+      meta.dirty_cell_ids = meta.dirty_cell_ids or {}
+      local ok = update_marker_types_in_range(bufnr, state, meta.dirty_cell_ids, firstline, lastline)
+      if ok then
+        vim.b[bufnr].neo_notebooks_index = state
+        meta.tick = current_tick(bufnr)
+        meta.dirty = false
+        meta.marker_dirty = false
+        meta.render_hint = "immediate"
+        return
+      end
+    end
     local orphans = meta.orphans or {}
     for _, cell in ipairs(state.list) do
-      if cell.start >= firstline and cell.start < lastline then
+      if cell.border ~= false and cell.start >= firstline and cell.start < lastline then
         local line = vim.api.nvim_buf_get_lines(bufnr, cell.start, cell.start + 1, false)[1]
         if not line or not line:match(MARKER_PATTERN) then
           table.insert(orphans, { id = cell.id, line = cell.start, type = cell.type })
@@ -261,17 +331,8 @@ function M.on_lines(bufnr, firstline, lastline, new_lastline)
     return
   end
   meta.dirty_cell_ids = meta.dirty_cell_ids or {}
-  local primary = find_cell_in_state(state, firstline)
-  if primary and primary.id then
-    meta.dirty_cell_ids[primary.id] = true
-  end
-  local last_line = math.max(firstline, lastline - 1)
-  if last_line ~= firstline then
-    local secondary = find_cell_in_state(state, last_line)
-    if secondary and secondary.id then
-      meta.dirty_cell_ids[secondary.id] = true
-    end
-  end
+  local range_last = math.max(lastline, new_lastline)
+  mark_dirty_cells_in_range(state, meta.dirty_cell_ids, firstline, range_last)
   local delta = new_lastline - lastline
   if delta ~= 0 then
     apply_delta(state, firstline, lastline, delta)
