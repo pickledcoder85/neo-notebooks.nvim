@@ -607,4 +607,29 @@ function M.run_cell(bufnr, line, opts)
   M.enqueue_cell(bufnr, line, opts)
 end
 
+function M.clear_cell_hash(bufnr, cell_id)
+  bufnr = resolve_bufnr(bufnr)
+  if not cell_id then
+    return
+  end
+  local store = get_hash_store(bufnr)
+  store[cell_id] = nil
+  set_hash_store(bufnr, store)
+end
+
+function M.clear_all_hashes(bufnr)
+  bufnr = resolve_bufnr(bufnr)
+  set_hash_store(bufnr, {})
+end
+
+function M._get_hash_store_for_test(bufnr)
+  bufnr = resolve_bufnr(bufnr)
+  return get_hash_store(bufnr)
+end
+
+function M._set_hash_store_for_test(bufnr, store)
+  bufnr = resolve_bufnr(bufnr)
+  set_hash_store(bufnr, store or {})
+end
+
 return M

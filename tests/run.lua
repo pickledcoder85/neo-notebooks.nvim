@@ -246,6 +246,19 @@ with_buf({
   ok(entry and entry.collapsed == false, "expanded state stored")
 end)
 
+-- Test: clearing output clears execution hash (allows rerun)
+with_buf({
+  "# %% [code]",
+  "print(1)",
+}, function(buf)
+  local state = index.rebuild(buf)
+  local cell = state.list[1]
+  exec._set_hash_store_for_test(buf, { [cell.id] = "hash" })
+  actions.clear_output(buf, cell.start + 1)
+  local store = exec._get_hash_store_for_test(buf)
+  ok(store[cell.id] == nil, "hash cleared for cell output")
+end)
+
 -- Test: move operations preserve output lines by cell id
 with_buf({
   "# %% [code]",

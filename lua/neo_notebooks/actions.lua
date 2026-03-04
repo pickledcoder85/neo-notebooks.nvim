@@ -221,6 +221,8 @@ function M.clear_output(bufnr, line)
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
   local cell = cells.get_cell_at_line(bufnr, line)
   if cell.id then
+    local exec = require("neo_notebooks.exec")
+    exec.clear_cell_hash(bufnr, cell.id)
     local index = require("neo_notebooks.index")
     local entry = index.get_by_id(bufnr, cell.id)
     if entry then
@@ -232,6 +234,8 @@ end
 
 function M.clear_all_output(bufnr)
   bufnr = bufnr or 0
+  local exec = require("neo_notebooks.exec")
+  exec.clear_all_hashes(bufnr)
   output.clear_all(bufnr)
 end
 
