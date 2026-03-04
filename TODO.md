@@ -4,15 +4,10 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Now
 
-- Investigate remaining layout issues before next merge:
-  - Cell right edge can go off-screen after terminal resize (needs responsive re-render/width recalculation).
-  - Left padding alignment still off by ~1 column in some cases.
+- No active “Now” items. Pick from **Next**.
 
 ## Next
 
-- Finish dirty-range index updates (reduce full-buffer scans where safe).
-  - Already added line-change dirty tracking + incremental delta updates + full rebuild fallback.
-  - Next: expand safe partial rebuilds for multi-range edits and marker moves.
 - Partial cell rerendering (redraw affected cells only, not full notebook).
 - Output collapse/expand per cell.
 - Add a UI action menu (Telescope-style picker).
@@ -43,6 +38,12 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Done (recent)
 
+- Layout fixes:
+  - Re-render on window enter/resize to keep borders aligned.
+  - Left padding alignment fixes around insert/indent behavior.
+- Dirty-range index updates:
+  - Multi-cell dirty marking and in-place marker type edits.
+  - Added tests for dirty-range updates and marker-type edits.
 - Cell spacing + containment polish:
   - Cursor containment for `o`, `O`, `<CR>`, `gg`, `G`.
   - Single internal blank-line spacing and `cell_gap_lines` stabilization.

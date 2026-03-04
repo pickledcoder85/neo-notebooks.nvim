@@ -6,6 +6,8 @@ This document summarizes implementation choices and the evolution of core featur
 
 - Any merge into `main` must reconcile `README.md`, `TODO.md`, and `TECHNICAL.md` for
   behavior/config/architecture changes.
+- The `TODO.md` "Now/Next" sections should be accurate before merge; move completed
+  items into "Done (recent)" as part of the merge process.
 
 ## Architecture overview
 
