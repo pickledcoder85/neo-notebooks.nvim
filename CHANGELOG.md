@@ -5,6 +5,11 @@ best-effort summary based on existing documentation and recent commits.
 
 ## Unreleased
 
+- Insert-mode padding is now preserved for auto-indent, then trimmed on exit/run.
+- Auto-indent/LSP now loads for `.ipynb`/`.nn` via `:setfiletype python`.
+- Re-render on window enter/resize to keep borders aligned to size changes.
+- Added optional cursor padding debug command (`:PadDebug`).
+- Added "Who this is for" guidance in `README.md`.
 - Added per-cell execution timing displayed at the top of inline output blocks.
 - Added incremental rendering and index updates to reduce full-buffer redraws.
 - Added render scheduler for debounced redraws and spinner updates.
