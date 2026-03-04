@@ -8,7 +8,6 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Next
 
-- Partial cell rerendering (redraw affected cells only, not full notebook).
 - Output collapse/expand per cell.
 - Typed output pipeline (MIME-aware):
   - Python runner returns typed outputs: `text`, `image/png`, optional `text/html`, `application/json`.
@@ -37,6 +36,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Done (recent)
 
+- Partial cell rerendering (redraw affected cells only, not full notebook).
 - Layout fixes:
   - Re-render on window enter/resize to keep borders aligned.
   - Left padding alignment fixes around insert/indent behavior.
