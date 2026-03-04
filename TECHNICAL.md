@@ -10,6 +10,11 @@ This document summarizes implementation choices and the evolution of core featur
   items into "Done (recent)" as part of the merge process.
 - When running headless tests, ensure any spawned `nvim` processes are terminated
   (use `tty=true` and send `SIGINT` on failures).
+- For any new feature taken from `TODO.md`:
+  - Make an implementation plan.
+  - Review the plan for simplification/optimization.
+  - Update the plan accordingly.
+  - Move to a feature branch (if not already) and implement the updated plan.
 
 ## Architecture overview
 
