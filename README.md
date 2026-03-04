@@ -124,7 +124,7 @@ require("neo_notebooks").setup({
     run_all = "<leader>ra",
     restart = "<leader>rs",
     toggle_output = "<leader>tt",
-    toggle_output_collapse = nil,
+    toggle_output_collapse = "<leader>of",
     select_cell = "<leader>vs",
     stats = "<leader>ns",
     run_above = "<leader>rk",
