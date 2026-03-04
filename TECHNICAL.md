@@ -8,6 +8,8 @@ This document summarizes implementation choices and the evolution of core featur
   behavior/config/architecture changes.
 - The `TODO.md` "Now/Next" sections should be accurate before merge; move completed
   items into "Done (recent)" as part of the merge process.
+- When running headless tests, ensure any spawned `nvim` processes are terminated
+  (use `tty=true` and send `SIGINT` on failures).
 
 ## Architecture overview
 
