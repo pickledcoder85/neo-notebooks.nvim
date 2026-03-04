@@ -5,6 +5,8 @@ best-effort summary based on existing documentation and recent commits.
 
 ## Unreleased
 
+- Improved dirty-range index updates (multi-cell dirty marking and in-place marker type edits).
+- Added tests covering dirty-range updates and marker-type edits.
 - Insert-mode padding is now preserved for auto-indent, then trimmed on exit/run.
 - Auto-indent/LSP now loads for `.ipynb`/`.nn` via `:setfiletype python`.
 - Re-render on window enter/resize to keep borders aligned to size changes.
