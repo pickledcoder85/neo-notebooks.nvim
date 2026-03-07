@@ -4,11 +4,22 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Now
 
-- No active “Now” items. Pick from **Next**.
+- Jupytext interoperability (next major task):
+  - Open/import paired Jupytext text notebooks (starting with `py:percent`).
+  - Preserve and round-trip `metadata.jupytext` when exporting `.ipynb`.
+  - Add compatibility fixtures from existing Jupytext repos to verify no format drift.
 
 ## Next
 
-- No active “Next” items. Pick from **Lowest priority**.
+- Kernel/session robustness:
+  - Clear restart/interrupt/status behavior with reliable state transitions.
+  - Better failure-mode UX around stale kernel state and reconnect flows.
+- Performance/scalability hardening:
+  - Profiling + optimization passes for large notebooks and high output volume.
+  - Stress tests for render/index/update loops on long-running sessions.
+- UX polish/stability hardening:
+  - Additional round-trip guarantees and regression coverage for cross-IDE workflows.
+  - Focused quality pass on notebook ergonomics and edge-case behavior.
 
 ## Later
 
