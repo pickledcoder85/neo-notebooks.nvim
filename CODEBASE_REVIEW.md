@@ -796,5 +796,5 @@ NeoNotebookSnakeCell
 
 - Extracted keymap wiring to `lua/neo_notebooks/entrypoint/keymaps.lua`.
 - Extracted lifecycle/autocmd wiring to `lua/neo_notebooks/entrypoint/lifecycle.lua`.
-- `plugin/neo_notebooks.lua` now delegates to extracted modules for those responsibilities.
-- Commands remain in `plugin/neo_notebooks.lua` for now; command extraction can be a follow-up slice if desired.
+- Extracted command registration wiring to `lua/neo_notebooks/entrypoint/commands.lua`.
+- `plugin/neo_notebooks.lua` now delegates keymaps, lifecycle, and commands to extracted entrypoint modules.

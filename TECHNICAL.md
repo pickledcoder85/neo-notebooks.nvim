@@ -33,9 +33,11 @@ This document summarizes implementation choices and the evolution of core featur
 ## Architecture overview
 
 - `plugin/neo_notebooks.lua`
-  - Registers user commands.
+  - Delegates user-command wiring to `lua/neo_notebooks/entrypoint/commands.lua`.
   - Delegates keymap wiring to `lua/neo_notebooks/entrypoint/keymaps.lua`.
   - Delegates lifecycle/autocmd wiring to `lua/neo_notebooks/entrypoint/lifecycle.lua`.
+- `lua/neo_notebooks/entrypoint/commands.lua`
+  - Owns `nvim_create_user_command` registrations and command-level glue flows.
 - `lua/neo_notebooks/entrypoint/keymaps.lua`
   - Owns default notebook keymaps and snake lock/restore keymap transitions.
 - `lua/neo_notebooks/entrypoint/lifecycle.lua`

@@ -16,7 +16,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Sweep 4: sequenced refactor execution plan with risk/test/rollback strategy.
   - Sweep 5 (optional): test/observability gap assessment (completed; prioritized gaps documented).
   - Phase 2 (in progress): test lane split (`core_contract`, `integration`, `optional_kitty`).
-  - Phase 3 (in progress): entrypoint decomposition (keymap/lifecycle wiring extracted; command extraction follow-up).
+  - Phase 3 (in progress): entrypoint decomposition (keymap/lifecycle/command wiring extracted; cleanup follow-up).
 
 ## Next
 
