@@ -901,6 +901,10 @@ NeoNotebookSnakeCell
 - Added `lua/neo_notebooks/formats/ipynb_outputs.lua`:
   - `outputs_to_items(outputs)` for MIME-aware output rendering adapters.
   - `items_to_outputs(items)` for typed payload -> nbformat output conversion.
+- Added `lua/neo_notebooks/formats/ipynb_codec.lua`:
+  - JSON decode/encode helpers for notebook documents.
+  - import/export cell/document assembly helpers (line normalization, leading blank-code normalization, metadata/doc build).
 - Updated `ipynb.lua` to consume the extracted parser module for Jupytext import and metadata defaults.
 - Updated `ipynb.lua` to consume extracted output conversion helpers.
+- Updated `ipynb.lua` to consume extracted document assembly/parsing helpers.
 - No user-visible behavior change; current test lanes remain green.
