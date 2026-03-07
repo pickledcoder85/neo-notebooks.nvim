@@ -89,6 +89,7 @@ M.config = {
     edit_cell = nil,
     save_cell = nil,
     run_cell = nil,
+    snake_game = nil,
   },
 }
 

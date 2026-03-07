@@ -16,9 +16,12 @@ local help = require("neo_notebooks.help")
 local editor = require("neo_notebooks.editor")
 local index = require("neo_notebooks.index")
 local scheduler = require("neo_notebooks.scheduler")
+local snake = require("neo_notebooks.snake")
 
 local set_default_keymaps
 local set_python_filetype
+local set_snake_keymaps
+local clear_snake_keymaps
 
 set_python_filetype = function(bufnr)
   bufnr = bufnr or 0
@@ -245,6 +248,45 @@ local function reset_undo_baseline(bufnr)
   local prev = vim.api.nvim_get_option_value("undolevels", { buf = bufnr })
   vim.api.nvim_set_option_value("undolevels", -1, { buf = bufnr })
   vim.api.nvim_set_option_value("undolevels", prev, { buf = bufnr })
+end
+
+clear_snake_keymaps = function(bufnr)
+  bufnr = bufnr or 0
+  for _, lhs in ipairs({ "h", "j", "k", "l", "<Esc>" }) do
+    pcall(vim.keymap.del, "n", lhs, { buffer = bufnr })
+  end
+end
+
+set_snake_keymaps = function(bufnr)
+  bufnr = bufnr or 0
+  clear_snake_keymaps(bufnr)
+  local opts = { noremap = true, silent = true, buffer = bufnr }
+  local function move(dir)
+    local ok, err = snake.move(bufnr, dir)
+    if not ok and err then
+      vim.notify("NeoNotebook: " .. err, vim.log.levels.WARN)
+      return
+    end
+    render_if_enabled(bufnr)
+  end
+  vim.keymap.set("n", "h", function()
+    move("left")
+  end, opts)
+  vim.keymap.set("n", "j", function()
+    move("down")
+  end, opts)
+  vim.keymap.set("n", "k", function()
+    move("up")
+  end, opts)
+  vim.keymap.set("n", "l", function()
+    move("right")
+  end, opts)
+  vim.keymap.set("n", "<Esc>", function()
+    snake.stop(bufnr)
+    clear_snake_keymaps(bufnr)
+    set_default_keymaps(bufnr)
+    render_if_enabled(bufnr)
+  end, opts)
 end
 
 local function logical_cell_insert_base(bufnr, cell)
@@ -566,6 +608,39 @@ vim.api.nvim_create_user_command("NeoNotebookOpenIpynb", function(opts)
   end
   reset_undo_baseline(0)
 end, { nargs = 1, complete = "file" })
+
+vim.api.nvim_create_user_command("NeoNotebookSnakeCell", function()
+  local bufnr = vim.api.nvim_get_current_buf()
+  if not should_enable(bufnr) then
+    vim.notify("NeoNotebook: snake mode requires a notebook buffer", vim.log.levels.WARN)
+    return
+  end
+  local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local insert_line = cells.insert_cell_below(bufnr, line, "code")
+  local state = index.rebuild(bufnr)
+  local entry = nil
+  for _, cell in ipairs(state.list or {}) do
+    if cell.start == insert_line and cell.type == "code" then
+      entry = cell
+      break
+    end
+  end
+  if not entry then
+    entry = cells.get_cell_at_line(bufnr, insert_line)
+  end
+  if not entry or not entry.id then
+    vim.notify("NeoNotebook: failed to create snake cell", vim.log.levels.ERROR)
+    return
+  end
+  local ok, err = snake.start(bufnr, entry.id)
+  if not ok then
+    vim.notify("NeoNotebook: " .. (err or "failed to start snake mode"), vim.log.levels.ERROR)
+    return
+  end
+  set_snake_keymaps(bufnr)
+  vim.api.nvim_win_set_cursor(0, { entry.start + 2, 0 })
+  render_if_enabled(bufnr)
+end, {})
 
 vim.api.nvim_create_user_command("NeoNotebookExportIpynb", function(opts)
   local path = opts.args
@@ -974,6 +1049,12 @@ set_default_keymaps = function(bufnr)
   if maps.run_cell then
     vim.keymap.set("n", maps.run_cell, function()
       editor.run_from_editor()
+    end, opts)
+  end
+
+  if maps.snake_game then
+    vim.keymap.set("n", maps.snake_game, function()
+      vim.cmd("NeoNotebookSnakeCell")
     end, opts)
   end
 

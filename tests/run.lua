@@ -43,6 +43,7 @@ local index_mod = require("neo_notebooks.index")
 local ipynb = require("neo_notebooks.ipynb")
 local exec = require("neo_notebooks.exec")
 local nb = require("neo_notebooks")
+local snake = require("neo_notebooks.snake")
 
 -- Test: default strict containment mode is soft
 eq(nb.config.strict_containment, "soft", "strict containment default")
@@ -328,6 +329,25 @@ with_buf({
   local lines = output.get_lines(buf, cell.id)
   ok(lines and #lines == 1 and lines[1] == "ok", "output stored")
   render.render(buf)
+end)
+
+-- Test: snake mode starts, moves, and exits in code cell
+with_buf({
+  "# %% [code]",
+  "print(1)",
+}, function(buf)
+  local state = index.rebuild(buf)
+  local cell = state.list[1]
+  local ok_start, err = snake.start(buf, cell.id, { width = 10, height = 6 })
+  ok(ok_start, err)
+  ok(snake.is_active(buf), "snake mode active after start")
+  local line = vim.api.nvim_buf_get_lines(buf, cell.start + 1, cell.start + 2, false)[1] or ""
+  ok(line:find("snake mode", 1, true) ~= nil, "snake instructions rendered")
+  local ok_move, err_move = snake.move(buf, "right")
+  ok(ok_move, err_move)
+  local stopped = snake.stop(buf)
+  ok(stopped, "snake mode stopped")
+  ok(not snake.is_active(buf), "snake mode inactive after stop")
 end)
 
 -- Test: markdown cells render heading/emphasis/code overlays

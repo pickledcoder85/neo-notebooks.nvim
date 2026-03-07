@@ -57,6 +57,7 @@ function M.show()
     "  :NeoNotebookOutputClearAll clear output for all cells",
     "  :NeoNotebookOutputCollapseToggle toggle output collapse",
     "  :NeoNotebookOutputPrint    print output for cell",
+    "  :NeoNotebookSnakeCell      insert/play mini snake in new code cell",
     "",
     "Keymaps:",
   }
@@ -95,6 +96,7 @@ function M.show()
   add("run below", maps.run_below)
   add("toggle auto render", maps.toggle_auto_render)
   add("toggle overlay", maps.toggle_overlay)
+  add("snake game", maps.snake_game)
 
   open_help(lines)
 end

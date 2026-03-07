@@ -8,11 +8,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Next
 
-- Optional fun keymap: insert a new code cell containing a mini terminal snake game.
-  - Game runs inline within the cell boundaries.
-  - Random apple placement.
-  - Movement controls via `h/j/k/l`.
-  - `<Esc>` exits game mode and restores the cell to a normal editable code cell.
+- No active “Next” items. Pick from **Lowest priority**.
 
 ## Later
 
@@ -29,6 +25,11 @@ This file tracks project scope and the order of work. Items can be moved as prio
 - Tree-sitter fenced Python token coloring in markdown cells.
 - Optional markdown cell rendering polish (conceal/theme controls for inline markdown overlays).
 - Fix undo (`u`) keeping cursor position within current cell (avoid jump to buffer end).
+- Optional fun keymap: insert a new code cell containing a mini terminal snake game.
+  - Game runs inline within the cell boundaries.
+  - Random apple placement.
+  - Movement controls via `h/j/k/l`.
+  - `<Esc>` exits game mode and restores the cell to a normal editable code cell.
 - Full `.ipynb` metadata + outputs support.
 - Typed output pipeline (MIME-aware):
   - Python runner returns typed outputs: `text/plain`, `image/png`.

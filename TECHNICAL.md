@@ -165,6 +165,12 @@ This document summarizes implementation choices and the evolution of core featur
 - `NeoNotebookCellSave` writes the editor buffer back to the source cell.
 - `NeoNotebookCellRunFromEditor` saves and executes the edited cell (code only).
 
+## Snake mode
+
+- `NeoNotebookSnakeCell` inserts a new code cell and enters a mini inline snake mode.
+- The game renders as comment lines inside the cell body, keeping all drawing within cell boundaries.
+- Movement uses `h/j/k/l`; `<Esc>` exits snake mode and restores normal notebook keymaps.
+
 ## Cell labels
 
 - Borders can include a numeric cell index when `show_cell_index = true`.
