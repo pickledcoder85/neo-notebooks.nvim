@@ -5,6 +5,11 @@ best-effort summary based on existing documentation and recent commits.
 
 ## Unreleased
 
+- Full `.ipynb` metadata + outputs support (preserve metadata, execution_count, outputs; render outputs on import).
+- Improved `.ipynb` MIME interop rendering:
+  - Imported `text/html` now renders as readable inline text.
+  - Imported `application/json` now renders as JSON text (including JSON-object payloads).
+  - `text/plain` object repr fallback is suppressed when richer HTML/JSON MIME is present.
 - Added per-cell output collapse/expand toggle (default: `<leader>of`).
 - Added typed output support with custom kitty image rendering to a tmux image pane (auto-created when TMUX is available, or via explicit TTY).
 - Added image pane size toggle (`<leader>pt`), collapse (`<leader>pc`), and statusline size indicator.
