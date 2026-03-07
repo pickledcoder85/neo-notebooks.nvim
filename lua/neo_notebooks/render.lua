@@ -224,6 +224,23 @@ local function markdown_chunks_for_line(line, width)
   return truncate_chunks(chunks, width, body_hl)
 end
 
+local function markdown_chunks_for_lines(lines, width)
+  local out = {}
+  local in_fence = false
+  for i, line in ipairs(lines or {}) do
+    local text = tostring(line or "")
+    if text:match("^%s*```") then
+      in_fence = not in_fence
+      out[i] = {}
+    elseif in_fence then
+      out[i] = truncate_chunks({ { text, "String" } }, width, "String")
+    else
+      out[i] = markdown_chunks_for_line(text, width)
+    end
+  end
+  return out
+end
+
 local function format_duration(duration_ms)
   if type(duration_ms) == "table" then
     duration_ms = duration_ms.duration_ms
@@ -552,8 +569,9 @@ local function render_cell(bufnr, ctx, cell, visible_idx, active, in_insert, cur
         local inner_width = math.max(0, width - 2)
         local body_lines = vim.api.nvim_buf_get_lines(bufnr, body_start, body_end + 1, false)
         markdown_overlay_lines = {}
-        for i, line in ipairs(body_lines) do
-          markdown_overlay_lines[body_start + i - 1] = markdown_chunks_for_line(line, inner_width)
+        local chunks_by_line = markdown_chunks_for_lines(body_lines, inner_width)
+        for i, chunks in ipairs(chunks_by_line) do
+          markdown_overlay_lines[body_start + i - 1] = chunks
         end
       end
     end

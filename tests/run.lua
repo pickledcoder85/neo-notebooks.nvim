@@ -379,6 +379,48 @@ with_buf({
   ok(saw_code, "markdown code span rendered")
 end)
 
+-- Test: markdown fenced code blocks render as code and hide fences
+with_buf({
+  "# %% [markdown]",
+  "```python",
+  "x = 1",
+  "print(x)",
+  "```",
+}, function(buf)
+  index.rebuild(buf)
+  render.render(buf)
+  local marks = vim.api.nvim_buf_get_extmarks(buf, render.ns, { 0, 0 }, { -1, -1 }, { details = true })
+  local saw_fence = false
+  local saw_code_line_1 = false
+  local saw_code_line_2 = false
+  for _, mark in ipairs(marks) do
+    local details = mark[4]
+    local vt = details and details.virt_text
+    if vt and details and details.virt_text_win_col then
+      local joined = ""
+      for _, chunk in ipairs(vt) do
+        joined = joined .. (chunk[1] or "")
+      end
+      if joined:find("```", 1, true) then
+        saw_fence = true
+      end
+      for _, chunk in ipairs(vt) do
+        local text = chunk[1] or ""
+        local hl = chunk[2]
+        if text == "x = 1" and hl == "String" then
+          saw_code_line_1 = true
+        end
+        if text == "print(x)" and hl == "String" then
+          saw_code_line_2 = true
+        end
+      end
+    end
+  end
+  ok(not saw_fence, "fenced markers hidden in overlay")
+  ok(saw_code_line_1, "fenced code first line rendered with code highlight")
+  ok(saw_code_line_2, "fenced code second line rendered with code highlight")
+end)
+
 -- Test: tail padding render is idempotent (no repeated buffer writes)
 with_buf({
   "# %% [code]",
