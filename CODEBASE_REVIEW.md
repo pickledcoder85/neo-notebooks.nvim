@@ -849,4 +849,9 @@ NeoNotebookSnakeCell
   - `actions.move_cell_up` / `actions.move_cell_down`,
   - `actions.move_cell_top` / `actions.move_cell_bottom`,
   - `actions.normalize_spacing`.
+- Migrated remaining direct line-edit call sites in `actions.lua` to helper:
+  - `guarded_delete_range` clear/delete loops,
+  - insert-enter synthetic pad-line write path,
+  - pending-virtual-indent trim writes,
+  - `guard_delete_current_line` mutate-line fallback.
 - Behavior remains unchanged for migrated paths; tests remain green.

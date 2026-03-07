@@ -70,7 +70,7 @@ local function guarded_delete_range(bufnr, start, target)
   if #clears > 0 then
     table.sort(clears)
     for _, l in ipairs(clears) do
-      vim.api.nvim_buf_set_lines(bufnr, l, l + 1, false, { "" })
+      mutation.apply(bufnr, l, l + 1, { "" }, false)
     end
   end
   if #deletes > 0 then
@@ -78,7 +78,7 @@ local function guarded_delete_range(bufnr, start, target)
       return a > b
     end)
     for _, l in ipairs(deletes) do
-      vim.api.nvim_buf_set_lines(bufnr, l, l + 1, false, {})
+      mutation.apply(bufnr, l, l + 1, {}, false)
     end
   end
   return true
@@ -551,7 +551,7 @@ function M.handle_enter_insert(bufnr)
     local text = vim.api.nvim_buf_get_lines(bufnr, state.line, state.line + 1, false)[1] or ""
     if text == "" then
       local line_text = string.rep(" ", pad)
-      vim.api.nvim_buf_set_lines(bufnr, state.line, state.line + 1, false, { line_text })
+      mutation.apply(bufnr, state.line, state.line + 1, { line_text }, false)
       if vim.g.neo_notebooks_debug_pad then
         vim.notify(string.format("PadDebug(<CR>): pad=%d line=%s", pad, line_text:gsub(" ", "·")), vim.log.levels.INFO)
       end
@@ -676,7 +676,7 @@ function M.consume_pending_virtual_indent(bufnr, line_override)
     local trim = math.min(leading, pad)
     if trim > 0 then
       local new_text = text:sub(trim + 1)
-      vim.api.nvim_buf_set_lines(bufnr, line, line + 1, false, { new_text })
+      mutation.apply(bufnr, line, line + 1, { new_text }, false)
     end
     pending[key] = nil
   end
@@ -746,7 +746,7 @@ function M.guard_delete_current_line(bufnr, count)
     local line = cursor[1] - 1
     local can_mutate = policy.can_mutate_line(bufnr, line)
     if can_mutate then
-      vim.api.nvim_buf_set_lines(bufnr, line, line + 1, false, { "" })
+      mutation.apply(bufnr, line, line + 1, { "" }, false)
       M.clamp_cursor_to_cell_left(bufnr, { force = true, clamp_to_line = true })
       return ""
     end
