@@ -34,31 +34,38 @@ Living visual map of current architecture and planned refactor state.
                v
 +------------------------------+
 | plugin/neo_notebooks.lua     |
-| (central orchestrator)       |
+| (gating + helper functions)  |
++------------------------------+
+               |
+               | delegates wiring
+               v
++------------------------------+
+| entrypoint/init.lua          |
+| bootstrap: register commands |
+| + keymaps + lifecycle        |
 +------------------------------+
       |           |          |
-      |           |          |
-      |           |          +----------------------+
-      |           |                                 |
-      v           v                                 v
-+-----------+ +-----------+                 +---------------+
-| actions   | | exec      |                 | format I/O    |
-| .lua      | | .lua      |                 | ipynb.lua     |
-+-----------+ +-----------+                 +---------------+
-      |           |                                 |
-      | edits     | output payloads                 | import/export model
-      v           v                                 v
-+-----------+ +-----------+                 +---------------+
-| index     | | output    |---------------->| render        |
-| .lua      | | .lua      |  render request | .lua          |
-+-----------+ +-----------+                 +---------------+
-                                                |
-                                                | extmarks / virt text
-                                                v
-                                      +----------------------+
-                                      | NEOVIM BUFFER + UI   |
-                                      +----------------------+
+      v           v          v
++-----------+ +-----------+ +-----------+
+|commands   | | keymaps   | | lifecycle |
+|.lua       | | .lua      | | .lua      |
++-----------+ +-----------+ +-----------+
+      \           |          /
+       \          |         /
+        v         v        v
+       +----------------------+
+       | domain/render/exec   |
+       | + format modules     |
+       +----------------------+
+                |
+                | extmarks / virt text
+                v
+      +----------------------+
+      | NEOVIM BUFFER + UI   |
+      +----------------------+
 ```
+
+`entrypoint/init.lua` is the bootstrap coordinator: it wires the three registration modules (`commands.lua`, `keymaps.lua`, `lifecycle.lua`) using shared helper callbacks from `plugin/neo_notebooks.lua`, so plugin behavior stays the same while ownership is separated.
 
 ### 1.2 State Planes (What is Stored Where)
 
@@ -167,9 +174,14 @@ Target:
 ```text
                     +-----------------------------+
                     | plugin/neo_notebooks.lua    |
-                    | thin bootstrap only          |
+                    | gating + helper callbacks    |
                     +-----------------------------+
-                         |        |        |
+                             |
+                             v
+                    +-----------------------------+
+                    | entrypoint/init.lua         |
+                    | bootstrap/wiring hub        |
+                    +-----------------------------+
                          |        |        |
                          v        v        v
                  +-----------+ +-----------+ +-----------+
