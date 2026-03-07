@@ -1,4 +1,5 @@
 local config = require("neo_notebooks").config
+local mutation = require("neo_notebooks.mutation")
 
 local M = {}
 
@@ -41,9 +42,7 @@ function M.ensure_body_line(bufnr, cell)
     return cell
   end
   local insert_at = cell.start + 1
-  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
-  local index = require("neo_notebooks.index")
-  index.on_text_changed(bufnr)
+  mutation.apply(bufnr, insert_at, insert_at, { "" }, { index_sync = "on_text_changed" })
   return M.get_cell(bufnr, insert_at)
 end
 

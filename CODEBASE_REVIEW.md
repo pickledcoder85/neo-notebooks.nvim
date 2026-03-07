@@ -801,3 +801,45 @@ NeoNotebookSnakeCell
 - Extracted command registration wiring to `lua/neo_notebooks/entrypoint/commands.lua`.
 - `plugin/neo_notebooks.lua` now delegates keymaps, lifecycle, and commands to extracted entrypoint modules.
 - Added `lua/neo_notebooks/entrypoint/init.lua` as a single bootstrap/wiring point for command/keymap/lifecycle registration.
+
+## Phase Worklist - Phase 4: Mutation/Render Contract Consolidation
+
+- Phase: 4 - mutation/render contract consolidation
+- Status: in_progress
+- Related sweep findings:
+  - Sweep 2: finding 3
+  - Sweep 3: findings 3, 4
+  - Sweep 5: findings 4, 5
+
+### Detailed task list (current slice)
+
+1. Introduce shared mutation helper module with canonical sequencing hook points.
+2. Migrate highest-frequency contained edit paths first (`open_line_below`, `open_line_above`, body-line insertion helpers).
+3. Keep call-site behavior unchanged (same index sync mode and render immediacy).
+4. Validate with split test lanes before expanding migration.
+
+### Exact files touched (current slice)
+
+- `lua/neo_notebooks/mutation.lua` (new)
+- `lua/neo_notebooks/actions.lua`
+- `lua/neo_notebooks/containment.lua`
+
+### Tests run
+
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/core_contract.lua" -c qa`
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/integration.lua" -c qa`
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_skip_optional_kitty=1" -c "luafile tests/run.lua" -c qa`
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/optional_kitty.lua" -c qa` (expected non-kitty optional failure signal)
+
+### Phase 4 Progress Notes (Current Iteration)
+
+- Added `lua/neo_notebooks/mutation.lua` with shared `apply(...)` helper:
+  - applies line edit,
+  - performs configured index sync (`on_text_changed` / `mark_dirty`),
+  - requests configured render schedule.
+- Migrated contained insertion paths to helper:
+  - `actions.open_line_below`,
+  - `actions.open_line_above`,
+  - `actions.handle_paste_below` protected-zone insertion,
+  - `containment.ensure_body_line`.
+- Behavior remains unchanged for migrated paths; tests remain green.

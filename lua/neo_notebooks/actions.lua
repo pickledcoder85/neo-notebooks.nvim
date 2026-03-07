@@ -3,6 +3,7 @@ local output = require("neo_notebooks.output")
 local config = require("neo_notebooks").config
 local containment = require("neo_notebooks.containment")
 local policy = require("neo_notebooks.policy")
+local mutation = require("neo_notebooks.mutation")
 
 local M = {}
 
@@ -500,11 +501,10 @@ function M.open_line_below(bufnr)
   end
   local pad = math.max(0, left_boundary_col(cell))
   local line_text = string.rep(" ", pad)
-  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { line_text })
-  local index = require("neo_notebooks.index")
-  index.on_text_changed(bufnr)
-  local scheduler = require("neo_notebooks.scheduler")
-  scheduler.request_render(bufnr, { immediate = true })
+  mutation.apply(bufnr, insert_at, insert_at, { line_text }, {
+    index_sync = "on_text_changed",
+    render = { immediate = true },
+  })
   vim.api.nvim_win_set_cursor(0, { insert_at + 1, pad })
   mark_pending_virtual_indent(bufnr, insert_at, pad)
   if vim.g.neo_notebooks_debug_pad then
@@ -521,11 +521,10 @@ function M.open_line_above(bufnr)
   local insert_at = containment.clamped_insert_at(cell, line)
   local pad = math.max(0, left_boundary_col(cell))
   local line_text = string.rep(" ", pad)
-  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { line_text })
-  local index = require("neo_notebooks.index")
-  index.on_text_changed(bufnr)
-  local scheduler = require("neo_notebooks.scheduler")
-  scheduler.request_render(bufnr, { immediate = true })
+  mutation.apply(bufnr, insert_at, insert_at, { line_text }, {
+    index_sync = "on_text_changed",
+    render = { immediate = true },
+  })
   vim.api.nvim_win_set_cursor(0, { insert_at + 1, pad })
   mark_pending_virtual_indent(bufnr, insert_at, pad)
   if vim.g.neo_notebooks_debug_pad then
@@ -801,9 +800,7 @@ function M.handle_paste_below(bufnr)
   if state.has_next and state.line >= state.protected_floor then
     local cell = containment.ensure_body_line(bufnr, state.cell)
     local insert_at = math.min(state.line + 1, cell.finish + 1)
-    vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, { "" })
-    local index = require("neo_notebooks.index")
-    index.on_text_changed(bufnr)
+    mutation.apply(bufnr, insert_at, insert_at, { "" }, { index_sync = "on_text_changed" })
     vim.api.nvim_win_set_cursor(0, { insert_at, 0 })
   end
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("p", true, false, true), "n", true)

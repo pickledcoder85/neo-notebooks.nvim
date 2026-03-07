@@ -42,6 +42,8 @@ This document summarizes implementation choices and the evolution of core featur
   - Owns default notebook keymaps and snake lock/restore keymap transitions.
 - `lua/neo_notebooks/entrypoint/lifecycle.lua`
   - Owns notebook lifecycle autocmd wiring (open/import/render/scheduler/cleanup flows).
+- `lua/neo_notebooks/mutation.lua`
+  - Shared mutation helper for canonical `line edit -> index sync -> render request` sequencing at migrated call sites.
 - `lua/neo_notebooks/containment.lua`
   - Canonical cursor/cell geometry helper.
   - Computes active cell identity, editable body bounds, and protected floor.
