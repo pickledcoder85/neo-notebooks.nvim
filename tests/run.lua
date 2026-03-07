@@ -382,17 +382,30 @@ end)
 -- Test: markdown fenced code blocks render as code and keep fences visible
 with_buf({
   "# %% [markdown]",
+  "# comment",
+  "def greet(name):",
   "```python",
-  "x = 1",
-  "print(x)",
+  "name = 'x'",
+  "print(name)",
   "```",
 }, function(buf)
   index.rebuild(buf)
   render.render(buf)
   local marks = vim.api.nvim_buf_get_extmarks(buf, render.ns, { 0, 0 }, { -1, -1 }, { details = true })
+  local has_ts_python = false
+  do
+    local ok_parser = pcall(function()
+      return vim.treesitter.get_string_parser("x=1", "python")
+    end)
+    local ok_query = pcall(function()
+      return vim.treesitter.query.get("python", "highlights")
+    end)
+    has_ts_python = ok_parser and ok_query
+  end
   local saw_fence = false
   local saw_code_line_1 = false
   local saw_code_line_2 = false
+  local saw_tokenized_python = false
   for _, mark in ipairs(marks) do
     local details = mark[4]
     local vt = details and details.virt_text
@@ -404,24 +417,33 @@ with_buf({
       if joined:find("```", 1, true) then
         saw_fence = true
       end
+      if joined:find("name = 'x'", 1, true) then
+        saw_code_line_1 = true
+      end
+      if joined:find("print(name)", 1, true) then
+        saw_code_line_2 = true
+      end
       for _, chunk in ipairs(vt) do
         local text = chunk[1] or ""
         local hl = chunk[2]
         if text:find("```", 1, true) and hl == "@punctuation.delimiter.markdown" then
           saw_fence = true
         end
-        if text == "x = 1" and hl == "@markup.raw.block.markdown" then
-          saw_code_line_1 = true
-        end
-        if text == "print(x)" and hl == "@markup.raw.block.markdown" then
-          saw_code_line_2 = true
+        if not text:find("```", 1, true)
+          and text ~= "name = 'x'"
+          and text ~= "print(name)"
+          and hl ~= "@markup.raw.block.markdown" then
+          saw_tokenized_python = true
         end
       end
     end
   end
   ok(saw_fence, "fenced markers shown in overlay")
-  ok(saw_code_line_1, "fenced code first line rendered with code highlight")
-  ok(saw_code_line_2, "fenced code second line rendered with code highlight")
+  ok(saw_code_line_1, "fenced code first line rendered")
+  ok(saw_code_line_2, "fenced code second line rendered")
+  if has_ts_python then
+    ok(saw_tokenized_python, "python fence uses tokenized chunks when treesitter is available")
+  end
 end)
 
 -- Test: tail padding render is idempotent (no repeated buffer writes)
