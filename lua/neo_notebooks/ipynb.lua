@@ -493,11 +493,20 @@ function M.export_ipynb(path, bufnr)
     table.insert(cells_out, cell_out)
   end
 
+  local metadata = {}
+  if type(state.metadata) == "table" then
+    metadata = vim.deepcopy(state.metadata)
+  end
+  metadata = vim.tbl_deep_extend("force", {
+    language_info = { name = "python" },
+  }, metadata)
+  if vim.b[bufnr] and vim.b[bufnr].neo_notebooks_is_jupytext then
+    metadata.jupytext = vim.tbl_deep_extend("force", default_jupytext_metadata(), metadata.jupytext or {})
+  end
+
   local doc = {
     cells = cells_out,
-    metadata = state.metadata or {
-      language_info = { name = "python" },
-    },
+    metadata = metadata,
     nbformat = state.nbformat or 4,
     nbformat_minor = state.nbformat_minor or 5,
   }
@@ -559,6 +568,7 @@ function M.import_jupytext(path, bufnr)
     end
   end
   set_state(bufnr, state)
+  vim.b[bufnr].neo_notebooks_is_jupytext = true
   output.clear_all(bufnr)
   return true
 end
