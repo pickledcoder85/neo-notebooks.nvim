@@ -242,6 +242,16 @@ This document summarizes implementation choices and the evolution of core featur
 - `.ipynb` buffers use `buftype=acwrite`; `:w` triggers export to the original file.
 - After import/open setup mutations, undo baseline is reset to prevent `u` from rolling back to raw JSON view.
 
+## Jupytext `py:percent` interop (v1)
+
+- `import_jupytext(path, bufnr)` parses Jupytext percent-style Python files into marker cells.
+- Supports cell markers: `# %%`, `# %% [markdown]`, and `# %% [md]`.
+- Markdown cell bodies convert from percent-comment lines to plain markdown text.
+- A lightweight YAML-comment header parser reads `metadata.jupytext` when present.
+- If missing, default `metadata.jupytext` is seeded (`ipynb,py:percent` + percent text representation).
+- `open_jupytext(path)` opens a new notebook-view buffer and imports the Jupytext file.
+- `.ipynb` export preserves the in-memory `metadata.jupytext` block.
+
 ## Auto-render and keymaps
 
 - Auto-render is gated by:

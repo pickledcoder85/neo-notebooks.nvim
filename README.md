@@ -94,6 +94,8 @@ print("hello")
 - Snake colors are themed via highlight groups: `NeoNotebookSnakeBorder` (default white), `NeoNotebookSnakeHead` (`@`, default yellow), `NeoNotebookSnakeBody` (`o`, default green), `NeoNotebookSnakeApple` (`*`, default red).
 - `:NeoNotebookImportIpynb {path}` imports a `.ipynb` file.
 - `:NeoNotebookOpenIpynb {path}` opens a `.ipynb` into a new buffer.
+- `:NeoNotebookImportJupytext {path}` imports a Jupytext `py:percent` file into the current notebook buffer.
+- `:NeoNotebookOpenJupytext {path}` opens a Jupytext `py:percent` file in a new notebook view buffer.
 - `:NeoNotebookExportIpynb {path}` exports the current buffer to `.ipynb`.
 
 ## Configuration
@@ -376,6 +378,26 @@ Notes:
 - Markdown and code cells are supported; other cell types are treated as code.
 - Import drops a leading blank code cell if it appears before the first markdown cell.
 - After `.ipynb` import/open, undo baseline is reset so extra `u` does not revert to raw JSON import state.
+
+### Jupytext `py:percent` import (v1)
+
+Import into current buffer:
+
+```
+:NeoNotebookImportJupytext path/to/notebook.py
+```
+
+Open in a new notebook-view buffer:
+
+```
+:NeoNotebookOpenJupytext path/to/notebook.py
+```
+
+Notes:
+- Supports Jupytext percent cell markers (`# %%`, `# %% [markdown]`, `# %% [md]`).
+- Markdown percent lines are converted to normal markdown cell text in NeoNotebook view.
+- A default `metadata.jupytext` block is seeded when missing.
+- Exporting to `.ipynb` preserves/round-trips `metadata.jupytext`.
 
 ### Filetypes
 

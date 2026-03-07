@@ -629,6 +629,50 @@ vim.api.nvim_create_user_command("NeoNotebookOpenIpynb", function(opts)
   reset_undo_baseline(0)
 end, { nargs = 1, complete = "file" })
 
+vim.api.nvim_create_user_command("NeoNotebookImportJupytext", function(opts)
+  local path = opts.args
+  if path == "" then
+    vim.notify("Provide a Jupytext .py path", vim.log.levels.WARN)
+    return
+  end
+  local bufnr = vim.api.nvim_get_current_buf()
+  vim.b[bufnr].neo_notebooks_enabled = true
+  set_python_filetype(bufnr)
+  local ok, err = ipynb.import_jupytext(path, bufnr)
+  if not ok then
+    vim.notify(err or "Jupytext import failed", vim.log.levels.ERROR)
+    return
+  end
+  ensure_top_padding(bufnr)
+  reset_undo_baseline(bufnr)
+  index.mark_dirty(bufnr)
+  index.attach(bufnr)
+  set_default_keymaps(bufnr)
+  render_if_enabled(bufnr)
+end, { nargs = 1, complete = "file" })
+
+vim.api.nvim_create_user_command("NeoNotebookOpenJupytext", function(opts)
+  local path = opts.args
+  if path == "" then
+    vim.notify("Provide a Jupytext .py path", vim.log.levels.WARN)
+    return
+  end
+  local ok, err, bufnr = ipynb.open_jupytext(path)
+  if not ok then
+    vim.notify(err or "Jupytext open failed", vim.log.levels.ERROR)
+    return
+  end
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  vim.b[bufnr].neo_notebooks_enabled = true
+  set_python_filetype(bufnr)
+  ensure_top_padding(bufnr)
+  reset_undo_baseline(bufnr)
+  index.mark_dirty(bufnr)
+  index.attach(bufnr)
+  set_default_keymaps(bufnr)
+  render_if_enabled(bufnr)
+end, { nargs = 1, complete = "file" })
+
 vim.api.nvim_create_user_command("NeoNotebookSnakeCell", function()
   local bufnr = vim.api.nvim_get_current_buf()
   if not should_enable(bufnr) then

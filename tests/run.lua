@@ -299,6 +299,69 @@ with_buf({ "" }, function(buf)
   ok(joined:find("<IPython.core.display.JSON object>", 1, true) == nil, "json plain fallback suppressed")
 end)
 
+-- Test: jupytext py:percent import parses markdown and preserves jupytext metadata on ipynb export
+with_buf({ "" }, function(buf)
+  local tmp = vim.fn.tempname() .. ".py"
+  local lines = {
+    "# ---",
+    "# jupyter:",
+    "#   jupytext:",
+    "#     formats: ipynb,py:percent",
+    "#     text_representation:",
+    "#       extension: .py",
+    "#       format_name: percent",
+    "#       format_version: '1.3'",
+    "# ---",
+    "# %% [markdown]",
+    "# # Title",
+    "# plain line",
+    "#",
+    "# %% [code]",
+    "print('hi')",
+  }
+  local ok_write = pcall(vim.fn.writefile, lines, tmp)
+  ok(ok_write, "wrote temp jupytext file")
+
+  local ok_import, err = ipynb.import_jupytext(tmp, buf)
+  ok(ok_import, err)
+
+  local out = vim.api.nvim_buf_get_lines(buf, 0, 8, false)
+  eq(out[1], "# %% [markdown]", "markdown marker imported")
+  eq(out[2], "# Title", "markdown heading converted from commented percent line")
+  eq(out[3], "plain line", "markdown plain line converted from commented percent line")
+
+  local state = vim.api.nvim_buf_get_var(buf, "neo_notebooks_ipynb_state")
+  ok(state.metadata and state.metadata.jupytext, "jupytext metadata captured")
+  eq(state.metadata.jupytext.formats, "ipynb,py:percent", "jupytext formats preserved")
+  eq(state.metadata.jupytext.text_representation.format_name, "percent", "jupytext format name preserved")
+
+  local tmp_out = vim.fn.tempname() .. ".ipynb"
+  local ok_export, err_export = ipynb.export_ipynb(tmp_out, buf)
+  ok(ok_export, err_export)
+  local exported = vim.fn.json_decode(table.concat(vim.fn.readfile(tmp_out), "\n"))
+  ok(exported.metadata and exported.metadata.jupytext, "export includes jupytext metadata")
+  eq(exported.metadata.jupytext.formats, "ipynb,py:percent", "export jupytext formats")
+  eq(exported.metadata.jupytext.text_representation.format_name, "percent", "export jupytext format name")
+end)
+
+-- Test: jupytext import without header still seeds default jupytext metadata
+with_buf({ "" }, function(buf)
+  local tmp = vim.fn.tempname() .. ".py"
+  local lines = {
+    "# %% [code]",
+    "x = 1",
+  }
+  local ok_write = pcall(vim.fn.writefile, lines, tmp)
+  ok(ok_write, "wrote temp jupytext file")
+
+  local ok_import, err = ipynb.import_jupytext(tmp, buf)
+  ok(ok_import, err)
+
+  local state = vim.api.nvim_buf_get_var(buf, "neo_notebooks_ipynb_state")
+  ok(state.metadata and state.metadata.jupytext, "default jupytext metadata seeded")
+  eq(state.metadata.jupytext.text_representation.format_name, "percent", "default format_name is percent")
+end)
+
 -- Test: move cell up preserves id mapping
 with_buf({
   "# %% [code]",

@@ -5,8 +5,8 @@ This file tracks project scope and the order of work. Items can be moved as prio
 ## Now
 
 - Jupytext interoperability (next major task):
-  - Open/import paired Jupytext text notebooks (starting with `py:percent`).
-  - Preserve and round-trip `metadata.jupytext` when exporting `.ipynb`.
+  - Initial `py:percent` open/import support landed (`:NeoNotebookImportJupytext` / `:NeoNotebookOpenJupytext`).
+  - Initial `metadata.jupytext` seed + `.ipynb` export round-trip landed.
   - Add compatibility fixtures from existing Jupytext repos to verify no format drift.
 
 ## Next

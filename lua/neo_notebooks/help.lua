@@ -52,6 +52,8 @@ function M.show()
     "  :NeoNotebookCellList       list cells",
     "  :NeoNotebookStats          show stats",
     "  :NeoNotebookImportIpynb    import ipynb",
+    "  :NeoNotebookImportJupytext import Jupytext py:percent",
+    "  :NeoNotebookOpenJupytext   open Jupytext py:percent in notebook view",
     "  :NeoNotebookExportIpynb    export ipynb",
     "  :NeoNotebookOutputClear    clear output for cell",
     "  :NeoNotebookOutputClearAll clear output for all cells",

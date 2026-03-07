@@ -5,6 +5,12 @@ best-effort summary based on existing documentation and recent commits.
 
 ## Unreleased
 
+- Added initial Jupytext `py:percent` interoperability:
+  - `:NeoNotebookImportJupytext {path}` imports Jupytext percent files into notebook cells.
+  - `:NeoNotebookOpenJupytext {path}` opens a Jupytext percent file in a new notebook-view buffer.
+  - Markdown percent-comment lines are converted to markdown cell text in notebook view.
+  - `metadata.jupytext` is parsed (when present), seeded (when missing), and preserved on `.ipynb` export.
+  - Added tests for Jupytext import parsing and metadata round-trip behavior.
 - Full `.ipynb` metadata + outputs support (preserve metadata, execution_count, outputs; render outputs on import).
 - Improved `.ipynb` MIME interop rendering:
   - Imported `text/html` now renders as readable inline text.
