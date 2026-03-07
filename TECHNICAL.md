@@ -34,9 +34,12 @@ This document summarizes implementation choices and the evolution of core featur
 
 - `plugin/neo_notebooks.lua`
   - Registers user commands.
-  - Sets buffer-local keymaps.
-  - Runs auto-render via autocommands.
-  - Stops Python sessions when buffers are wiped.
+  - Delegates keymap wiring to `lua/neo_notebooks/entrypoint/keymaps.lua`.
+  - Delegates lifecycle/autocmd wiring to `lua/neo_notebooks/entrypoint/lifecycle.lua`.
+- `lua/neo_notebooks/entrypoint/keymaps.lua`
+  - Owns default notebook keymaps and snake lock/restore keymap transitions.
+- `lua/neo_notebooks/entrypoint/lifecycle.lua`
+  - Owns notebook lifecycle autocmd wiring (open/import/render/scheduler/cleanup flows).
 - `lua/neo_notebooks/containment.lua`
   - Canonical cursor/cell geometry helper.
   - Computes active cell identity, editable body bounds, and protected floor.

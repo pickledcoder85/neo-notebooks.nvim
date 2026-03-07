@@ -752,3 +752,49 @@ NeoNotebookSnakeCell
   - snake temporary cell lifecycle contract (insert on start, delete on stop).
 - Remaining for full Phase 2 closure:
   - optionally add README test-lane invocation snippet.
+
+## Phase Worklist - Phase 3: Entrypoint Decomposition
+
+- Phase: 3 - keymap/lifecycle wiring extraction
+- Status: in_progress
+- Related sweep findings:
+  - Sweep 1: findings 1, 2, 8, 9
+  - Sweep 2: findings 1, 2, 6, 8
+
+### Detailed task list
+
+1. Extract keymap wiring from `plugin/neo_notebooks.lua` into dedicated module.
+2. Extract autocmd/lifecycle wiring from `plugin/neo_notebooks.lua` into dedicated module.
+3. Keep user-visible behavior and command names unchanged.
+4. Validate no-regression using split test lanes.
+5. Update architecture/progress docs to reflect new ownership split.
+
+### Exact files touched (current slice)
+
+- `plugin/neo_notebooks.lua`
+- `lua/neo_notebooks/entrypoint/keymaps.lua` (new)
+- `lua/neo_notebooks/entrypoint/lifecycle.lua` (new)
+- `ARCHITECTURE_FLOWCHARTS.md`
+- `TECHNICAL.md`
+- `TODO.md`
+
+### Tests run
+
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/core_contract.lua" -c qa`
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/integration.lua" -c qa`
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_skip_optional_kitty=1" -c "luafile tests/run.lua" -c qa`
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/optional_kitty.lua" -c qa` (expected non-kitty optional failure signal)
+
+### Acceptance criteria (for this slice)
+
+- Keymap ownership moved to a dedicated module.
+- Lifecycle/autocmd ownership moved to a dedicated module.
+- Existing command surface and behavior remain unchanged.
+- Core + integration lanes remain green.
+
+### Phase 3 Progress Notes (Current Iteration)
+
+- Extracted keymap wiring to `lua/neo_notebooks/entrypoint/keymaps.lua`.
+- Extracted lifecycle/autocmd wiring to `lua/neo_notebooks/entrypoint/lifecycle.lua`.
+- `plugin/neo_notebooks.lua` now delegates to extracted modules for those responsibilities.
+- Commands remain in `plugin/neo_notebooks.lua` for now; command extraction can be a follow-up slice if desired.
