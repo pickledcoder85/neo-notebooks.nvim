@@ -20,6 +20,12 @@ This file tracks project scope and the order of work. Items can be moved as prio
 - UX polish/stability hardening:
   - Additional round-trip guarantees and regression coverage for cross-IDE workflows.
   - Focused quality pass on notebook ergonomics and edge-case behavior.
+- Architecture formalization sweep:
+  - Revisit module boundaries, event flow, and state ownership.
+  - Simplify dependency direction and document architectural invariants.
+- Refactor/hardening cleanup sweep:
+  - Remove dead code and tighten error-path handling.
+  - Refactor high-risk paths for robustness and add regression tests around them.
 
 ## Later
 
