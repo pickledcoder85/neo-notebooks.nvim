@@ -90,7 +90,7 @@ print("hello")
 - `:NeoNotebookCellEdit` opens the current cell in a floating editor.
 - `:NeoNotebookCellSave` saves the floating editor back to the buffer.
 - `:NeoNotebookCellRunFromEditor` saves and runs the edited cell.
-- `:NeoNotebookSnakeCell` inserts a new code cell and starts a mini inline snake mode (auto-moving snake; fixed default board `20x10`; `h/j/k/l` turns direction; `<leader>` pauses/resumes; `<Esc>` or game over deletes the snake cell and exits mode).
+- `:NeoNotebookSnakeCell` inserts a new code cell and starts a mini inline snake mode (auto-moving snake; fixed default board `15x20`; `h/j/k/l` turns direction; `<leader>` pauses/resumes; `<Esc>` or game over deletes the snake cell and exits mode).
 - Snake colors are themed via highlight groups: `NeoNotebookSnakeBorder` (default white), `NeoNotebookSnakeHead` (`@`, default yellow), `NeoNotebookSnakeBody` (`o`, default green), `NeoNotebookSnakeApple` (`*`, default red).
 - `:NeoNotebookImportIpynb {path}` imports a `.ipynb` file.
 - `:NeoNotebookOpenIpynb {path}` opens a `.ipynb` into a new buffer.

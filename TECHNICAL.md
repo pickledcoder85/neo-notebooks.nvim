@@ -169,7 +169,7 @@ This document summarizes implementation choices and the evolution of core featur
 
 - `NeoNotebookSnakeCell` inserts a new code cell and enters a mini inline snake mode.
 - The game renders via virtual-text overlay inside the cell body; source lines remain blank host rows.
-- Default board size is fixed at `20x10` (width x height) unless overridden in code.
+- Default board size is fixed at `15x20` (width x height) unless overridden in code.
 - Snake auto-moves on a per-buffer timer; `h/j/k/l` updates direction and speed increases as apples are consumed.
 - A per-buffer high score is tracked while the notebook buffer remains open and shown in the HUD.
 - Snake visuals use dedicated highlight groups:

@@ -135,7 +135,7 @@ local function resolve_board_width(_entry, opts)
   if opts and opts.width ~= nil then
     return math.max(8, tonumber(opts.width) or 18)
   end
-  return 20
+  return 15
 end
 
 local function ensure_board_rows(bufnr, state)
@@ -194,7 +194,7 @@ function M.start(bufnr, cell_id, opts)
   require("neo_notebooks.render").render(bufnr)
   entry = index.get_by_id(bufnr, cell_id) or entry
   local width = resolve_board_width(entry, opts)
-  local height = math.max(5, tonumber(opts.height) or 10)
+  local height = math.max(5, tonumber(opts.height) or 20)
   local state = {
     cell_id = cell_id,
     width = width,
