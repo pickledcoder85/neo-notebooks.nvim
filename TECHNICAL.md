@@ -7,6 +7,12 @@ This document summarizes implementation choices and the evolution of core featur
 - Any merge into `main` must reconcile `README.md`, `TODO.md`, and `TECHNICAL.md` for
   behavior/config/architecture changes.
 - Refactor/review sweeps must follow `CODEBASE_REVIEW.md` and keep its sweep artifacts current.
+- For any refactor phase derived from sweep findings, implementation may not start until a
+  detailed phase worklist exists in `CODEBASE_REVIEW.md` that includes:
+  - issue-by-issue task list mapped to sweep findings,
+  - exact files to touch per task,
+  - specific tests to add/update/run per task,
+  - acceptance criteria per task.
 - The `TODO.md` "Now/Next" sections should be accurate before merge; move completed
   items into "Done (recent)" as part of the merge process.
 - When running headless tests, ensure any spawned `nvim` processes are terminated
@@ -16,6 +22,10 @@ This document summarizes implementation choices and the evolution of core featur
   - Review the plan for simplification/optimization.
   - Update the plan accordingly.
   - Move to a feature branch (if not already) and implement the updated plan.
+- For refactor phases:
+  - follow the same plan lifecycle (`draft -> simplify/optimize -> updated plan -> implement`);
+  - keep `ARCHITECTURE_FLOWCHARTS.md` updated with current/target diagrams and phase progress;
+  - keep `CODEBASE_REVIEW.md` phase status and checklists in sync with implemented changes.
 - Never merge and delete a feature branch until manual testing has been completed
   and explicitly approved. After implementing a revised feature plan, provide a
   manual test checklist for approval before merging/deleting the branch.
