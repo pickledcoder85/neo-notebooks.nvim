@@ -695,7 +695,6 @@ NeoNotebookSnakeCell
 - `tests/core_contract.lua` (new)
 - `tests/integration.lua` (new)
 - `tests/optional_kitty.lua` (new)
-- `tests/_helpers.lua` (new shared harness helpers; name can vary)
 - `TODO.md` (phase status sync)
 - `TECHNICAL.md` (test lane documentation updates)
 - `README.md` (optional test command docs if user-facing)
@@ -731,3 +730,20 @@ NeoNotebookSnakeCell
 - Revert lane split commits as a set:
   - restore single-file `tests/run.lua` runner,
   - remove new lane files and helper module.
+
+### Phase 2 Progress Notes (Current Iteration)
+
+- Added lane runner entrypoints:
+  - `tests/core_contract.lua`
+  - `tests/integration.lua`
+  - `tests/optional_kitty.lua`
+- Updated `tests/run.lua` to gate kitty-specific assertion behind:
+  - `vim.g.neo_notebooks_test_skip_optional_kitty`
+- Current lane behavior:
+  - `core_contract`: passes in default environment.
+  - `integration`: passes in default environment.
+  - `optional_kitty`: expected failure in non-kitty/default environment (`kitty escape emitted`), now isolated from required lanes.
+- Remaining for full Phase 2 closure:
+  - move shared test harness helpers into dedicated helper module,
+  - map tests into genuinely distinct `core` vs `integration` suites (currently both dispatch full non-kitty run),
+  - optionally add README test-lane invocation snippet.

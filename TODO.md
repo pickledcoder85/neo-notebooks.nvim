@@ -15,6 +15,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Sweep 3: dead code + optimization candidates (document only).
   - Sweep 4: sequenced refactor execution plan with risk/test/rollback strategy.
   - Sweep 5 (optional): test/observability gap assessment (completed; prioritized gaps documented).
+  - Phase 2 (in progress): test lane split (`core_contract`, `integration`, `optional_kitty`).
 
 ## Next
 

@@ -242,6 +242,10 @@ This document summarizes implementation choices and the evolution of core featur
 
 - Headless tests live in `tests/run.lua`.
 - Jupytext compatibility fixtures live in `tests/fixtures/jupytext/` and are validated in headless tests.
+- Test lanes:
+  - `tests/core_contract.lua` (required core signal; skips optional kitty backend assertions)
+  - `tests/integration.lua` (broad workflow signal; skips optional kitty backend assertions)
+  - `tests/optional_kitty.lua` (kitty/image backend assertions; optional in non-kitty environments)
 
 ## .ipynb import/export
 
