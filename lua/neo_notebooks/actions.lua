@@ -809,6 +809,28 @@ function M.handle_paste_below(bufnr)
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("p", true, false, true), "n", true)
 end
 
+function M.handle_undo(bufnr, count)
+  bufnr = bufnr or 0
+  local n = tonumber(count) or vim.v.count1 or 1
+  n = math.max(1, n)
+  vim.cmd("normal! " .. tostring(n) .. "u")
+  local state = containment.cursor_state(bufnr)
+  if state and state.cell then
+    local cell = containment.ensure_body_line(bufnr, state.cell)
+    local target = state.line
+    if state.line <= cell.start then
+      target = state.body_start
+    elseif state.has_next and state.line >= state.protected_floor then
+      target = math.max(state.body_start, state.protected_floor - 1)
+    end
+    if target ~= state.line then
+      vim.api.nvim_win_set_cursor(0, { target + 1, math.max(0, state.col) })
+    end
+  end
+  -- Keep undo behavior intact, then re-clamp cursor to notebook cell bounds.
+  M.clamp_cursor_to_cell_left(bufnr, { force = true, clamp_to_line = true })
+end
+
 function M.goto_cell_top(bufnr)
   bufnr = bufnr or 0
   local line = vim.api.nvim_win_get_cursor(0)[1] - 1

@@ -1045,6 +1045,25 @@ with_buf({
   eq(s.active_cell_index, 2, "active cell index matches second cell")
 end)
 
+-- Test: contained undo keeps cursor in current cell body
+with_buf({
+  "# %% [markdown]",
+  "line 123",
+  "",
+  "# %% [code]",
+  "print(1)",
+}, function(buf)
+  index.rebuild(buf)
+  local pos = nil
+  vim.api.nvim_buf_call(buf, function()
+    vim.api.nvim_win_set_cursor(0, { 2, 8 })
+    vim.cmd("normal! dw")
+    actions.handle_undo(buf, 1)
+    pos = vim.api.nvim_win_get_cursor(0)
+  end)
+  ok(pos[1] >= 2 and pos[1] <= 3, "cursor stays in markdown cell body/protected lines")
+end)
+
 -- Test: empty vs non-empty cell body detection
 with_buf({
   "# %% [code]",

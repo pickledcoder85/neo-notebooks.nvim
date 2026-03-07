@@ -332,6 +332,7 @@ require("neo_notebooks").setup({ suppress_completion_popup = true })
 - `<leader>mG` move cell to top
 - `<leader>mgg` move cell to bottom
 - `j` / `k` stay inside the active cell body when `soft_contain=true` and `contain_line_nav=true`
+- `u` (undo) preserves native undo behavior and then re-clamps cursor within current cell bounds
   (use `<C-n>` / `<C-p>` to move between cells)
 
 If you use a custom statusline (e.g. lualine), add the component:
