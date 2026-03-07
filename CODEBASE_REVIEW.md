@@ -865,3 +865,38 @@ NeoNotebookSnakeCell
   - `snake.stop` cell deletion path,
   - `render` tail-pad add/remove writes (`ensure_tail_pad` / `clear_tail_pad`).
 - Behavior remains unchanged for migrated paths; tests remain green.
+
+## Phase Worklist - Phase 5: Format Layer Split
+
+- Phase: 5 - format layer split
+- Status: in_progress
+- Related sweep findings:
+  - Sweep 1: finding 4
+  - Sweep 2: finding 4
+  - Sweep 3: finding 5
+
+### Detailed task list (current slice)
+
+1. Extract Jupytext percent parser responsibilities from `ipynb.lua` into dedicated format module.
+2. Keep adapter behavior unchanged in `ipynb.lua` (import/open/export APIs and metadata policy).
+3. Validate lane parity before additional codec/adapter splits.
+
+### Exact files touched (current slice)
+
+- `lua/neo_notebooks/formats/jupytext_percent.lua` (new)
+- `lua/neo_notebooks/ipynb.lua`
+
+### Tests run
+
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/core_contract.lua" -c qa`
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/integration.lua" -c qa`
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_skip_optional_kitty=1" -c "luafile tests/run.lua" -c qa`
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/optional_kitty.lua" -c qa` (expected non-kitty optional failure signal)
+
+### Phase 5 Progress Notes (Current Iteration)
+
+- Added `lua/neo_notebooks/formats/jupytext_percent.lua`:
+  - `default_metadata()`
+  - `parse(lines)` for `py:percent` cells + optional YAML-style header metadata.
+- Updated `ipynb.lua` to consume the extracted parser module for Jupytext import and metadata defaults.
+- No user-visible behavior change; current test lanes remain green.

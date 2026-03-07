@@ -48,6 +48,8 @@ This document summarizes implementation choices and the evolution of core featur
     - `raw` = edit only
     - `index_only` = edit + `index.mark_dirty`
     - `index_and_render` = edit + `index.on_text_changed` + immediate `scheduler.request_render`
+- `lua/neo_notebooks/formats/jupytext_percent.lua`
+  - Owns Jupytext `py:percent` parsing and default Jupytext metadata generation used by format adapters.
 - `lua/neo_notebooks/containment.lua`
   - Canonical cursor/cell geometry helper.
   - Computes active cell identity, editable body bounds, and protected floor.
