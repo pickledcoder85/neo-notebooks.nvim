@@ -80,6 +80,10 @@ This document summarizes implementation choices and the evolution of core featur
 - `:NeoNotebookMarkdownPreview` opens a centered floating window.
 - Markdown is highlighted using Neovim's `markdown` filetype.
 - Font sizes are not changed (Neovim does not support per-heading font sizes in a single buffer).
+- Inline markdown cells are visually formatted in-place via virtual text overlays:
+  - heading markers (`#`, `##`, ...) are rendered as styled heading text;
+  - inline emphasis/code spans (`**bold**`, `*italic*`, `` `code` ``) are highlighted;
+  - overlays are disabled while actively editing that markdown cell in insert mode.
 
 ## Cell overlay preview
 

@@ -262,6 +262,7 @@ require("neo_notebooks").setup({ output = "float" })
 ### Markdown preview
 
 Run `:NeoNotebookMarkdownPreview` in a markdown cell to open a floating preview window with markdown highlighting.
+Inline markdown cells also get lightweight virtual formatting for headings and emphasis/code spans when not actively edited.
 
 ### Cell overlay preview (read-only)
 

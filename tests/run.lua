@@ -330,6 +330,100 @@ with_buf({
   render.render(buf)
 end)
 
+-- Test: markdown cells render heading/emphasis/code overlays
+with_buf({
+  "# %% [markdown]",
+  "# Heading **Bold** *italic* `code`",
+}, function(buf)
+  index.rebuild(buf)
+  render.render(buf)
+  local marks = vim.api.nvim_buf_get_extmarks(buf, render.ns, { 0, 0 }, { -1, -1 }, { details = true })
+  local saw_heading = false
+  local saw_raw_heading = false
+  local saw_bold = false
+  local saw_italic = false
+  local saw_code = false
+  for _, mark in ipairs(marks) do
+    local details = mark[4]
+    local vt = details and details.virt_text
+    if vt and details and details.virt_text_win_col then
+      local joined = ""
+      for _, chunk in ipairs(vt) do
+        joined = joined .. (chunk[1] or "")
+      end
+      if joined:find("Heading", 1, true) then
+        saw_heading = true
+      end
+      if joined:find("# Heading", 1, true) then
+        saw_raw_heading = true
+      end
+      for _, chunk in ipairs(vt) do
+        local text = chunk[1] or ""
+        local hl = chunk[2]
+        if text == "Bold" and hl == "@markup.strong.markdown_inline" then
+          saw_bold = true
+        end
+        if text == "italic" and hl == "@markup.italic.markdown_inline" then
+          saw_italic = true
+        end
+        if text == "code" and hl == "@markup.raw.markdown_inline" then
+          saw_code = true
+        end
+      end
+    end
+  end
+  ok(saw_heading, "markdown heading overlay rendered")
+  ok(not saw_raw_heading, "markdown heading markers removed in overlay")
+  ok(saw_bold, "markdown bold emphasis rendered")
+  ok(saw_italic, "markdown italic emphasis rendered")
+  ok(saw_code, "markdown code span rendered")
+end)
+
+-- Test: markdown fenced code blocks render as code and keep fences visible
+with_buf({
+  "# %% [markdown]",
+  "```python",
+  "x = 1",
+  "print(x)",
+  "```",
+}, function(buf)
+  index.rebuild(buf)
+  render.render(buf)
+  local marks = vim.api.nvim_buf_get_extmarks(buf, render.ns, { 0, 0 }, { -1, -1 }, { details = true })
+  local saw_fence = false
+  local saw_code_line_1 = false
+  local saw_code_line_2 = false
+  for _, mark in ipairs(marks) do
+    local details = mark[4]
+    local vt = details and details.virt_text
+    if vt and details and details.virt_text_win_col then
+      local joined = ""
+      for _, chunk in ipairs(vt) do
+        joined = joined .. (chunk[1] or "")
+      end
+      if joined:find("```", 1, true) then
+        saw_fence = true
+      end
+      for _, chunk in ipairs(vt) do
+        local text = chunk[1] or ""
+        local hl = chunk[2]
+        if text:find("```", 1, true) and hl == "@punctuation.delimiter.markdown" then
+          saw_fence = true
+        end
+        if text == "x = 1" and hl == "@markup.raw.block.markdown" then
+          saw_code_line_1 = true
+        end
+        if text == "print(x)" and hl == "@markup.raw.block.markdown" then
+          saw_code_line_2 = true
+        end
+      end
+    end
+  end
+  ok(saw_fence, "fenced markers shown in overlay")
+  ok(saw_code_line_1, "fenced code first line rendered with code highlight")
+  ok(saw_code_line_2, "fenced code second line rendered with code highlight")
+end)
+
 -- Test: tail padding render is idempotent (no repeated buffer writes)
 with_buf({
   "# %% [code]",
