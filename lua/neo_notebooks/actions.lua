@@ -811,21 +811,51 @@ end
 
 function M.handle_undo(bufnr, count)
   bufnr = bufnr or 0
+  local pre_tick = vim.api.nvim_buf_get_changedtick(bufnr)
+  local pre_state = containment.cursor_state(bufnr)
   local n = tonumber(count) or vim.v.count1 or 1
   n = math.max(1, n)
   vim.cmd("normal! " .. tostring(n) .. "u")
-  local state = containment.cursor_state(bufnr)
-  if state and state.cell then
-    local cell = containment.ensure_body_line(bufnr, state.cell)
-    local target = state.line
-    if state.line <= cell.start then
-      target = state.body_start
-    elseif state.has_next and state.line >= state.protected_floor then
-      target = math.max(state.body_start, state.protected_floor - 1)
+  local post_tick = vim.api.nvim_buf_get_changedtick(bufnr)
+
+  -- Anchor cursor to the pre-undo active cell to avoid EOF jumps when undo
+  -- history is exhausted or when count overshoots available undo entries.
+  local target_cell = nil
+  if pre_state and pre_state.active_cell_id then
+    local index = require("neo_notebooks.index")
+    local idx = index.get(bufnr)
+    target_cell = idx and idx.by_id and idx.by_id[pre_state.active_cell_id] or nil
+  end
+  if not target_cell then
+    local state = containment.cursor_state(bufnr)
+    target_cell = state and state.cell or nil
+  end
+  if target_cell then
+    target_cell = containment.ensure_body_line(bufnr, target_cell)
+    local keep = 0
+    if containment.has_next_marker(bufnr, target_cell) then
+      keep = math.max(0, config.cell_gap_lines or 0)
     end
-    if target ~= state.line then
-      vim.api.nvim_win_set_cursor(0, { target + 1, math.max(0, state.col) })
+    local body_start = target_cell.start + 1
+    local protected_floor = math.max(body_start, target_cell.finish - keep)
+    local preferred = (pre_state and pre_state.line) or body_start
+    local target = preferred
+    if target <= target_cell.start then
+      target = body_start
+    elseif keep > 0 and target >= protected_floor then
+      target = math.max(body_start, protected_floor - 1)
+    else
+      target = math.max(body_start, math.min(target, target_cell.finish))
     end
+
+    local col = math.max(0, (pre_state and pre_state.col) or 0)
+    local text = vim.api.nvim_buf_get_lines(bufnr, target, target + 1, false)[1] or ""
+    if #text > 0 then
+      col = math.min(col, #text - 1)
+    end
+    vim.api.nvim_win_set_cursor(0, { target + 1, col })
+  elseif post_tick == pre_tick and pre_state then
+    vim.api.nvim_win_set_cursor(0, { pre_state.line + 1, math.max(0, pre_state.col) })
   end
   -- Keep undo behavior intact, then re-clamp cursor to notebook cell bounds.
   M.clamp_cursor_to_cell_left(bufnr, { force = true, clamp_to_line = true })
