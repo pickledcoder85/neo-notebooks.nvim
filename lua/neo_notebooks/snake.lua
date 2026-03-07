@@ -5,6 +5,7 @@ local M = {}
 M.ns = vim.api.nvim_create_namespace("neo_notebooks_snake")
 
 local state_by_buf = {}
+local snake_hl_ready = false
 
 math.randomseed(os.time())
 
@@ -43,12 +44,24 @@ local function random_apple(state)
   return free[math.random(#free)]
 end
 
-local function render_lines(state)
+local function ensure_highlights()
+  if snake_hl_ready then
+    return
+  end
+  vim.api.nvim_set_hl(0, "NeoNotebookSnakeHud", { default = true, link = "Comment" })
+  vim.api.nvim_set_hl(0, "NeoNotebookSnakeBorder", { default = true, fg = "#ffffff" })
+  vim.api.nvim_set_hl(0, "NeoNotebookSnakeBody", { default = true, fg = "#7CFC00" })
+  vim.api.nvim_set_hl(0, "NeoNotebookSnakeApple", { default = true, fg = "#ff4d4f" })
+  vim.api.nvim_set_hl(0, "NeoNotebookSnakeGameOver", { default = true, fg = "#ff4d4f", bold = true })
+  snake_hl_ready = true
+end
+
+local function render_chunks(state)
   local grid = {}
   for y = 1, state.height do
     local row = {}
     for _ = 1, state.width do
-      table.insert(row, " ")
+      table.insert(row, { ch = " ", hl = "NeoNotebookSnakeHud" })
     end
     table.insert(grid, row)
   end
@@ -56,28 +69,47 @@ local function render_lines(state)
   for i, part in ipairs(state.snake) do
     local row = grid[part.y]
     if row and row[part.x] then
-      row[part.x] = i == 1 and "@" or "o"
+      row[part.x] = { ch = i == 1 and "@" or "o", hl = "NeoNotebookSnakeBody" }
     end
   end
 
   if state.apple then
     local row = grid[state.apple.y]
-    if row and row[state.apple.x] and row[state.apple.x] == " " then
-      row[state.apple.x] = "*"
+    if row and row[state.apple.x] and row[state.apple.x].ch == " " then
+      row[state.apple.x] = { ch = "*", hl = "NeoNotebookSnakeApple" }
     end
   end
 
   local lines = {
-    "snake: auto-move, h/j/k/l turn, <Esc> exit",
-    string.format("score: %d", state.score),
-    "┌" .. string.rep("─", state.width) .. "┐",
+    { { "snake: auto-move, h/j/k/l turn, <Esc> exit", "NeoNotebookSnakeHud" } },
+    { { string.format("score: %d", state.score), "NeoNotebookSnakeHud" } },
+    { { "┌" .. string.rep("─", state.width) .. "┐", "NeoNotebookSnakeBorder" } },
   }
   for y = 1, state.height do
-    table.insert(lines, "│" .. table.concat(grid[y], "") .. "│")
+    local chunks = { { "│", "NeoNotebookSnakeBorder" } }
+    local run_text = nil
+    local run_hl = nil
+    for x = 1, state.width do
+      local cell = grid[y][x]
+      if run_hl == cell.hl then
+        run_text = run_text .. cell.ch
+      else
+        if run_text and run_hl then
+          table.insert(chunks, { run_text, run_hl })
+        end
+        run_text = cell.ch
+        run_hl = cell.hl
+      end
+    end
+    if run_text and run_hl then
+      table.insert(chunks, { run_text, run_hl })
+    end
+    table.insert(chunks, { "│", "NeoNotebookSnakeBorder" })
+    table.insert(lines, chunks)
   end
-  table.insert(lines, "└" .. string.rep("─", state.width) .. "┘")
+  table.insert(lines, { { "└" .. string.rep("─", state.width) .. "┘", "NeoNotebookSnakeBorder" } })
   if not state.alive then
-    table.insert(lines, "game over (<Esc> to exit snake mode)")
+    table.insert(lines, { { "game over (<Esc> to exit snake mode)", "NeoNotebookSnakeGameOver" } })
   end
   return lines
 end
@@ -138,6 +170,7 @@ local function ensure_board_rows(bufnr, state)
 end
 
 local function render_overlay(bufnr, state)
+  ensure_highlights()
   local entry = index.get_by_id(bufnr, state.cell_id)
   if not entry then
     return false
@@ -145,13 +178,13 @@ local function render_overlay(bufnr, state)
   local start_line = entry.start + 1
   local end_line = entry.finish + 1
   vim.api.nvim_buf_clear_namespace(bufnr, M.ns, start_line, end_line)
-  local lines = render_lines(state)
+  local lines = render_chunks(state)
   local left = board_left_col(entry)
-  for i, line in ipairs(lines) do
+  for i, chunks in ipairs(lines) do
     local lnum = start_line + i - 1
     if lnum <= end_line then
       vim.api.nvim_buf_set_extmark(bufnr, M.ns, lnum, 0, {
-        virt_text = { { line, "Comment" } },
+        virt_text = chunks,
         virt_text_pos = "overlay",
         virt_text_win_col = left,
         priority = 160,
