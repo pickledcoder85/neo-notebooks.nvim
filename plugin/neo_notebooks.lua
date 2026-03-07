@@ -636,6 +636,13 @@ vim.api.nvim_create_user_command("NeoNotebookImportJupytext", function(opts)
     return
   end
   local bufnr = vim.api.nvim_get_current_buf()
+  local buftype = vim.api.nvim_get_option_value("buftype", { buf = bufnr })
+  local modifiable = vim.api.nvim_get_option_value("modifiable", { buf = bufnr })
+  if buftype == "nofile" or not modifiable then
+    vim.cmd("enew")
+    bufnr = vim.api.nvim_get_current_buf()
+    vim.api.nvim_buf_set_name(bufnr, path .. ".nn")
+  end
   vim.b[bufnr].neo_notebooks_enabled = true
   set_python_filetype(bufnr)
   local ok, err = ipynb.import_jupytext(path, bufnr)

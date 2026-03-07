@@ -167,6 +167,9 @@ local function parse_jupytext_percent(lines)
       }
     else
       if not current then
+        if vim.trim(raw or "") == "" then
+          goto continue
+        end
         current = {
           cell_type = "code",
           source = {},
@@ -178,6 +181,7 @@ local function parse_jupytext_percent(lines)
       end
       table.insert(current.source, text)
     end
+    ::continue::
   end
   flush_current()
 
@@ -508,6 +512,9 @@ function M.import_jupytext(path, bufnr)
   if not lines_in then
     return nil, err
   end
+  if not vim.api.nvim_get_option_value("modifiable", { buf = bufnr }) then
+    return nil, "Target buffer is not modifiable"
+  end
 
   local cells_in, parsed_meta = parse_jupytext_percent(lines_in)
   local lines = {}
@@ -522,7 +529,10 @@ function M.import_jupytext(path, bufnr)
   if #lines == 0 then
     lines = { "# %% [markdown]", "" }
   end
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+  local ok_set, set_err = pcall(vim.api.nvim_buf_set_lines, bufnr, 0, -1, false, lines)
+  if not ok_set then
+    return nil, tostring(set_err)
+  end
 
   local state = get_state(bufnr)
   state.nbformat = 4
