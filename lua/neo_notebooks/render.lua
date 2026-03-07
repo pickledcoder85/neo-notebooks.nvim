@@ -133,15 +133,15 @@ end
 
 local function markdown_heading_hl(level)
   if level <= 1 then
-    return "Title"
+    return "@markup.heading.1.markdown"
   end
   if level == 2 then
-    return "Function"
+    return "@markup.heading.2.markdown"
   end
   if level == 3 then
-    return "Identifier"
+    return "@markup.heading.3.markdown"
   end
-  return "Comment"
+  return "@markup.heading.markdown"
 end
 
 local function markdown_inline_chunks(text, base_hl)
@@ -161,7 +161,7 @@ local function markdown_inline_chunks(text, base_hl)
     if one == "`" then
       local j = text:find("`", i + 1, true)
       if j then
-        push(text:sub(i + 1, j - 1), "String")
+        push(text:sub(i + 1, j - 1), "@markup.raw.markdown_inline")
         i = j + 1
       else
         push(one, base_hl)
@@ -170,7 +170,7 @@ local function markdown_inline_chunks(text, base_hl)
     elseif two == "**" or two == "__" then
       local j = text:find(two, i + 2, true)
       if j then
-        push(text:sub(i + 2, j - 1), "Special")
+        push(text:sub(i + 2, j - 1), "@markup.strong.markdown_inline")
         i = j + 2
       else
         push(two, base_hl)
@@ -179,7 +179,7 @@ local function markdown_inline_chunks(text, base_hl)
     elseif one == "*" or one == "_" then
       local j = text:find(one, i + 1, true)
       if j then
-        push(text:sub(i + 1, j - 1), "Comment")
+        push(text:sub(i + 1, j - 1), "@markup.italic.markdown_inline")
         i = j + 1
       else
         push(one, base_hl)
@@ -219,7 +219,7 @@ local function markdown_chunks_for_line(line, width)
     local heading_chunks = markdown_inline_chunks(heading_text, heading_hl)
     return truncate_chunks(heading_chunks, width, heading_hl)
   end
-  local body_hl = "Normal"
+  local body_hl = "@markup.markdown"
   local chunks = markdown_inline_chunks(text, body_hl)
   return truncate_chunks(chunks, width, body_hl)
 end
@@ -231,10 +231,9 @@ local function markdown_chunks_for_lines(lines, width)
     local text = tostring(line or "")
     if text:match("^%s*```") then
       in_fence = not in_fence
-      -- Mask fence marker lines in overlay so raw ``` markers are not shown.
-      out[i] = truncate_chunks({ { "", "Conceal" } }, width, "Conceal")
+      out[i] = truncate_chunks({ { text, "@punctuation.delimiter.markdown" } }, width, "@punctuation.delimiter.markdown")
     elseif in_fence then
-      out[i] = truncate_chunks({ { text, "String" } }, width, "String")
+      out[i] = truncate_chunks({ { text, "@markup.raw.block.markdown" } }, width, "@markup.raw.block.markdown")
     else
       out[i] = markdown_chunks_for_line(text, width)
     end

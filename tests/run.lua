@@ -360,13 +360,13 @@ with_buf({
       for _, chunk in ipairs(vt) do
         local text = chunk[1] or ""
         local hl = chunk[2]
-        if text == "Bold" and hl == "Special" then
+        if text == "Bold" and hl == "@markup.strong.markdown_inline" then
           saw_bold = true
         end
-        if text == "italic" and hl == "Comment" then
+        if text == "italic" and hl == "@markup.italic.markdown_inline" then
           saw_italic = true
         end
-        if text == "code" and hl == "String" then
+        if text == "code" and hl == "@markup.raw.markdown_inline" then
           saw_code = true
         end
       end
@@ -379,7 +379,7 @@ with_buf({
   ok(saw_code, "markdown code span rendered")
 end)
 
--- Test: markdown fenced code blocks render as code and hide fences
+-- Test: markdown fenced code blocks render as code and keep fences visible
 with_buf({
   "# %% [markdown]",
   "```python",
@@ -407,16 +407,19 @@ with_buf({
       for _, chunk in ipairs(vt) do
         local text = chunk[1] or ""
         local hl = chunk[2]
-        if text == "x = 1" and hl == "String" then
+        if text:find("```", 1, true) and hl == "@punctuation.delimiter.markdown" then
+          saw_fence = true
+        end
+        if text == "x = 1" and hl == "@markup.raw.block.markdown" then
           saw_code_line_1 = true
         end
-        if text == "print(x)" and hl == "String" then
+        if text == "print(x)" and hl == "@markup.raw.block.markdown" then
           saw_code_line_2 = true
         end
       end
     end
   end
-  ok(not saw_fence, "fenced markers hidden in overlay")
+  ok(saw_fence, "fenced markers shown in overlay")
   ok(saw_code_line_1, "fenced code first line rendered with code highlight")
   ok(saw_code_line_2, "fenced code second line rendered with code highlight")
 end)
