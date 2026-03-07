@@ -756,7 +756,7 @@ NeoNotebookSnakeCell
 ## Phase Worklist - Phase 3: Entrypoint Decomposition
 
 - Phase: 3 - keymap/lifecycle wiring extraction
-- Status: in_progress
+- Status: closed
 - Related sweep findings:
   - Sweep 1: findings 1, 2, 8, 9
   - Sweep 2: findings 1, 2, 6, 8
@@ -774,6 +774,8 @@ NeoNotebookSnakeCell
 - `plugin/neo_notebooks.lua`
 - `lua/neo_notebooks/entrypoint/keymaps.lua` (new)
 - `lua/neo_notebooks/entrypoint/lifecycle.lua` (new)
+- `lua/neo_notebooks/entrypoint/commands.lua` (new)
+- `lua/neo_notebooks/entrypoint/init.lua` (new bootstrap)
 - `ARCHITECTURE_FLOWCHARTS.md`
 - `TECHNICAL.md`
 - `TODO.md`
@@ -798,3 +800,4 @@ NeoNotebookSnakeCell
 - Extracted lifecycle/autocmd wiring to `lua/neo_notebooks/entrypoint/lifecycle.lua`.
 - Extracted command registration wiring to `lua/neo_notebooks/entrypoint/commands.lua`.
 - `plugin/neo_notebooks.lua` now delegates keymaps, lifecycle, and commands to extracted entrypoint modules.
+- Added `lua/neo_notebooks/entrypoint/init.lua` as a single bootstrap/wiring point for command/keymap/lifecycle registration.
