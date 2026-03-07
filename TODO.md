@@ -8,14 +8,10 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Next
 
-- Optional execution dependency awareness:
-  - Detect likely upstream cell dependencies and warn on reordered runs.
-  - Offer targeted "run required predecessors" before executing a moved cell.
-  - Keep default behavior globally scoped for lightweight workflows.
+- Optional markdown cell rendering polish (conceal/theme controls for inline markdown overlays).
 
 ## Later
 
-- Optional markdown cell rendering polish (conceal/theme controls for inline markdown overlays).
 - Fix undo (`u`) keeping cursor position within current cell (avoid jump to buffer end).
 - Optional fun keymap: insert a new code cell containing a mini terminal snake game.
   - Game runs inline within the cell boundaries.
