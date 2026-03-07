@@ -737,13 +737,15 @@ NeoNotebookSnakeCell
   - `tests/core_contract.lua`
   - `tests/integration.lua`
   - `tests/optional_kitty.lua`
-- Updated `tests/run.lua` to gate kitty-specific assertion behind:
-  - `vim.g.neo_notebooks_test_skip_optional_kitty`
-- Current lane behavior:
+- Added shared harness helpers in:
+  - `tests/_helpers.lua`
+- Converted `tests/run.lua` into compatibility dispatcher:
+  - runs `core_contract` + `integration`
+  - runs optional kitty lane only when not explicitly skipped.
+- Current lane behavior (verified):
   - `core_contract`: passes in default environment.
   - `integration`: passes in default environment.
-  - `optional_kitty`: expected failure in non-kitty/default environment (`kitty escape emitted`), now isolated from required lanes.
+  - `optional_kitty`: expected failure in non-kitty/default environment (`kitty escape emitted`), isolated from required lanes.
 - Remaining for full Phase 2 closure:
-  - move shared test harness helpers into dedicated helper module,
-  - map tests into genuinely distinct `core` vs `integration` suites (currently both dispatch full non-kitty run),
+  - add targeted lifecycle/keymap contract tests from Sweep 5 minimum set,
   - optionally add README test-lane invocation snippet.
