@@ -805,7 +805,7 @@ NeoNotebookSnakeCell
 ## Phase Worklist - Phase 4: Mutation/Render Contract Consolidation
 
 - Phase: 4 - mutation/render contract consolidation
-- Status: in_progress
+- Status: closed
 - Related sweep findings:
   - Sweep 2: finding 3
   - Sweep 3: findings 3, 4
@@ -837,6 +837,10 @@ NeoNotebookSnakeCell
   - applies line edit,
   - performs configured index sync (`on_text_changed` / `mark_dirty`),
   - requests configured render schedule.
+- Added explicit mutation wrapper modes:
+  - `raw` (edit only),
+  - `index_only` (edit + `mark_dirty`),
+  - `index_and_render` (edit + `on_text_changed` + immediate render request).
 - Migrated contained insertion paths to helper:
   - `actions.open_line_below`,
   - `actions.open_line_above`,

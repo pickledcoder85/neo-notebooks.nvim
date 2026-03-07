@@ -17,7 +17,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Sweep 5 (optional): test/observability gap assessment (completed; prioritized gaps documented).
   - Phase 2 (in progress): test lane split (`core_contract`, `integration`, `optional_kitty`).
   - Phase 3 (completed): entrypoint decomposition (keymap/lifecycle/command wiring extracted with bootstrap module).
-  - Phase 4 (in progress): mutation/render contract consolidation (shared mutation helper + first contained-edit migrations).
+  - Phase 4 (completed): mutation/render contract consolidation (shared mutation helper + named modes + migrated high-traffic call sites).
 
 ## Next
 

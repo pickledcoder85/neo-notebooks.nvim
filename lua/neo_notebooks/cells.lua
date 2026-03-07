@@ -107,7 +107,7 @@ function M.insert_cell_below(bufnr, line, cell_type)
   if cell and cell.finish then
     insert_line = cell.finish + 1
   end
-  mutation.apply(bufnr, insert_line, insert_line, { marker, "" }, { index_sync = "mark_dirty" })
+  mutation.apply(bufnr, insert_line, insert_line, { marker, "" }, "index_only")
   return insert_line
 end
 
@@ -121,12 +121,12 @@ function M.toggle_cell_type(bufnr, line)
 
   local current = marker_line:match(MARKER_PATTERN)
   if not current then
-    mutation.apply(bufnr, cell.start, cell.start + 1, { "# %% [code]" }, false)
+    mutation.apply(bufnr, cell.start, cell.start + 1, { "# %% [code]" }, "raw")
     return
   end
 
   local next_type = current == "code" and "markdown" or "code"
-  mutation.apply(bufnr, cell.start, cell.start + 1, { "# %% [" .. next_type .. "]" }, false)
+  mutation.apply(bufnr, cell.start, cell.start + 1, { "# %% [" .. next_type .. "]" }, "raw")
 end
 
 function M.is_markdown_cell(bufnr, line)

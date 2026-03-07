@@ -151,7 +151,7 @@ local function ensure_board_rows(bufnr, state)
   for _ = 1, required do
     table.insert(blanks, "")
   end
-  mutation.apply(bufnr, start_line, end_line, blanks, { index_sync = "mark_dirty" })
+  mutation.apply(bufnr, start_line, end_line, blanks, "index_only")
   return true
 end
 
@@ -341,7 +341,7 @@ function M.stop(bufnr, opts)
   local entry = index.get_by_id(bufnr, state.cell_id)
   if entry and opts.delete_cell then
     vim.api.nvim_buf_clear_namespace(bufnr, M.ns, entry.start + 1, entry.finish + 1)
-    mutation.apply(bufnr, entry.start, entry.finish + 1, {}, { index_sync = "mark_dirty" })
+    mutation.apply(bufnr, entry.start, entry.finish + 1, {}, "index_only")
     local line_count = vim.api.nvim_buf_line_count(bufnr)
     local target_line = math.max(1, math.min(entry.start + 1, line_count))
     pcall(vim.api.nvim_win_set_cursor, 0, { target_line, 0 })

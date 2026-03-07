@@ -516,7 +516,7 @@ local function clear_tail_pad(bufnr)
     end
   end
   if can_remove then
-    mutation.apply(bufnr, total - pad, total, {}, false)
+    mutation.apply(bufnr, total - pad, total, {}, "raw")
     set_buf_var(bufnr, "neo_notebooks_tail_pad", 0)
   end
 end
@@ -556,7 +556,7 @@ local function ensure_tail_pad(bufnr, lines)
   for _ = 1, lines do
     table.insert(blanks, "")
   end
-  mutation.apply(bufnr, line_count, line_count, blanks, false)
+  mutation.apply(bufnr, line_count, line_count, blanks, "raw")
   set_buf_var(bufnr, "neo_notebooks_tail_pad", lines)
 end
 

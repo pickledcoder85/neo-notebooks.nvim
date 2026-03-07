@@ -23,9 +23,19 @@ local function apply_render_sync(bufnr, render_opts)
   scheduler.request_render(bufnr, render_opts)
 end
 
+local MODE_CONFIG = {
+  raw = { index_sync = false, render = false },
+  index_only = { index_sync = "mark_dirty", render = false },
+  index_and_render = { index_sync = "on_text_changed", render = { immediate = true } },
+}
+
 function M.apply(bufnr, start_line, end_line, replacement, opts)
   bufnr = bufnr or 0
-  opts = opts or {}
+  if type(opts) == "string" then
+    opts = MODE_CONFIG[opts] or {}
+  else
+    opts = opts or {}
+  end
   vim.api.nvim_buf_set_lines(bufnr, start_line, end_line, false, replacement)
   apply_index_sync(bufnr, opts.index_sync)
   apply_render_sync(bufnr, opts.render)

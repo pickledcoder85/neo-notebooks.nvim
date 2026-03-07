@@ -70,7 +70,7 @@ local function guarded_delete_range(bufnr, start, target)
   if #clears > 0 then
     table.sort(clears)
     for _, l in ipairs(clears) do
-      mutation.apply(bufnr, l, l + 1, { "" }, false)
+      mutation.apply(bufnr, l, l + 1, { "" }, "raw")
     end
   end
   if #deletes > 0 then
@@ -78,7 +78,7 @@ local function guarded_delete_range(bufnr, start, target)
       return a > b
     end)
     for _, l in ipairs(deletes) do
-      mutation.apply(bufnr, l, l + 1, {}, false)
+      mutation.apply(bufnr, l, l + 1, {}, "raw")
     end
   end
   return true
@@ -180,7 +180,7 @@ function M.duplicate_cell(bufnr, line)
   local lines = vim.api.nvim_buf_get_lines(bufnr, cell.start, cell.finish + 1, false)
   local insert_at = cell.finish + 1
 
-  mutation.apply(bufnr, insert_at, insert_at, lines, { index_sync = "mark_dirty" })
+  mutation.apply(bufnr, insert_at, insert_at, lines, "index_only")
   local new_start = insert_at
   vim.api.nvim_win_set_cursor(0, { new_start + 2, 0 })
   M.clamp_cursor_to_cell_left(bufnr, { force = true, clamp_to_line = true })
@@ -205,7 +205,7 @@ function M.split_cell(bufnr, line)
   end
 
   local marker = "# %% [" .. cell.type .. "]"
-  mutation.apply(bufnr, line, line, { marker }, { index_sync = "mark_dirty" })
+  mutation.apply(bufnr, line, line, { marker }, "index_only")
   if cell.id then
     output.clear_by_id(bufnr, cell.id)
   end
@@ -292,7 +292,7 @@ function M.delete_cell(bufnr, line)
       cell.finish = entry.finish
     end
   end
-  mutation.apply(bufnr, cell.start, cell.finish + 1, {}, { index_sync = "mark_dirty" })
+  mutation.apply(bufnr, cell.start, cell.finish + 1, {}, "index_only")
   local line_count = vim.api.nvim_buf_line_count(bufnr)
   local target = math.max(1, cell.start + 1)
   target = math.min(target, math.max(1, line_count))
@@ -351,9 +351,9 @@ local function move_once(bufnr, direction)
   local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
   local current_len = current.finish - current.start + 1
 
-  mutation.apply(bufnr, current.start, current.finish + 1, {}, false)
+  mutation.apply(bufnr, current.start, current.finish + 1, {}, "raw")
   local insert_at = direction < 0 and swap.start or (swap.finish - current_len + 1)
-  mutation.apply(bufnr, insert_at, insert_at, current_lines, { index_sync = "mark_dirty" })
+  mutation.apply(bufnr, insert_at, insert_at, current_lines, "index_only")
   if id then
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
@@ -400,9 +400,9 @@ function M.move_cell_top(bufnr)
   local current = list[idx]
   local id = current.id
   local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
-  mutation.apply(bufnr, current.start, current.finish + 1, {}, false)
+  mutation.apply(bufnr, current.start, current.finish + 1, {}, "raw")
   local insert_at = list[1].start
-  mutation.apply(bufnr, insert_at, insert_at, current_lines, { index_sync = "mark_dirty" })
+  mutation.apply(bufnr, insert_at, insert_at, current_lines, "index_only")
   if id then
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
@@ -431,9 +431,9 @@ function M.move_cell_bottom(bufnr)
   local current = list[idx]
   local id = current.id
   local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
-  mutation.apply(bufnr, current.start, current.finish + 1, {}, false)
+  mutation.apply(bufnr, current.start, current.finish + 1, {}, "raw")
   local insert_at = list[#list].finish + 1
-  mutation.apply(bufnr, insert_at, insert_at, current_lines, { index_sync = "mark_dirty" })
+  mutation.apply(bufnr, insert_at, insert_at, current_lines, "index_only")
   if id then
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
@@ -487,10 +487,7 @@ function M.open_line_below(bufnr)
   end
   local pad = math.max(0, left_boundary_col(cell))
   local line_text = string.rep(" ", pad)
-  mutation.apply(bufnr, insert_at, insert_at, { line_text }, {
-    index_sync = "on_text_changed",
-    render = { immediate = true },
-  })
+  mutation.apply(bufnr, insert_at, insert_at, { line_text }, "index_and_render")
   vim.api.nvim_win_set_cursor(0, { insert_at + 1, pad })
   mark_pending_virtual_indent(bufnr, insert_at, pad)
   if vim.g.neo_notebooks_debug_pad then
@@ -507,10 +504,7 @@ function M.open_line_above(bufnr)
   local insert_at = containment.clamped_insert_at(cell, line)
   local pad = math.max(0, left_boundary_col(cell))
   local line_text = string.rep(" ", pad)
-  mutation.apply(bufnr, insert_at, insert_at, { line_text }, {
-    index_sync = "on_text_changed",
-    render = { immediate = true },
-  })
+  mutation.apply(bufnr, insert_at, insert_at, { line_text }, "index_and_render")
   vim.api.nvim_win_set_cursor(0, { insert_at + 1, pad })
   mark_pending_virtual_indent(bufnr, insert_at, pad)
   if vim.g.neo_notebooks_debug_pad then
@@ -551,7 +545,7 @@ function M.handle_enter_insert(bufnr)
     local text = vim.api.nvim_buf_get_lines(bufnr, state.line, state.line + 1, false)[1] or ""
     if text == "" then
       local line_text = string.rep(" ", pad)
-      mutation.apply(bufnr, state.line, state.line + 1, { line_text }, false)
+      mutation.apply(bufnr, state.line, state.line + 1, { line_text }, "raw")
       if vim.g.neo_notebooks_debug_pad then
         vim.notify(string.format("PadDebug(<CR>): pad=%d line=%s", pad, line_text:gsub(" ", "·")), vim.log.levels.INFO)
       end
@@ -676,7 +670,7 @@ function M.consume_pending_virtual_indent(bufnr, line_override)
     local trim = math.min(leading, pad)
     if trim > 0 then
       local new_text = text:sub(trim + 1)
-      mutation.apply(bufnr, line, line + 1, { new_text }, false)
+      mutation.apply(bufnr, line, line + 1, { new_text }, "raw")
     end
     pending[key] = nil
   end
@@ -734,7 +728,7 @@ function M.normalize_spacing(bufnr)
 
   for i = #remove, 1, -1 do
     local r = remove[i]
-    mutation.apply(bufnr, r.start, r.stop, {}, false)
+    mutation.apply(bufnr, r.start, r.stop, {}, "raw")
   end
 end
 
@@ -746,7 +740,7 @@ function M.guard_delete_current_line(bufnr, count)
     local line = cursor[1] - 1
     local can_mutate = policy.can_mutate_line(bufnr, line)
     if can_mutate then
-      mutation.apply(bufnr, line, line + 1, { "" }, false)
+      mutation.apply(bufnr, line, line + 1, { "" }, "raw")
       M.clamp_cursor_to_cell_left(bufnr, { force = true, clamp_to_line = true })
       return ""
     end
