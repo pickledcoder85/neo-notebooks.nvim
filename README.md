@@ -332,6 +332,7 @@ require("neo_notebooks").setup({ suppress_completion_popup = true })
 - `<leader>mG` move cell to top
 - `<leader>mgg` move cell to bottom
 - `j` / `k` stay inside the active cell body when `soft_contain=true` and `contain_line_nav=true`
+- `u` (undo) preserves native undo behavior and then re-clamps cursor within current cell bounds
   (use `<C-n>` / `<C-p>` to move between cells)
 
 If you use a custom statusline (e.g. lualine), add the component:
@@ -370,6 +371,7 @@ Notes:
 - Existing outputs are rendered on import for code cells.
 - Markdown and code cells are supported; other cell types are treated as code.
 - Import drops a leading blank code cell if it appears before the first markdown cell.
+- After `.ipynb` import/open, undo baseline is reset so extra `u` does not revert to raw JSON import state.
 
 ### Filetypes
 

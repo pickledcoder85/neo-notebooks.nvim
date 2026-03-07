@@ -237,6 +237,16 @@ local function render_if_enabled(bufnr)
   end
 end
 
+local function reset_undo_baseline(bufnr)
+  bufnr = bufnr or 0
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return
+  end
+  local prev = vim.api.nvim_get_option_value("undolevels", { buf = bufnr })
+  vim.api.nvim_set_option_value("undolevels", -1, { buf = bufnr })
+  vim.api.nvim_set_option_value("undolevels", prev, { buf = bufnr })
+end
+
 local function logical_cell_insert_base(bufnr, cell)
   local body = vim.api.nvim_buf_get_lines(bufnr, cell.start + 1, cell.finish + 1, false)
   local last_nonempty = nil
@@ -538,6 +548,8 @@ vim.api.nvim_create_user_command("NeoNotebookImportIpynb", function(opts)
     vim.notify(err or "Import failed", vim.log.levels.ERROR)
     return
   end
+  ensure_top_padding(0)
+  reset_undo_baseline(0)
   render_if_enabled(0)
 end, { nargs = 1, complete = "file" })
 
@@ -550,7 +562,9 @@ vim.api.nvim_create_user_command("NeoNotebookOpenIpynb", function(opts)
   local ok, err = ipynb.open_ipynb(path)
   if not ok then
     vim.notify(err or "Open failed", vim.log.levels.ERROR)
+    return
   end
+  reset_undo_baseline(0)
 end, { nargs = 1, complete = "file" })
 
 vim.api.nvim_create_user_command("NeoNotebookExportIpynb", function(opts)
@@ -653,6 +667,7 @@ vim.api.nvim_create_autocmd("BufReadPost", {
         return
       end
       ensure_top_padding(args.buf)
+      reset_undo_baseline(args.buf)
       vim.b[args.buf].neo_notebooks_skip_initial = true
       set_default_keymaps(args.buf)
       index.mark_dirty(args.buf)
@@ -1006,6 +1021,9 @@ set_default_keymaps = function(bufnr)
     end, { silent = true, buffer = bufnr })
     vim.keymap.set("n", "p", function()
       actions.handle_paste_below(bufnr)
+    end, opts)
+    vim.keymap.set("n", "u", function()
+      actions.handle_undo(bufnr, vim.v.count1)
     end, opts)
     vim.keymap.set("n", "x", function()
       return actions.guard_delete_char(bufnr)
