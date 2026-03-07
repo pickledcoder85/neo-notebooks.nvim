@@ -430,3 +430,80 @@ After each sweep implementation branch:
 5. Define and test buffer-state schema invariants.
 6. Add malformed input fixtures for `.ipynb` and Jupytext parsers.
 7. Add a contract-to-test traceability table in docs.
+
+## Phase Worklist - Phase 1: Contract Baseline (Docs Only)
+
+- Phase: 1 - Contract baseline
+- Status: in_progress
+- Related sweep findings:
+  - Sweep 1: findings 1-12
+  - Sweep 2: findings 1-10
+  - Sweep 5: findings 2, 3, 4, 6, 10
+
+### Detailed task list
+
+1. Build module contract inventory table
+- Map each major module to responsibility, inputs/outputs, side effects, state ownership, and error surface.
+- Include UI modules and Neovim integration modules.
+
+2. Build event-flow map
+- Document key command and autocmd paths:
+  - cell run/run-and-next,
+  - open/import/export (`.ipynb`, Jupytext),
+  - render/update loops,
+  - snake mode lifecycle.
+- Include event ordering assumptions and call-chain boundaries.
+
+3. Define canonical buffer-state schema
+- Enumerate owned `vim.b[...]` keys and owners.
+- Define read/write boundaries and allowed value shapes.
+
+4. Create UI contract matrix
+- Document expected behavior by mode/event for:
+  - markdown overlay rendering,
+  - output block rendering/collapse,
+  - overlay preview,
+  - snake game overlays and key lock behavior.
+
+5. Create contract-to-test trace table (docs-only draft)
+- Map current contracts to existing tests and mark known gaps.
+- Call out which items are deferred to Phase 2 test-lane split.
+
+6. Update plan/status docs
+- Sync `TODO.md` and `ARCHITECTURE_FLOWCHARTS.md` phase status notes.
+- Ensure `TECHNICAL.md` references remain accurate.
+
+### Exact files to touch
+
+- `CODEBASE_REVIEW.md` (primary artifact)
+- `ARCHITECTURE_FLOWCHARTS.md` (phase progress and diagram notes if needed)
+- `TECHNICAL.md` (contract references and clarified architecture notes)
+- `TODO.md` (phase status consistency only)
+
+### Tests
+
+- Tests to add/update: none (docs-only phase)
+- Tests to run:
+  - `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile /tmp/neo_jupytext_check.lua" -c qa` (sanity)
+  - full suite optional for signal: `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/run.lua" -c qa`
+    - known optional-path caveat: kitty-related failure may appear
+
+### Acceptance criteria
+
+- Module contract inventory exists and covers core + UI + Neovim lifecycle surfaces.
+- Event-flow map exists for the highest-risk paths listed above.
+- Buffer-state schema table exists with ownership + value-shape notes.
+- UI contract matrix exists for markdown/output/overlay/snake.
+- Contract-to-test trace table exists with explicit gaps.
+- Documentation-gate references are consistent across touched docs.
+
+### Manual validation checklist
+
+- Verify all referenced module/file names and command names match repository reality.
+- Confirm each contract item has a clear owner and no placeholder/TODO wording.
+- Confirm no runtime code changed in this phase.
+
+### Rollback plan
+
+- Revert Phase 1 docs commits only:
+  - `git revert <phase1-doc-commit>` (safe; no runtime behavior impact).
