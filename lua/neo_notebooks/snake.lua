@@ -117,7 +117,7 @@ local function resolve_board_width(entry, opts)
   local cell_width = board_cell_width(entry)
   -- Keep the board (including box chars) inside the notebook cell interior.
   local derived = cell_width - 4
-  return math.max(8, math.min(derived, 48))
+  return math.max(8, derived)
 end
 
 local function ensure_board_rows(bufnr, state)
@@ -184,7 +184,7 @@ function M.start(bufnr, cell_id, opts)
     score = 0,
     alive = true,
     on_exit = opts.on_exit,
-    tick_ms = math.max(40, tonumber(opts.tick_ms) or 320),
+    tick_ms = math.max(40, tonumber(opts.tick_ms) or 200),
     min_tick_ms = math.max(30, tonumber(opts.min_tick_ms) or 80),
     speed_step_ms = math.max(1, tonumber(opts.speed_step_ms) or 25),
     auto = opts.auto ~= false,
