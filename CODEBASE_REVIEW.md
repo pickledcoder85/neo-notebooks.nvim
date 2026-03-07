@@ -746,6 +746,9 @@ NeoNotebookSnakeCell
   - `core_contract`: passes in default environment.
   - `integration`: passes in default environment.
   - `optional_kitty`: expected failure in non-kitty/default environment (`kitty escape emitted`), isolated from required lanes.
+- Added targeted Sweep 5 minimum-gap tests in integration lane:
+  - default notebook snake keymap registration contract,
+  - snake keymap ownership transition contract (`default -> locked -> restored`),
+  - snake temporary cell lifecycle contract (insert on start, delete on stop).
 - Remaining for full Phase 2 closure:
-  - add targeted lifecycle/keymap contract tests from Sweep 5 minimum set,
   - optionally add README test-lane invocation snippet.

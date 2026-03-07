@@ -246,6 +246,7 @@ This document summarizes implementation choices and the evolution of core featur
   - `tests/core_contract.lua` (required core signal; skips optional kitty backend assertions)
   - `tests/integration.lua` (broad workflow signal; skips optional kitty backend assertions)
   - `tests/optional_kitty.lua` (kitty/image backend assertions; optional in non-kitty environments)
+  - integration lane includes snake lifecycle/keymap ownership transition assertions.
 
 ## .ipynb import/export
 

@@ -5,7 +5,7 @@ Living visual map of current architecture and planned refactor state.
 ## Phase Progress
 
 - Phase 1 (Contract Baseline): complete on `feature/review-sweep-1-contracts` (docs-only).
-- Phase 2 (Test Lane Split): in progress (lane runners added; optional kitty isolated).
+- Phase 2 (Test Lane Split): in progress (lane runners added; optional kitty isolated; lifecycle/keymap minimum tests added).
 - Phase 3 (Entrypoint Decomposition): not started.
 - Phase 4 (Mutation/Render Contract): not started.
 - Phase 5 (Format Layer Split): not started.

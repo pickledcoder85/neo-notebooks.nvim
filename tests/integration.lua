@@ -15,6 +15,25 @@ local exec = require('neo_notebooks.exec')
 local nb = require('neo_notebooks')
 local snake = require('neo_notebooks.snake')
 
+vim.cmd('runtime plugin/neo_notebooks.lua')
+
+local function find_buf_map(buf, mode, lhs)
+  for _, map in ipairs(vim.api.nvim_buf_get_keymap(buf, mode)) do
+    if map.lhs == lhs then
+      return map
+    end
+  end
+  return nil
+end
+
+local function has_buf_map(buf, mode, lhs)
+  if find_buf_map(buf, mode, lhs) then
+    return true
+  end
+  local expanded = lhs:gsub("<leader>", vim.g.mapleader or "\\")
+  return find_buf_map(buf, mode, expanded) ~= nil
+end
+
 -- Test: move cell up preserves id mapping
 with_buf({
   "# %% [code]",
@@ -96,6 +115,55 @@ with_buf({
     end
   end
   ok(not snake.is_active(buf), "snake mode inactive after game over")
+end)
+
+-- Test: default snake keymap is registered for notebook buffers
+with_buf({
+  "# %% [code]",
+  "print(1)",
+}, function(buf)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_name(buf, vim.fn.tempname() .. ".nn")
+  vim.b[buf].neo_notebooks_enabled = true
+  nb.setup({})
+  ok(has_buf_map(buf, "n", "<leader>sg"), "default snake keymap registered")
+end)
+
+-- Test: snake mode keymaps lock and restore on exit
+with_buf({
+  "# %% [code]",
+  "print(1)",
+  "# %% [code]",
+  "print(2)",
+}, function(buf)
+  vim.api.nvim_set_current_buf(buf)
+  vim.api.nvim_buf_set_name(buf, vim.fn.tempname() .. ".nn")
+  vim.b[buf].neo_notebooks_enabled = true
+  nb.setup({})
+  index.rebuild(buf)
+
+  local before_cells = #index.get(buf).list
+  ok(has_buf_map(buf, "n", "<leader>sg"), "snake launch keymap present before game")
+  ok(not has_buf_map(buf, "n", "a"), "non-notebook key is not mapped before game")
+
+  vim.api.nvim_buf_call(buf, function()
+    vim.cmd("NeoNotebookSnakeCell")
+  end)
+
+  local locked = vim.b[buf].neo_notebooks_snake_locked_keys
+  ok(type(locked) == "table" and #locked > 0, "snake locked key list stored")
+  ok(has_buf_map(buf, "n", "h"), "snake direction keymap active")
+  ok(has_buf_map(buf, "n", "a"), "snake lock keymap active for blocked keys")
+  ok(snake.is_active(buf), "snake mode active after command")
+  eq(#index.get(buf).list, before_cells + 1, "snake command inserts a temporary cell")
+
+  local stopped = snake.stop(buf, { delete_cell = true, reason = "test" })
+  ok(stopped, "snake stop succeeds")
+  ok(not snake.is_active(buf), "snake mode inactive after stop")
+  ok(vim.b[buf].neo_notebooks_snake_locked_keys == nil, "snake locked key list cleared")
+  ok(not has_buf_map(buf, "n", "a"), "blocked keymap removed after snake stop")
+  ok(has_buf_map(buf, "n", "<leader>sg"), "default snake launch keymap restored")
+  eq(#index.get(buf).list, before_cells, "temporary snake cell removed on exit")
 end)
 
 -- Test: markdown cells render heading/emphasis/code overlays
