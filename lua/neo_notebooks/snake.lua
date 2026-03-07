@@ -97,6 +97,29 @@ local function board_left_col(entry)
   return pad + 1
 end
 
+local function board_cell_width(entry)
+  if entry and entry.layout and entry.layout.left_col and entry.layout.right_col then
+    return math.max(1, (entry.layout.right_col - entry.layout.left_col) + 1)
+  end
+  local win_width = vim.api.nvim_win_get_width(0)
+  local ratio = config.cell_width_ratio or 0.9
+  local width = math.floor(win_width * ratio)
+  width = math.max(config.cell_min_width or 60, width)
+  width = math.min(config.cell_max_width or win_width, width)
+  width = math.min(width, win_width)
+  return math.max(10, width)
+end
+
+local function resolve_board_width(entry, opts)
+  if opts and opts.width ~= nil then
+    return math.max(8, tonumber(opts.width) or 18)
+  end
+  local cell_width = board_cell_width(entry)
+  -- Keep the board (including box chars) inside the notebook cell interior.
+  local derived = cell_width - 4
+  return math.max(8, math.min(derived, 48))
+end
+
 local function ensure_board_rows(bufnr, state)
   local entry = index.get_by_id(bufnr, state.cell_id)
   if not entry then
@@ -149,7 +172,9 @@ function M.start(bufnr, cell_id, opts)
   if not entry or entry.type ~= "code" then
     return nil, "Snake mode requires a code cell"
   end
-  local width = math.max(8, tonumber(opts.width) or 18)
+  require("neo_notebooks.render").render(bufnr)
+  entry = index.get_by_id(bufnr, cell_id) or entry
+  local width = resolve_board_width(entry, opts)
   local height = math.max(5, tonumber(opts.height) or 5)
   local state = {
     cell_id = cell_id,

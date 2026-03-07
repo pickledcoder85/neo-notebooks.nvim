@@ -168,7 +168,8 @@ This document summarizes implementation choices and the evolution of core featur
 ## Snake mode
 
 - `NeoNotebookSnakeCell` inserts a new code cell and enters a mini inline snake mode.
-- The game renders as comment lines inside the cell body, keeping all drawing within cell boundaries.
+- The game renders via virtual-text overlay inside the cell body; source lines remain blank host rows.
+- Default board width is derived from the rendered cell frame so the box fits within notebook borders.
 - Snake auto-moves on a per-buffer timer; `h/j/k/l` updates direction and speed increases as apples are consumed.
 - Snake mode installs a restricted keymap so only `h/j/k/l` and `<Esc>` are active while playing.
 - `<Esc>` exits snake mode by deleting the snake cell and restoring normal notebook keymaps.
