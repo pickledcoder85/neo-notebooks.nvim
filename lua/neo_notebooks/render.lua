@@ -224,18 +224,165 @@ local function markdown_chunks_for_line(line, width)
   return truncate_chunks(chunks, width, body_hl)
 end
 
+local capture_hl_cache = {}
+
+local function capture_to_hl(capture)
+  if not capture or capture == "" then
+    return "@markup.raw.block.markdown"
+  end
+  local cached = capture_hl_cache[capture]
+  if cached then
+    return cached
+  end
+  local lang_specific = "@" .. capture .. ".python"
+  if vim.fn.hlexists(lang_specific) == 1 then
+    capture_hl_cache[capture] = lang_specific
+    return lang_specific
+  end
+  local generic = "@" .. capture
+  if vim.fn.hlexists(generic) == 1 then
+    capture_hl_cache[capture] = generic
+    return generic
+  end
+  capture_hl_cache[capture] = "@markup.raw.block.markdown"
+  return "@markup.raw.block.markdown"
+end
+
+local function chunks_from_hl_map(line, map, base_hl)
+  local text = tostring(line or "")
+  if text == "" then
+    return { { "", base_hl } }
+  end
+  local chunks = {}
+  local i = 1
+  while i <= #text do
+    local hl = map[i] or base_hl
+    local j = i + 1
+    while j <= #text and (map[j] or base_hl) == hl do
+      j = j + 1
+    end
+    table.insert(chunks, { text:sub(i, j - 1), hl })
+    i = j
+  end
+  return chunks
+end
+
+local function python_fence_chunks(lines, width)
+  if type(vim.treesitter) ~= "table" or type(vim.treesitter.get_string_parser) ~= "function" then
+    return nil
+  end
+  local ok_parser, parser = pcall(vim.treesitter.get_string_parser, table.concat(lines or {}, "\n"), "python")
+  if not ok_parser or not parser then
+    return nil
+  end
+  local ok_query, query = pcall(vim.treesitter.query.get, "python", "highlights")
+  if not ok_query or not query then
+    return nil
+  end
+  local source = table.concat(lines or {}, "\n")
+  local trees = parser:parse()
+  local tree = trees and trees[1]
+  if not tree then
+    return nil
+  end
+  local maps = {}
+  for i, line in ipairs(lines or {}) do
+    maps[i] = {}
+    local len = #tostring(line or "")
+    for col = 1, len do
+      maps[i][col] = "@markup.raw.block.markdown"
+    end
+  end
+
+  local function paint_row(row_idx, s_col0, e_col0, hl)
+    local line = tostring((lines or {})[row_idx] or "")
+    if line == "" then
+      return
+    end
+    local s = math.max(0, s_col0 or 0) + 1
+    local e = math.min(#line, math.max(0, e_col0 or 0))
+    if e < s then
+      return
+    end
+    local map = maps[row_idx]
+    if not map then
+      return
+    end
+    for col = s, e do
+      map[col] = hl
+    end
+  end
+
+  local root = tree:root()
+  for id, node in query:iter_captures(root, source, 0, #lines) do
+    local capture = query.captures[id]
+    local hl = capture_to_hl(capture)
+    local sr, sc, er, ec = node:range()
+    local start_row = sr + 1
+    local end_row = er + 1
+    if start_row == end_row then
+      paint_row(start_row, sc, ec, hl)
+    else
+      paint_row(start_row, sc, #tostring((lines or {})[start_row] or ""), hl)
+      for row = start_row + 1, end_row - 1 do
+        paint_row(row, 0, #tostring((lines or {})[row] or ""), hl)
+      end
+      paint_row(end_row, 0, ec, hl)
+    end
+  end
+
+  local out = {}
+  for i, line in ipairs(lines or {}) do
+    local chunks = chunks_from_hl_map(line, maps[i] or {}, "@markup.raw.block.markdown")
+    out[i] = truncate_chunks(chunks, width, "@markup.raw.block.markdown")
+  end
+  return out
+end
+
 local function markdown_chunks_for_lines(lines, width)
   local out = {}
-  local in_fence = false
-  for i, line in ipairs(lines or {}) do
+  local i = 1
+  local total = #(lines or {})
+  while i <= total do
+    local line = (lines or {})[i]
     local text = tostring(line or "")
-    if text:match("^%s*```") then
-      in_fence = not in_fence
+    local fence_lang = text:match("^%s*```%s*([%w_+-]*)")
+    if fence_lang ~= nil then
       out[i] = truncate_chunks({ { text, "@punctuation.delimiter.markdown" } }, width, "@punctuation.delimiter.markdown")
-    elseif in_fence then
-      out[i] = truncate_chunks({ { text, "@markup.raw.block.markdown" } }, width, "@markup.raw.block.markdown")
+      local j = i + 1
+      while j <= total do
+        local candidate = tostring((lines or {})[j] or "")
+        if candidate:match("^%s*```") then
+          break
+        end
+        j = j + 1
+      end
+      local body = {}
+      for row = i + 1, math.min(j - 1, total) do
+        table.insert(body, tostring((lines or {})[row] or ""))
+      end
+      local body_chunks = nil
+      if fence_lang:lower() == "python" then
+        body_chunks = python_fence_chunks(body, width)
+      end
+      for idx = 1, #body do
+        local row = i + idx
+        if body_chunks and body_chunks[idx] then
+          out[row] = body_chunks[idx]
+        else
+          out[row] = truncate_chunks({ { body[idx], "@markup.raw.block.markdown" } }, width, "@markup.raw.block.markdown")
+        end
+      end
+      if j <= total then
+        local close_text = tostring((lines or {})[j] or "")
+        out[j] = truncate_chunks({ { close_text, "@punctuation.delimiter.markdown" } }, width, "@punctuation.delimiter.markdown")
+        i = j + 1
+      else
+        i = total + 1
+      end
     else
       out[i] = markdown_chunks_for_line(text, width)
+      i = i + 1
     end
   end
   return out

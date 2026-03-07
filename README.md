@@ -263,6 +263,7 @@ require("neo_notebooks").setup({ output = "float" })
 
 Run `:NeoNotebookMarkdownPreview` in a markdown cell to open a floating preview window with markdown highlighting.
 Inline markdown cells also get lightweight virtual formatting for headings and emphasis/code spans when not actively edited.
+For fenced markdown blocks tagged as `python` (```python ... ```), NeoNotebooks uses Tree-sitter token captures when available; it falls back to raw-block highlighting if parser/query support is unavailable.
 
 ### Cell overlay preview (read-only)
 

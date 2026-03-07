@@ -83,6 +83,8 @@ This document summarizes implementation choices and the evolution of core featur
 - Inline markdown cells are visually formatted in-place via virtual text overlays:
   - heading markers (`#`, `##`, ...) are rendered as styled heading text;
   - inline emphasis/code spans (`**bold**`, `*italic*`, `` `code` ``) are highlighted;
+  - fenced blocks tagged `python` are tokenized via Tree-sitter highlight captures when available;
+  - fenced block rendering gracefully falls back to raw markdown block highlighting if Tree-sitter support is unavailable;
   - overlays are disabled while actively editing that markdown cell in insert mode.
 
 ## Cell overlay preview
