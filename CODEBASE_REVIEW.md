@@ -898,5 +898,9 @@ NeoNotebookSnakeCell
 - Added `lua/neo_notebooks/formats/jupytext_percent.lua`:
   - `default_metadata()`
   - `parse(lines)` for `py:percent` cells + optional YAML-style header metadata.
+- Added `lua/neo_notebooks/formats/ipynb_outputs.lua`:
+  - `outputs_to_items(outputs)` for MIME-aware output rendering adapters.
+  - `items_to_outputs(items)` for typed payload -> nbformat output conversion.
 - Updated `ipynb.lua` to consume the extracted parser module for Jupytext import and metadata defaults.
+- Updated `ipynb.lua` to consume extracted output conversion helpers.
 - No user-visible behavior change; current test lanes remain green.
