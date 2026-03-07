@@ -90,7 +90,7 @@ print("hello")
 - `:NeoNotebookCellEdit` opens the current cell in a floating editor.
 - `:NeoNotebookCellSave` saves the floating editor back to the buffer.
 - `:NeoNotebookCellRunFromEditor` saves and runs the edited cell.
-- `:NeoNotebookSnakeCell` inserts a new code cell and starts a mini inline snake mode (`h/j/k/l`, `<Esc>` to exit).
+- `:NeoNotebookSnakeCell` inserts a new code cell and starts a mini inline snake mode (`h/j/k/l` move; `<Esc>` or game over deletes the snake cell and exits mode).
 - `:NeoNotebookImportIpynb {path}` imports a `.ipynb` file.
 - `:NeoNotebookOpenIpynb {path}` opens a `.ipynb` into a new buffer.
 - `:NeoNotebookExportIpynb {path}` exports the current buffer to `.ipynb`.
@@ -184,7 +184,7 @@ require("neo_notebooks").setup({
     edit_cell = "<leader>ee",
     save_cell = "<leader>es",
     run_cell = "<leader>er",
-    snake_game = nil, -- optional
+    snake_game = "<leader>sg",
   },
 })
 ```
@@ -336,7 +336,7 @@ require("neo_notebooks").setup({ suppress_completion_popup = true })
 - `j` / `k` stay inside the active cell body when `soft_contain=true` and `contain_line_nav=true`
 - `u` (undo) preserves native undo behavior and then re-clamps cursor within current cell bounds
   (use `<C-n>` / `<C-p>` to move between cells)
-- `snake_game` keymap is optional; when set, it runs `:NeoNotebookSnakeCell`
+- `<leader>sg` starts snake mode by creating a new code cell below the current cell
 
 If you use a custom statusline (e.g. lualine), add the component:
 

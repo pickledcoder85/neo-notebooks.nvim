@@ -169,7 +169,8 @@ This document summarizes implementation choices and the evolution of core featur
 
 - `NeoNotebookSnakeCell` inserts a new code cell and enters a mini inline snake mode.
 - The game renders as comment lines inside the cell body, keeping all drawing within cell boundaries.
-- Movement uses `h/j/k/l`; `<Esc>` exits snake mode and restores normal notebook keymaps.
+- Movement uses `h/j/k/l`; `<Esc>` exits snake mode by deleting the snake cell and restoring normal notebook keymaps.
+- Hitting a wall or the snake body also ends the game and deletes the snake cell.
 
 ## Cell labels
 

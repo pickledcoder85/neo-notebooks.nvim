@@ -331,7 +331,7 @@ with_buf({
   render.render(buf)
 end)
 
--- Test: snake mode starts, moves, and exits in code cell
+-- Test: snake mode starts, moves, and deletes cell on stop/game-over
 with_buf({
   "# %% [code]",
   "print(1)",
@@ -345,9 +345,32 @@ with_buf({
   ok(line:find("snake mode", 1, true) ~= nil, "snake instructions rendered")
   local ok_move, err_move = snake.move(buf, "right")
   ok(ok_move, err_move)
-  local stopped = snake.stop(buf)
+  local stopped = snake.stop(buf, { delete_cell = true })
   ok(stopped, "snake mode stopped")
   ok(not snake.is_active(buf), "snake mode inactive after stop")
+end)
+
+-- Test: snake game-over on wall collision auto-stops
+with_buf({
+  "# %% [code]",
+  "print(1)",
+  "# %% [code]",
+  "print(2)",
+}, function(buf)
+  local state = index.rebuild(buf)
+  local cell = state.list[1]
+  local ok_start, err = snake.start(buf, cell.id, { width = 8, height = 6 })
+  ok(ok_start, err)
+  local ok_move = false
+  local err_move = nil
+  for _ = 1, 16 do
+    ok_move, err_move = snake.move(buf, "right")
+    ok(ok_move, err_move)
+    if not snake.is_active(buf) then
+      break
+    end
+  end
+  ok(not snake.is_active(buf), "snake mode inactive after game over")
 end)
 
 -- Test: markdown cells render heading/emphasis/code overlays

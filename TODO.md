@@ -29,7 +29,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Game runs inline within the cell boundaries.
   - Random apple placement.
   - Movement controls via `h/j/k/l`.
-  - `<Esc>` exits game mode and restores the cell to a normal editable code cell.
+  - `<Esc>` or game over exits game mode and deletes the snake cell.
 - Full `.ipynb` metadata + outputs support.
 - Typed output pipeline (MIME-aware):
   - Python runner returns typed outputs: `text/plain`, `image/png`.

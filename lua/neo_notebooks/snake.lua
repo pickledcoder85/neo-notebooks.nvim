@@ -154,8 +154,8 @@ function M.move(bufnr, direction)
   local ny = head.y + dy
   if nx < 1 or nx > state.width or ny < 1 or ny > state.height or occupies_snake(state, nx, ny) then
     state.alive = false
-    write_cell(bufnr, state)
-    return true
+    M.stop(bufnr, { delete_cell = true })
+    return true, "game_over"
   end
 
   table.insert(state.snake, 1, { x = nx, y = ny })
@@ -170,14 +170,21 @@ function M.move(bufnr, direction)
   return true
 end
 
-function M.stop(bufnr)
+function M.stop(bufnr, opts)
   bufnr = bufnr or 0
+  opts = opts or {}
   local state = find_state(bufnr)
   if not state then
     return false
   end
   local entry = index.get_by_id(bufnr, state.cell_id)
-  if entry then
+  if entry and opts.delete_cell then
+    vim.api.nvim_buf_set_lines(bufnr, entry.start, entry.finish + 1, false, {})
+    local line_count = vim.api.nvim_buf_line_count(bufnr)
+    local target_line = math.max(1, math.min(entry.start + 1, line_count))
+    pcall(vim.api.nvim_win_set_cursor, 0, { target_line, 0 })
+    index.mark_dirty(bufnr)
+  elseif entry then
     vim.api.nvim_buf_set_lines(bufnr, entry.start + 1, entry.finish + 1, false, {
       "# snake mode exited",
       "",

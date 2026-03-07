@@ -267,6 +267,10 @@ set_snake_keymaps = function(bufnr)
       vim.notify("NeoNotebook: " .. err, vim.log.levels.WARN)
       return
     end
+    if not snake.is_active(bufnr) then
+      clear_snake_keymaps(bufnr)
+      set_default_keymaps(bufnr)
+    end
     render_if_enabled(bufnr)
   end
   vim.keymap.set("n", "h", function()
@@ -282,7 +286,7 @@ set_snake_keymaps = function(bufnr)
     move("right")
   end, opts)
   vim.keymap.set("n", "<Esc>", function()
-    snake.stop(bufnr)
+    snake.stop(bufnr, { delete_cell = true })
     clear_snake_keymaps(bufnr)
     set_default_keymaps(bufnr)
     render_if_enabled(bufnr)
