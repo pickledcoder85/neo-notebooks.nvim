@@ -161,7 +161,7 @@ function M.start(bufnr, cell_id, opts)
     on_exit = opts.on_exit,
     tick_ms = math.max(40, tonumber(opts.tick_ms) or 320),
     min_tick_ms = math.max(30, tonumber(opts.min_tick_ms) or 80),
-    speed_step_ms = math.max(1, tonumber(opts.speed_step_ms) or 18),
+    speed_step_ms = math.max(1, tonumber(opts.speed_step_ms) or 25),
     auto = opts.auto ~= false,
     timer = nil,
     snake = {
