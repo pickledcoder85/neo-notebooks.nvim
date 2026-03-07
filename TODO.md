@@ -8,7 +8,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Next
 
- 
+- Improved markdown rendering (headings, emphasis).
 
 ## Later
 
@@ -16,7 +16,6 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Detect likely upstream cell dependencies and warn on reordered runs.
   - Offer targeted "run required predecessors" before executing a moved cell.
   - Keep default behavior globally scoped for lightweight workflows.
-- Improved markdown rendering (headings, emphasis).
 - Optional markdown cell rendering polish (conceal/emphasis; Tree-sitter-based).
 - Fix undo (`u`) keeping cursor position within current cell (avoid jump to buffer end).
 - Optional fun keymap: insert a new code cell containing a mini terminal snake game.

@@ -131,6 +131,99 @@ local function truncate_chunks(chunks, width, base_hl)
   return out
 end
 
+local function markdown_heading_hl(level)
+  if level <= 1 then
+    return "Title"
+  end
+  if level == 2 then
+    return "Function"
+  end
+  if level == 3 then
+    return "Identifier"
+  end
+  return "Comment"
+end
+
+local function markdown_inline_chunks(text, base_hl)
+  local chunks = {}
+  local i = 1
+  local len = #text
+
+  local function push(seg, hl)
+    if seg ~= "" then
+      table.insert(chunks, { seg, hl })
+    end
+  end
+
+  while i <= len do
+    local one = text:sub(i, i)
+    local two = text:sub(i, i + 1)
+    if one == "`" then
+      local j = text:find("`", i + 1, true)
+      if j then
+        push(text:sub(i + 1, j - 1), "String")
+        i = j + 1
+      else
+        push(one, base_hl)
+        i = i + 1
+      end
+    elseif two == "**" or two == "__" then
+      local j = text:find(two, i + 2, true)
+      if j then
+        push(text:sub(i + 2, j - 1), "Special")
+        i = j + 2
+      else
+        push(two, base_hl)
+        i = i + 2
+      end
+    elseif one == "*" or one == "_" then
+      local j = text:find(one, i + 1, true)
+      if j then
+        push(text:sub(i + 1, j - 1), "Comment")
+        i = j + 1
+      else
+        push(one, base_hl)
+        i = i + 1
+      end
+    else
+      local next_pos = len + 1
+      local tick = text:find("`", i, true)
+      local star = text:find("*", i, true)
+      local us = text:find("_", i, true)
+      if tick and tick < next_pos then
+        next_pos = tick
+      end
+      if star and star < next_pos then
+        next_pos = star
+      end
+      if us and us < next_pos then
+        next_pos = us
+      end
+      push(text:sub(i, next_pos - 1), base_hl)
+      i = next_pos
+    end
+  end
+
+  if #chunks == 0 then
+    return { { "", base_hl } }
+  end
+  return chunks
+end
+
+local function markdown_chunks_for_line(line, width)
+  local text = tostring(line or "")
+  local indent, hashes, rest = text:match("^(%s*)(#+)%s+(.*)$")
+  if hashes then
+    local heading_hl = markdown_heading_hl(#hashes)
+    local heading_text = (indent or "") .. (rest or "")
+    local heading_chunks = markdown_inline_chunks(heading_text, heading_hl)
+    return truncate_chunks(heading_chunks, width, heading_hl)
+  end
+  local body_hl = "Normal"
+  local chunks = markdown_inline_chunks(text, body_hl)
+  return truncate_chunks(chunks, width, body_hl)
+end
+
 local function format_duration(duration_ms)
   if type(duration_ms) == "table" then
     duration_ms = duration_ms.duration_ms
@@ -449,6 +542,23 @@ local function render_cell(bufnr, ctx, cell, visible_idx, active, in_insert, cur
     -- Images are rendered in a separate pane; no inline rendering here.
   end
 
+  local markdown_overlay_lines = nil
+  if cell.type == "markdown" then
+    local editing_markdown = in_insert and active and active.id == cell.id
+    if not editing_markdown then
+      local body_start = math.max(cell.start + 1, 0)
+      local body_end = math.min(render_finish, math.max(line_count - 1, 0))
+      if body_start <= body_end then
+        local inner_width = math.max(0, width - 2)
+        local body_lines = vim.api.nvim_buf_get_lines(bufnr, body_start, body_end + 1, false)
+        markdown_overlay_lines = {}
+        for i, line in ipairs(body_lines) do
+          markdown_overlay_lines[body_start + i - 1] = markdown_chunks_for_line(line, inner_width)
+        end
+      end
+    end
+  end
+
   if config.vertical_borders then
     local text_pad = string.rep(" ", pad + 1)
     local pending = vim.b[bufnr] and vim.b[bufnr].neo_notebooks_pending_virtual_indent or nil
@@ -466,6 +576,14 @@ local function render_cell(bufnr, ctx, cell, visible_idx, active, in_insert, cur
           right_gravity = false,
           priority = 120,
         })
+        if markdown_overlay_lines and markdown_overlay_lines[line] then
+          vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
+            virt_text = markdown_overlay_lines[line],
+            virt_text_pos = "overlay",
+            virt_text_win_col = left_col + 1,
+            priority = 110,
+          })
+        end
         vim.api.nvim_buf_set_extmark(bufnr, M.ns, line, 0, {
           virt_text = { { "│", hl } },
           virt_text_pos = "overlay",
