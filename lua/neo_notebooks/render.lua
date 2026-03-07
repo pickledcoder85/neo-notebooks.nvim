@@ -259,15 +259,40 @@ local function clear_tail_pad(bufnr)
   end
   if can_remove then
     vim.api.nvim_buf_set_lines(bufnr, total - pad, total, false, {})
+    set_buf_var(bufnr, "neo_notebooks_tail_pad", 0)
   end
-  set_buf_var(bufnr, "neo_notebooks_tail_pad", 0)
+end
+
+local function tail_pad_matches(bufnr, lines)
+  if lines <= 0 then
+    return get_buf_var(bufnr, "neo_notebooks_tail_pad", 0) <= 0
+  end
+  local pad = get_buf_var(bufnr, "neo_notebooks_tail_pad", 0)
+  if pad ~= lines then
+    return false
+  end
+  local current = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local total = #current
+  if total < lines then
+    return false
+  end
+  for i = total - lines + 1, total do
+    if current[i] ~= "" then
+      return false
+    end
+  end
+  return true
 end
 
 local function ensure_tail_pad(bufnr, lines)
-  clear_tail_pad(bufnr)
   if lines <= 0 then
+    clear_tail_pad(bufnr)
     return
   end
+  if tail_pad_matches(bufnr, lines) then
+    return
+  end
+  clear_tail_pad(bufnr)
   local line_count = vim.api.nvim_buf_line_count(bufnr)
   local blanks = {}
   for _ = 1, lines do

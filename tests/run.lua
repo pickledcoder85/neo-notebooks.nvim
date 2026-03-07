@@ -193,6 +193,111 @@ with_buf({
   eq(list[1].finish, 2, "tail pad excluded from cell finish")
 end)
 
+-- Test: ipynb import/export preserves metadata + outputs
+with_buf({ "" }, function(buf)
+  local tmp = vim.fn.tempname() .. ".ipynb"
+  local doc = {
+    nbformat = 4,
+    nbformat_minor = 5,
+    metadata = { kernelspec = { name = "python3" }, custom = { foo = "bar" } },
+    cells = {
+      {
+        cell_type = "markdown",
+        metadata = { tags = { "intro" } },
+        source = { "# Title\n" },
+      },
+      {
+        cell_type = "code",
+        metadata = { tags = { "code" } },
+        execution_count = 3,
+        source = { "print('hi')\n" },
+        outputs = {
+          { output_type = "stream", name = "stdout", text = "hi\n" },
+          { output_type = "error", ename = "ValueError", evalue = "bad", traceback = { "Traceback line\n" } },
+          { output_type = "display_data", data = { ["text/plain"] = "ok" }, metadata = {} },
+        },
+      },
+    },
+  }
+  local ok_write = pcall(vim.fn.writefile, { vim.fn.json_encode(doc) }, tmp)
+  ok(ok_write, "wrote temp ipynb")
+
+  local ok_import, err = ipynb.import_ipynb(tmp, buf)
+  ok(ok_import, err)
+
+  local state = vim.api.nvim_buf_get_var(buf, "neo_notebooks_ipynb_state")
+  eq(state.metadata.custom.foo, "bar", "metadata preserved")
+  eq(#state.order, 2, "cell order stored")
+  local code_id = state.order[2]
+  eq(state.cells[code_id].execution_count, 3, "execution_count preserved")
+  eq(#state.cells[code_id].outputs, 3, "outputs preserved")
+
+  local tmp_out = vim.fn.tempname() .. ".ipynb"
+  local ok_export, err_export = ipynb.export_ipynb(tmp_out, buf)
+  ok(ok_export, err_export)
+  local exported = vim.fn.json_decode(table.concat(vim.fn.readfile(tmp_out), "\n"))
+  eq(exported.metadata.custom.foo, "bar", "export metadata preserved")
+  eq(#exported.cells, 2, "export cell count")
+  eq(exported.cells[2].execution_count, 3, "export execution_count")
+  eq(#exported.cells[2].outputs, 3, "export outputs preserved")
+end)
+
+-- Test: ipynb import renders html/json MIME and suppresses plain fallback repr
+with_buf({ "" }, function(buf)
+  local tmp = vim.fn.tempname() .. ".ipynb"
+  local doc = {
+    nbformat = 4,
+    nbformat_minor = 5,
+    metadata = {},
+    cells = {
+      {
+        cell_type = "code",
+        metadata = {},
+        execution_count = 2,
+        source = { "pass\n" },
+        outputs = {
+          {
+            output_type = "execute_result",
+            execution_count = 1,
+            metadata = {},
+            data = {
+              ["text/html"] = "<b>HTML OK</b><br><i>interop test</i>",
+              ["text/plain"] = "<IPython.core.display.HTML object>",
+            },
+          },
+          {
+            output_type = "execute_result",
+            execution_count = 2,
+            metadata = { ["application/json"] = { expanded = false } },
+            data = {
+              ["application/json"] = { k = "v", n = 42 },
+              ["text/plain"] = "<IPython.core.display.JSON object>",
+            },
+          },
+        },
+      },
+    },
+  }
+  local ok_write = pcall(vim.fn.writefile, { vim.fn.json_encode(doc) }, tmp)
+  ok(ok_write, "wrote temp ipynb")
+
+  local ok_import, err = ipynb.import_ipynb(tmp, buf)
+  ok(ok_import, err)
+
+  local state = vim.api.nvim_buf_get_var(buf, "neo_notebooks_ipynb_state")
+  local code_id = state.order[1]
+  local lines = output.get_lines(buf, code_id) or {}
+  local joined = table.concat(lines, "\n")
+  ok(joined:find("HTML OK", 1, true) ~= nil, "html content rendered")
+  ok(joined:find("interop test", 1, true) ~= nil, "html line break rendered")
+  ok(joined:find("\"k\"", 1, true) ~= nil, "json key rendered")
+  ok(joined:find("\"v\"", 1, true) ~= nil, "json value rendered")
+  ok(joined:find("\"n\"", 1, true) ~= nil, "json numeric key rendered")
+  ok(joined:find("42", 1, true) ~= nil, "json number rendered")
+  ok(joined:find("<IPython.core.display.HTML object>", 1, true) == nil, "html plain fallback suppressed")
+  ok(joined:find("<IPython.core.display.JSON object>", 1, true) == nil, "json plain fallback suppressed")
+end)
+
 -- Test: move cell up preserves id mapping
 with_buf({
   "# %% [code]",
@@ -223,6 +328,21 @@ with_buf({
   local lines = output.get_lines(buf, cell.id)
   ok(lines and #lines == 1 and lines[1] == "ok", "output stored")
   render.render(buf)
+end)
+
+-- Test: tail padding render is idempotent (no repeated buffer writes)
+with_buf({
+  "# %% [code]",
+  "print(1)",
+}, function(buf)
+  local state = index.rebuild(buf)
+  local cell = state.list[1]
+  output.show_inline(buf, { id = cell.id, start = cell.start, finish = cell.finish, type = cell.type }, { "ok" })
+  render.render(buf)
+  local tick1 = vim.api.nvim_buf_get_changedtick(buf)
+  render.render(buf)
+  local tick2 = vim.api.nvim_buf_get_changedtick(buf)
+  eq(tick2, tick1, "second render should not rewrite tail pad")
 end)
 
 -- Test: output collapse toggles per cell

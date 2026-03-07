@@ -51,6 +51,47 @@ local function split_text_lines(text)
   return lines
 end
 
+local function html_to_text(html)
+  local text = tostring(html or "")
+  text = text:gsub("<br%s*/?>", "\n")
+  text = text:gsub("</p>", "\n")
+  text = text:gsub("</div>", "\n")
+  text = text:gsub("</li>", "\n")
+  text = text:gsub("<li[^>]*>", "- ")
+  text = text:gsub("<[^>]+>", "")
+  text = text:gsub("&nbsp;", " ")
+  text = text:gsub("&lt;", "<")
+  text = text:gsub("&gt;", ">")
+  text = text:gsub("&amp;", "&")
+  text = text:gsub("&quot;", "\"")
+  return text
+end
+
+local function json_to_text(value)
+  if value == nil then
+    return ""
+  end
+  if type(value) == "table" then
+    local ok, encoded = pcall(vim.fn.json_encode, value)
+    if ok and type(encoded) == "string" then
+      return encoded
+    end
+    return ""
+  end
+  local text = tostring(value)
+  if text == "" then
+    return ""
+  end
+  local ok_decode, decoded = pcall(vim.fn.json_decode, text)
+  if ok_decode then
+    local ok_encode, normalized = pcall(vim.fn.json_encode, decoded)
+    if ok_encode and type(normalized) == "string" and normalized ~= "" then
+      return normalized
+    end
+  end
+  return text
+end
+
 local function kitty_supported()
   local config = require("neo_notebooks").config
   local mode = config.image_protocol or "auto"
@@ -187,6 +228,16 @@ local function render_lines_for_items(bufnr, items, opts)
     local kind = item.type or "text/plain"
     if kind == "text/plain" or kind == "text" then
       local text_lines = split_text_lines(item.data or "")
+      for _, line in ipairs(text_lines) do
+        table.insert(lines, line)
+      end
+    elseif kind == "text/html" then
+      local text_lines = split_text_lines(html_to_text(item.data or ""))
+      for _, line in ipairs(text_lines) do
+        table.insert(lines, line)
+      end
+    elseif kind == "application/json" then
+      local text_lines = split_text_lines(json_to_text(item.data))
       for _, line in ipairs(text_lines) do
         table.insert(lines, line)
       end

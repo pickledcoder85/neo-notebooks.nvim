@@ -8,10 +8,10 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Next
 
+ 
 
 ## Later
 
-- Full `.ipynb` metadata + outputs support.
 - Optional execution dependency awareness:
   - Detect likely upstream cell dependencies and warn on reordered runs.
   - Offer targeted "run required predecessors" before executing a moved cell.
@@ -31,10 +31,15 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Done (recent)
 
+- Full `.ipynb` metadata + outputs support.
 - Typed output pipeline (MIME-aware):
   - Python runner returns typed outputs: `text/plain`, `image/png`.
   - Output schema: list of `{ type, data, meta }` entries.
   - Neovim renderer chooses output strategy per type with kitty graphics fallback.
+- `.ipynb` MIME interop rendering:
+  - Render imported `text/html` outputs as readable text.
+  - Render imported `application/json` outputs as JSON text.
+  - Preserve MIME bundles on save while suppressing plain-object fallback repr when richer MIME exists.
 - Tmux image pane rendering (kitty protocol):
   - Auto pane open/close toggle and size toggle (25/33/50%).
   - Page mode with next/prev paging to avoid scrollback limitations.
