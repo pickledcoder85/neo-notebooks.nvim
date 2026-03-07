@@ -50,6 +50,7 @@ local function ensure_highlights()
   end
   vim.api.nvim_set_hl(0, "NeoNotebookSnakeHud", { default = true, link = "Comment" })
   vim.api.nvim_set_hl(0, "NeoNotebookSnakeBorder", { default = true, fg = "#ffffff" })
+  vim.api.nvim_set_hl(0, "NeoNotebookSnakeHead", { default = true, fg = "#ffd75f" })
   vim.api.nvim_set_hl(0, "NeoNotebookSnakeBody", { default = true, fg = "#7CFC00" })
   vim.api.nvim_set_hl(0, "NeoNotebookSnakeApple", { default = true, fg = "#ff4d4f" })
   vim.api.nvim_set_hl(0, "NeoNotebookSnakeGameOver", { default = true, fg = "#ff4d4f", bold = true })
@@ -69,7 +70,7 @@ local function render_chunks(state)
   for i, part in ipairs(state.snake) do
     local row = grid[part.y]
     if row and row[part.x] then
-      row[part.x] = { ch = i == 1 and "@" or "o", hl = "NeoNotebookSnakeBody" }
+      row[part.x] = { ch = i == 1 and "@" or "o", hl = i == 1 and "NeoNotebookSnakeHead" or "NeoNotebookSnakeBody" }
     end
   end
 
