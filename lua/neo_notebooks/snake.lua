@@ -97,7 +97,7 @@ function M.start(bufnr, cell_id, opts)
     return nil, "Snake mode requires a code cell"
   end
   local width = math.max(8, tonumber(opts.width) or 18)
-  local height = math.max(6, tonumber(opts.height) or 10)
+  local height = math.max(5, tonumber(opts.height) or 5)
   local state = {
     cell_id = cell_id,
     width = width,
