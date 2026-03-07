@@ -434,7 +434,7 @@ After each sweep implementation branch:
 ## Phase Worklist - Phase 1: Contract Baseline (Docs Only)
 
 - Phase: 1 - Contract baseline
-- Status: in_progress
+- Status: closed
 - Related sweep findings:
   - Sweep 1: findings 1-12
   - Sweep 2: findings 1-10
@@ -507,3 +507,139 @@ After each sweep implementation branch:
 
 - Revert Phase 1 docs commits only:
   - `git revert <phase1-doc-commit>` (safe; no runtime behavior impact).
+
+### Phase 1 Execution Artifacts
+
+#### A) Module Contract Inventory (Current State)
+
+| Module(s) | Responsibility | Primary Inputs | Primary Outputs | State Ownership / Writes | Side Effects | Error Surface |
+|---|---|---|---|---|---|---|
+| `plugin/neo_notebooks.lua` | Command, keymap, and autocmd orchestration | user commands, cursor/events, config | module dispatch + render scheduling | writes many `vim.b` flags (`enabled`, lifecycle flags, key lock flags) | sets keymaps/autocmds, mutates buffers, notifies user | mostly `vim.notify` and guarded calls |
+| `lua/neo_notebooks/init.lua` | config defaults + setup | user setup opts | merged runtime config | writes `M.config`, some `vim.g` statusline flags | statusline hook registration | minimal (no user-facing notify) |
+| `lua/neo_notebooks/actions.lua` | notebook edit/navigation operations | bufnr, cursor line, motions | buffer/index mutations + optional output control | writes pending indent buffer key; triggers index dirty | buffer edits, cursor moves, notifications | mixed notify + policy redirect + implicit failures |
+| `lua/neo_notebooks/containment.lua`, `policy.lua` | line/cell legality and edit policy | bufnr, line/col, op context | decisions (`allow/redirect/block`) | read-mostly | none (pure-ish decision helpers) | returns structured decisions |
+| `lua/neo_notebooks/cells.lua` | marker-level cell parsing/creation | buffer lines, requested cell type | cell lists/current cell, inserted markers | triggers index dirty after inserts/toggles | buffer line edits | minimal explicit errors |
+| `lua/neo_notebooks/index.lua` | canonical per-buffer cell index + extmark IDs | buffer lines + on_lines deltas | `list` + `by_id` + dirty/range hints | owns `vim.b.neo_notebooks_index`, attach state | extmark create/delete, index attach hooks | mostly silent recovery via rebuild |
+| `lua/neo_notebooks/render.lua` | visual cell rendering + markdown overlays | cells/index/output/layout context | extmark/virt line rendering | owns tail-pad buffer var | sets/removes extmarks, may adjust trailing lines | guarded tree-sitter fallback paths |
+| `lua/neo_notebooks/output.lua`, `spinner.lua` | output storage/timing/collapse + spinner state | execution payloads, cell IDs | output store updates + render requests | owns output store/timing vars + spinner runtime | render scheduling, optional image pane interactions | mixed debug notify + guarded conversions |
+| `lua/neo_notebooks/scheduler.lua` | render coalescing/debounce | request options (`immediate`, cell IDs) | deferred render invocation | in-memory per-buffer schedule table | timer callbacks + render calls | mostly internal guarded flow |
+| `lua/neo_notebooks/exec.lua`, `session.lua` | python session/job queue + run dispatch | code cells, run opts, restart | payloads to output/render path | owns exec hash state per buffer, in-memory sessions | starts jobs, sends/receives IPC, signals interrupts | mixed return + notify + pcall |
+| `lua/neo_notebooks/ipynb.lua` | `.ipynb` and Jupytext import/export adaptation | file path + buffer | marker-buffer content + state metadata + exported JSON | owns `neo_notebooks_ipynb_state`, jupytext buffer flag | file IO, buffer rewrite, output hydration | returns `(ok, err)` in many paths |
+| `lua/neo_notebooks/overlay.lua` | read-only current-cell floating mirror | active cell + cursor movement | floating overlay updates | owns overlay state in `vim.b` | creates/closes floating windows | mostly guarded with `pcall` |
+| `lua/neo_notebooks/markdown.lua` | markdown preview window | current markdown cell | preview window | none durable | creates float buffer/window | warn/info notify paths |
+| `lua/neo_notebooks/editor.lua` | floating cell editor | active cell, edit buffer | saved cell body + optional run | owns editor state in edit buffer | creates/saves/closes floating editor | explicit error/warn notifications |
+| `lua/neo_notebooks/snake.lua` | inline snake game mode | code cell id + key directions | overlay updates + cell delete on exit | in-memory game state per buffer | timers, extmarks, buffer edits | returns `(ok, err)` + guarded callbacks |
+| `lua/neo_notebooks/image_pane.lua`, `kitty.lua` | image rendering transport/pane control | image payloads + tty/tmux context | pane/kitty rendering commands | in-memory pane state + temp files | tmux shell calls, terminal control sequences | debug notifies + fallback behavior |
+| `lua/neo_notebooks/navigation.lua`, `help.lua`, `stats.lua` | utility UI/navigation surfaces | cursor, maps, cell list | movement/help/stats UI | none major | notifications + floating help | straightforward notify/warn |
+
+#### B) Event-Flow Map (High-Risk Paths)
+
+1. Run current cell (`NeoNotebookCellRun`)
+
+```text
+command -> plugin:run_cell_with_output
+        -> exec.run_cell / enqueue
+        -> output.show_* / payload conversion
+        -> scheduler/request or render
+        -> render cell/output extmarks
+```
+
+2. Run and next (`<S-CR>`)
+
+```text
+keymap -> actions.consume_pending_virtual_indent
+      -> plugin run flow + optional insert new code cell
+      -> index dirty/rebuild as needed
+      -> render + cursor clamp
+```
+
+3. `.ipynb` open/import/export lifecycle
+
+```text
+BufReadPost *.ipynb -> plugin autocommand
+                   -> ipynb.import_ipynb
+                   -> index attach + keymaps + render
+
+BufWriteCmd *.ipynb -> ipynb.export_ipynb
+                   -> file write + modified=false
+```
+
+4. Jupytext import/open + export
+
+```text
+NeoNotebookImportJupytext / OpenJupytext
+  -> ipynb.import_jupytext/open_jupytext
+  -> state seed (metadata.jupytext) + index rebuild
+  -> standard setup + render
+  -> export via NeoNotebookExportIpynb uses buffer in-memory state
+```
+
+5. Snake mode lifecycle
+
+```text
+NeoNotebookSnakeCell
+  -> insert code cell + snake.start
+  -> lock keymaps (h/j/k/l/<leader>/<Esc>)
+  -> timer-driven moves + overlay render
+  -> stop on <Esc>/collision -> delete cell -> restore keymaps
+```
+
+#### C) Canonical Buffer-State Schema (Current)
+
+| Buffer key (`vim.b[...]`) | Owner | Shape | Write paths (authoritative) | Notes |
+|---|---|---|---|---|
+| `neo_notebooks_enabled` | plugin / format openers | `boolean` | plugin open/import/autocmd + ipynb open helpers | buffer eligibility gate |
+| `neo_notebooks_is_ipynb` | plugin | `boolean` | `BufReadPost *.ipynb` open flow | drives write/export semantics |
+| `neo_notebooks_is_jupytext` | ipynb module | `boolean` | `ipynb.import_jupytext` | informs export metadata policy |
+| `neo_notebooks_skip_initial` | plugin | `boolean` | ipynb open/import lifecycle | prevents unwanted initial cell insertion |
+| `neo_notebooks_ipynb_opened` | plugin | `boolean` | BufReadPost guard | prevents duplicate open-import |
+| `neo_notebooks_opened` | plugin | `boolean` | startup path | one-time setup guard |
+| `neo_notebooks_index` | index module | `table` (`list`, `by_id`, metadata) | `index.rebuild/on_lines/set_state` | canonical cell geometry cache |
+| `neo_notebooks_index_attached` | index module | `boolean` | `index.attach` | tracks on_lines attach lifecycle |
+| `neo_notebooks_tail_pad` | render module | `integer` | render tail-pad helpers | logical cell range adjustment |
+| `neo_notebooks_pending_virtual_indent` | actions module | `table<string,int>` | actions enter/open helpers | temporary indent staging |
+| `neo_notebooks_output_store` | output module | `table` keyed by cell id | output store setters | inline output source of truth |
+| `neo_notebooks_output_timing` | output module | `table` keyed by cell id | output timing setters | duration display |
+| `neo_notebooks_ipynb_state` | ipynb module | `table` (`metadata/cells/order/...`) | ipynb import/export/update | format round-trip state |
+| `neo_notebooks_exec_hashes` | exec/session | `table` keyed by cell id | exec hash store + session restart | rerun skip/interrupt policy |
+| `neo_notebooks_overlay` | overlay module | `table` (buf/win/cell_id/line) | overlay state helpers | current-cell preview state |
+| `neo_notebooks_editor` | editor module (editor buffer) | `table` | editor open/save/run | only valid in editor scratch buffer |
+| `neo_notebooks_snake_locked_keys` | plugin snake wiring | `string[]` | `set_snake_keymaps/clear` | locked map lifecycle |
+| completion helper keys (`neo_notebooks_completion_*`, `neo_notebooks_prev_*`) | plugin completion guard | mixed | `update_completion` | markdown completion suppression |
+| `neo_notebooks_prev_textwidth` | plugin textwidth guard | `integer` | `update_textwidth` | restore-on-exit semantics |
+
+#### D) UI Contract Matrix (Current Behavior)
+
+| UI surface | Trigger | Expected behavior | Authoritative modules | Test coverage state |
+|---|---|---|---|---|
+| Cell borders + labels | render cycle / cursor movement | borders and type labels align to computed cell layout | `render.lua`, `index.lua` | covered in broad integration tests; no dedicated geometry stress lane |
+| Markdown inline overlay | markdown cell not actively edited | headings/emphasis/code spans rendered via overlay | `render.lua` markdown helpers | covered (`markdown heading/emphasis/fence` tests in `tests/run.lua`) |
+| Fenced markdown python coloring | markdown fence with `python` | fence markers visible; inner python captures when available | `render.lua` tree-sitter path | covered (fence visibility/tokenization tests) |
+| Output blocks | cell execution/output update | inline block render, optional collapse, timing row, spinner | `output.lua`, `spinner.lua`, `render.lua` | covered for core payloads; stress/coalescing gaps remain |
+| Overlay preview window | toggle + cursor move | read-only float mirrors active cell | `overlay.lua`, plugin toggle/autocmd | behavior present; limited dedicated assertions |
+| Snake mode overlay | `NeoNotebookSnakeCell` | locked keys, auto-move, overlay board, delete on exit/game over | `snake.lua`, plugin key-lock handling | covered for start/move/stop/game-over; lifecycle edge cases still mostly manual |
+| `.ipynb` open/save UX | BufReadPost/BufWriteCmd | import to marker view and export back on `:w` | plugin autocmds + `ipynb.lua` | covered in import/export round-trip tests |
+| Jupytext import/open | command invoke | parse `py:percent`, seed/preserve metadata | plugin commands + `ipynb.lua` | covered with synthetic + fixture tests |
+
+#### E) Contract-to-Test Trace (Draft)
+
+| Contract item | Existing automated coverage | Gaps / follow-up |
+|---|---|---|
+| Stable cell index and ID continuity | multiple `index` tests in `tests/run.lua` | add stress lane for burst edits + resize/autocmd timing |
+| Marker-based cell parsing and type toggles | `cells` + marker edit tests | add malformed marker fuzz cases |
+| `.ipynb` metadata/output round-trip | dedicated import/export tests | add malformed JSON/error-path fixtures |
+| Jupytext `py:percent` compatibility | dedicated + fixture tests (`tests/fixtures/jupytext`) | expand real-world fixture corpus and edge headers |
+| Markdown overlay rendering contract | heading/emphasis/fence tests | add insert-mode transition/disable-reenable assertions |
+| Snake lifecycle contract | start/move/stop/collision tests | add keymap lock/restore dedicated test cases |
+| Scheduler/render coalescing | indirect only | create explicit burst/coalescing contract tests (Phase 2) |
+| Autocmd lifecycle correctness | mostly indirect | add focused lifecycle tests (BufReadPost/BufWriteCmd/FileType ordering) |
+| Buffer-state schema invariants | none explicit | add schema invariant checks per key owner (Phase 2) |
+
+#### F) Phase 1 Acceptance Check (Result)
+
+- Module contract inventory: complete.
+- Event-flow map: complete for highest-risk paths.
+- Buffer-state schema table: complete.
+- UI contract matrix: complete.
+- Contract-to-test trace draft: complete with explicit gaps.
+- Runtime behavior changes: none introduced in this phase.

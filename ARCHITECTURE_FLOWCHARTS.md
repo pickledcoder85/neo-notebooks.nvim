@@ -2,6 +2,15 @@
 
 Living visual map of current architecture and planned refactor state.
 
+## Phase Progress
+
+- Phase 1 (Contract Baseline): complete on `feature/review-sweep-1-contracts` (docs-only).
+- Phase 2 (Test Lane Split): not started.
+- Phase 3 (Entrypoint Decomposition): not started.
+- Phase 4 (Mutation/Render Contract): not started.
+- Phase 5 (Format Layer Split): not started.
+- Phase 6 (Error/Notify Policy): not started.
+
 ## Reading Guide
 
 - Boxes are modules/components.

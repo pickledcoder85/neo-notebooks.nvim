@@ -10,10 +10,11 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Initial compatibility fixtures from official Jupytext README/docs landed (`tests/fixtures/jupytext`).
   - Expand fixture corpus with additional real-world repos to further reduce format drift risk.
 - Structured codebase review sweeps (see `CODEBASE_REVIEW.md`):
-  - Sweep 1: contract map (modules/APIs/invariants, including UI + Neovim integration contracts).
+  - Sweep 1: contract map (completed; module/API/state/UI artifacts documented).
   - Sweep 2: architecture assessment (event flow, coupling hotspots, simplification opportunities).
   - Sweep 3: dead code + optimization candidates (document only).
   - Sweep 4: sequenced refactor execution plan with risk/test/rollback strategy.
+  - Sweep 5 (optional): test/observability gap assessment (completed; prioritized gaps documented).
 
 ## Next
 
