@@ -643,3 +643,91 @@ NeoNotebookSnakeCell
 - UI contract matrix: complete.
 - Contract-to-test trace draft: complete with explicit gaps.
 - Runtime behavior changes: none introduced in this phase.
+
+## Phase Worklist - Phase 2: Test Topology Split and Confidence Lanes
+
+- Phase: 2 - test lane split
+- Status: in_progress
+- Related sweep findings:
+  - Sweep 1: finding 10
+  - Sweep 2: finding 10
+  - Sweep 5: findings 1, 2, 3, 4, 5, 6
+
+### Detailed task list
+
+1. Create explicit test entrypoints
+- Introduce separate test runners:
+  - `tests/core_contract.lua`
+  - `tests/integration.lua`
+  - `tests/optional_kitty.lua`
+- Keep `tests/run.lua` as compatibility wrapper or dispatcher (non-breaking developer UX).
+
+2. Extract shared test harness utilities
+- Move reusable assertions/helpers (`ok`, `eq`, `with_buf`, etc.) into a shared helper module/file.
+- Ensure all lanes import shared helpers, not duplicate logic.
+
+3. Assign existing tests into lanes
+- `core_contract`:
+  - index/cells/policy/containment core contracts,
+  - ipynb/jupytext parsing+round-trip contracts not requiring kitty.
+- `integration`:
+  - workflow-level command/lifecycle behavior,
+  - render/scheduler interactions, snake lifecycle.
+- `optional_kitty`:
+  - kitty/image-pane/backend-specific checks.
+
+4. Add lane invocation docs and scripts
+- Document how to run each lane and expected failure semantics.
+- Ensure gate language references core lane as required.
+
+5. Add/adjust tests for lifecycle and keymap ownership gaps (initial minimum)
+- Add focused tests for:
+  - keymap lock/restore transitions in snake mode,
+  - key lifecycle events around notebook open/import where practical in headless.
+
+6. Validate and stabilize
+- Confirm `core_contract` runs clean independent of kitty backend.
+- Confirm optional lane is isolated and no longer blocks core signal.
+
+### Exact files to touch
+
+- `tests/run.lua` (dispatcher/backward compatibility)
+- `tests/core_contract.lua` (new)
+- `tests/integration.lua` (new)
+- `tests/optional_kitty.lua` (new)
+- `tests/_helpers.lua` (new shared harness helpers; name can vary)
+- `TODO.md` (phase status sync)
+- `TECHNICAL.md` (test lane documentation updates)
+- `README.md` (optional test command docs if user-facing)
+- `ARCHITECTURE_FLOWCHARTS.md` (phase progress update)
+
+### Tests
+
+- Tests to add/update:
+  - lane split harness and migrated test groups,
+  - minimal new tests for keymap/lifecycle gaps from Sweep 5.
+- Tests to run:
+  - `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/core_contract.lua" -c qa`
+  - `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/integration.lua" -c qa`
+  - `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/optional_kitty.lua" -c qa` (allowed optional failure signal)
+  - `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/run.lua" -c qa` (compat runner behavior)
+
+### Acceptance criteria
+
+- Three independent lanes exist and are runnable.
+- `core_contract` lane is backend-independent and green in default environment.
+- Optional kitty-specific behavior is isolated to `optional_kitty` lane.
+- Existing coverage is preserved (no silent test loss).
+- Updated docs clearly define lane purpose and invocation.
+
+### Manual validation checklist
+
+- Verify each previous major test area from `tests/run.lua` is mapped to a lane.
+- Verify `tests/run.lua` still gives a sensible default developer experience.
+- Verify docs clearly call out required lane(s) for merge gate.
+
+### Rollback plan
+
+- Revert lane split commits as a set:
+  - restore single-file `tests/run.lua` runner,
+  - remove new lane files and helper module.
