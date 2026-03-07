@@ -231,7 +231,8 @@ local function markdown_chunks_for_lines(lines, width)
     local text = tostring(line or "")
     if text:match("^%s*```") then
       in_fence = not in_fence
-      out[i] = {}
+      -- Mask fence marker lines in overlay so raw ``` markers are not shown.
+      out[i] = truncate_chunks({ { "", "Conceal" } }, width, "Conceal")
     elseif in_fence then
       out[i] = truncate_chunks({ { text, "String" } }, width, "String")
     else
