@@ -230,6 +230,7 @@ This document summarizes implementation choices and the evolution of core featur
 ## Tests
 
 - Headless tests live in `tests/run.lua`.
+- Jupytext compatibility fixtures live in `tests/fixtures/jupytext/` and are validated in headless tests.
 
 ## .ipynb import/export
 

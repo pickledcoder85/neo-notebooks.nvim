@@ -44,6 +44,7 @@ local ipynb = require("neo_notebooks.ipynb")
 local exec = require("neo_notebooks.exec")
 local nb = require("neo_notebooks")
 local snake = require("neo_notebooks.snake")
+local fixture_root = vim.fn.getcwd() .. "/tests/fixtures/jupytext"
 
 -- Test: default strict containment mode is soft
 eq(nb.config.strict_containment, "soft", "strict containment default")
@@ -362,6 +363,46 @@ with_buf({ "" }, function(buf)
   local state = vim.api.nvim_buf_get_var(buf, "neo_notebooks_ipynb_state")
   ok(state.metadata and state.metadata.jupytext, "default jupytext metadata seeded")
   eq(state.metadata.jupytext.text_representation.format_name, "percent", "default format_name is percent")
+end)
+
+-- Test: jupytext fixture from upstream README ("Text Notebooks") imports/exports expected shape
+-- Source: https://github.com/mwouts/jupytext
+with_buf({ "" }, function(buf)
+  local path = fixture_root .. "/readme_basic_percent.py"
+  local ok_import, err = ipynb.import_jupytext(path, buf)
+  ok(ok_import, err)
+
+  local out = vim.api.nvim_buf_get_lines(buf, 0, 9, false)
+  eq(out[1], "# %% [markdown]", "fixture markdown marker")
+  eq(out[2], "This is a markdown cell", "fixture markdown content")
+  eq(out[4], "# %% [code]", "fixture code marker")
+  eq(out[5], "def f(x):", "fixture code content")
+
+  local tmp_out = vim.fn.tempname() .. ".ipynb"
+  local ok_export, err_export = ipynb.export_ipynb(tmp_out, buf)
+  ok(ok_export, err_export)
+  local exported = vim.fn.json_decode(table.concat(vim.fn.readfile(tmp_out), "\n"))
+  eq(#exported.cells, 3, "fixture export cell count")
+  eq(exported.cells[1].cell_type, "markdown", "fixture first cell markdown")
+end)
+
+-- Test: jupytext fixture from upstream docs preserves header metadata and marker variants
+-- Source: https://jupytext.readthedocs.io/en/latest/formats-scripts.html
+with_buf({ "" }, function(buf)
+  local path = fixture_root .. "/docs_percent_with_header.py"
+  local ok_import, err = ipynb.import_jupytext(path, buf)
+  ok(ok_import, err)
+
+  local state = vim.api.nvim_buf_get_var(buf, "neo_notebooks_ipynb_state")
+  ok(state.metadata and state.metadata.jupytext, "docs fixture captured jupytext metadata")
+  eq(state.metadata.jupytext.formats, "ipynb,py:percent", "docs fixture formats parsed")
+  eq(state.metadata.jupytext.text_representation.format_name, "percent", "docs fixture format_name parsed")
+
+  local idx = index.rebuild(buf)
+  eq(#idx.list, 4, "docs fixture parsed into four cells")
+  eq(idx.list[1].type, "markdown", "docs fixture first markdown")
+  eq(idx.list[2].type, "markdown", "docs fixture title marker markdown")
+  eq(idx.list[3].type, "code", "docs fixture third code")
 end)
 
 -- Test: move cell up preserves id mapping

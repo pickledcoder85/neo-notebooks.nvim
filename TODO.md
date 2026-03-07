@@ -7,7 +7,8 @@ This file tracks project scope and the order of work. Items can be moved as prio
 - Jupytext interoperability (next major task):
   - Initial `py:percent` open/import support landed (`:NeoNotebookImportJupytext` / `:NeoNotebookOpenJupytext`).
   - Initial `metadata.jupytext` seed + `.ipynb` export round-trip landed.
-  - Add compatibility fixtures from existing Jupytext repos to verify no format drift.
+  - Initial compatibility fixtures from official Jupytext README/docs landed (`tests/fixtures/jupytext`).
+  - Expand fixture corpus with additional real-world repos to further reduce format drift risk.
 
 ## Next
 

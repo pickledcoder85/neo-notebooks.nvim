@@ -11,6 +11,7 @@ best-effort summary based on existing documentation and recent commits.
   - Markdown percent-comment lines are converted to markdown cell text in notebook view.
   - `metadata.jupytext` is parsed (when present), seeded (when missing), and preserved on `.ipynb` export.
   - Added tests for Jupytext import parsing and metadata round-trip behavior.
+  - Added compatibility fixtures sourced from official Jupytext README/docs examples.
 - Full `.ipynb` metadata + outputs support (preserve metadata, execution_count, outputs; render outputs on import).
 - Improved `.ipynb` MIME interop rendering:
   - Imported `text/html` now renders as readable inline text.
