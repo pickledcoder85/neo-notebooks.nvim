@@ -252,8 +252,15 @@ end
 
 clear_snake_keymaps = function(bufnr)
   bufnr = bufnr or 0
+  local locked = vim.b[bufnr] and vim.b[bufnr].neo_notebooks_snake_locked_keys or {}
+  for _, lhs in ipairs(locked) do
+    pcall(vim.keymap.del, "n", lhs, { buffer = bufnr })
+  end
   for _, lhs in ipairs({ "h", "j", "k", "l", "<Esc>" }) do
     pcall(vim.keymap.del, "n", lhs, { buffer = bufnr })
+  end
+  if vim.b[bufnr] then
+    vim.b[bufnr].neo_notebooks_snake_locked_keys = nil
   end
 end
 
@@ -261,36 +268,42 @@ set_snake_keymaps = function(bufnr)
   bufnr = bufnr or 0
   clear_snake_keymaps(bufnr)
   local opts = { noremap = true, silent = true, buffer = bufnr }
-  local function move(dir)
-    local ok, err = snake.move(bufnr, dir)
+  local function turn(dir)
+    local ok, err = snake.set_direction(bufnr, dir)
     if not ok and err then
       vim.notify("NeoNotebook: " .. err, vim.log.levels.WARN)
       return
     end
-    if not snake.is_active(bufnr) then
-      clear_snake_keymaps(bufnr)
-      set_default_keymaps(bufnr)
-    end
-    render_if_enabled(bufnr)
   end
   vim.keymap.set("n", "h", function()
-    move("left")
+    turn("left")
   end, opts)
   vim.keymap.set("n", "j", function()
-    move("down")
+    turn("down")
   end, opts)
   vim.keymap.set("n", "k", function()
-    move("up")
+    turn("up")
   end, opts)
   vim.keymap.set("n", "l", function()
-    move("right")
+    turn("right")
   end, opts)
   vim.keymap.set("n", "<Esc>", function()
-    snake.stop(bufnr, { delete_cell = true })
-    clear_snake_keymaps(bufnr)
-    set_default_keymaps(bufnr)
-    render_if_enabled(bufnr)
+    snake.stop(bufnr, { delete_cell = true, reason = "esc" })
   end, opts)
+  local locked = {
+    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+    "a", "b", "c", "d", "e", "f", "g", "i", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+    "A", "B", "C", "D", "E", "F", "G", "I", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+    ":", "/", "?", ".", ",", ";", "'", "\"", "<CR>", "<BS>", "<Del>",
+    "$", "^", "%", "#", "*", "+", "-", "_", "=",
+    "<C-n>", "<C-p>", "<S-CR>",
+  }
+  vim.b[bufnr].neo_notebooks_snake_locked_keys = locked
+  for _, lhs in ipairs(locked) do
+    vim.keymap.set("n", lhs, function()
+      return
+    end, opts)
+  end
 end
 
 local function logical_cell_insert_base(bufnr, cell)
@@ -636,7 +649,13 @@ vim.api.nvim_create_user_command("NeoNotebookSnakeCell", function()
     vim.notify("NeoNotebook: failed to create snake cell", vim.log.levels.ERROR)
     return
   end
-  local ok, err = snake.start(bufnr, entry.id)
+  local ok, err = snake.start(bufnr, entry.id, {
+    on_exit = function()
+      clear_snake_keymaps(bufnr)
+      set_default_keymaps(bufnr)
+      render_if_enabled(bufnr)
+    end,
+  })
   if not ok then
     vim.notify("NeoNotebook: " .. (err or "failed to start snake mode"), vim.log.levels.ERROR)
     return

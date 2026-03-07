@@ -10,6 +10,13 @@ local function find_state(bufnr)
   return state_by_buf[bufnr]
 end
 
+local function stop_timer(state)
+  if state and state.timer then
+    pcall(vim.fn.timer_stop, state.timer)
+    state.timer = nil
+  end
+end
+
 local function occupies_snake(state, x, y)
   for _, part in ipairs(state.snake) do
     if part.x == x and part.y == y then
@@ -105,6 +112,12 @@ function M.start(bufnr, cell_id, opts)
     dir = "right",
     score = 0,
     alive = true,
+    on_exit = opts.on_exit,
+    tick_ms = math.max(40, tonumber(opts.tick_ms) or 320),
+    min_tick_ms = math.max(30, tonumber(opts.min_tick_ms) or 80),
+    speed_step_ms = math.max(1, tonumber(opts.speed_step_ms) or 18),
+    auto = opts.auto ~= false,
+    timer = nil,
     snake = {
       { x = 3, y = 3 },
       { x = 2, y = 3 },
@@ -114,6 +127,32 @@ function M.start(bufnr, cell_id, opts)
   state.apple = random_apple(state)
   state_by_buf[bufnr] = state
   write_cell(bufnr, state)
+  if state.auto then
+    state.timer = vim.fn.timer_start(state.tick_ms, vim.schedule_wrap(function()
+      if not state_by_buf[bufnr] then
+        return
+      end
+      M.move(bufnr)
+    end), { ["repeat"] = -1 })
+  end
+  return true
+end
+
+function M.set_direction(bufnr, direction)
+  bufnr = bufnr or 0
+  local state = find_state(bufnr)
+  if not state then
+    return nil, "Snake mode is not active"
+  end
+  local opposite = {
+    left = "right",
+    right = "left",
+    up = "down",
+    down = "up",
+  }
+  if direction and opposite[direction] ~= state.dir then
+    state.dir = direction
+  end
   return true
 end
 
@@ -128,14 +167,11 @@ function M.move(bufnr, direction)
     return true
   end
 
-  local opposite = {
-    left = "right",
-    right = "left",
-    up = "down",
-    down = "up",
-  }
-  if direction and opposite[direction] ~= state.dir then
-    state.dir = direction
+  if direction then
+    local ok_dir, err_dir = M.set_direction(bufnr, direction)
+    if not ok_dir then
+      return nil, err_dir
+    end
   end
 
   local head = state.snake[1]
@@ -154,7 +190,7 @@ function M.move(bufnr, direction)
   local ny = head.y + dy
   if nx < 1 or nx > state.width or ny < 1 or ny > state.height or occupies_snake(state, nx, ny) then
     state.alive = false
-    M.stop(bufnr, { delete_cell = true })
+    M.stop(bufnr, { delete_cell = true, reason = "game_over" })
     return true, "game_over"
   end
 
@@ -162,6 +198,16 @@ function M.move(bufnr, direction)
   if state.apple and nx == state.apple.x and ny == state.apple.y then
     state.score = state.score + 1
     state.apple = random_apple(state)
+    if state.auto then
+      state.tick_ms = math.max(state.min_tick_ms, state.tick_ms - state.speed_step_ms)
+      stop_timer(state)
+      state.timer = vim.fn.timer_start(state.tick_ms, vim.schedule_wrap(function()
+        if not state_by_buf[bufnr] then
+          return
+        end
+        M.move(bufnr)
+      end), { ["repeat"] = -1 })
+    end
   else
     table.remove(state.snake)
   end
@@ -177,6 +223,7 @@ function M.stop(bufnr, opts)
   if not state then
     return false
   end
+  stop_timer(state)
   local entry = index.get_by_id(bufnr, state.cell_id)
   if entry and opts.delete_cell then
     vim.api.nvim_buf_set_lines(bufnr, entry.start, entry.finish + 1, false, {})
@@ -192,6 +239,9 @@ function M.stop(bufnr, opts)
     index.mark_dirty(bufnr)
   end
   state_by_buf[bufnr] = nil
+  if type(state.on_exit) == "function" then
+    pcall(state.on_exit, opts.reason or "stopped")
+  end
   return true
 end
 

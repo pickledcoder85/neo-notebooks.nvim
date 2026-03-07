@@ -338,7 +338,7 @@ with_buf({
 }, function(buf)
   local state = index.rebuild(buf)
   local cell = state.list[1]
-  local ok_start, err = snake.start(buf, cell.id, { width = 10, height = 6 })
+  local ok_start, err = snake.start(buf, cell.id, { width = 10, height = 6, auto = false })
   ok(ok_start, err)
   ok(snake.is_active(buf), "snake mode active after start")
   local line = vim.api.nvim_buf_get_lines(buf, cell.start + 1, cell.start + 2, false)[1] or ""
@@ -359,7 +359,7 @@ with_buf({
 }, function(buf)
   local state = index.rebuild(buf)
   local cell = state.list[1]
-  local ok_start, err = snake.start(buf, cell.id, { width = 8, height = 6 })
+  local ok_start, err = snake.start(buf, cell.id, { width = 8, height = 6, auto = false })
   ok(ok_start, err)
   local ok_move = false
   local err_move = nil
