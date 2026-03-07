@@ -207,22 +207,16 @@ This document summarizes implementation choices and the evolution of core featur
 - Scheduler requests can target specific cell IDs to redraw only affected cells,
   falling back to full renders when needed.
 
-## Render scheduling
-
-- `lua/neo_notebooks/scheduler.lua` coalesces bursty render requests per buffer.
-- Text-change hooks and spinner ticks request debounced renders instead of forcing
-  immediate redraws on every event.
-- Immediate redraws are still used where UX requires direct feedback.
-
 ## Tests
 
 - Headless tests live in `tests/run.lua`.
 
 ## .ipynb import/export
 
-- Import reads `.ipynb` JSON and converts cells to marker format.
+- Import reads `.ipynb` JSON, preserves notebook/cell metadata and outputs, and converts cells to marker format.
 - Import drops a leading blank code cell when followed by markdown (common notebook artifact).
-- Export writes a minimal `.ipynb` with cell sources (no outputs).
+- Import renders existing code-cell outputs using the typed output pipeline.
+- Export writes a full `.ipynb` with cell sources, metadata, execution counts, and outputs.
 - Open creates a new buffer, sets `filetype=python`, and imports content.
 - When `auto_open_ipynb` is enabled, reading a `.ipynb` auto-opens it into a scratch buffer.
 - `.ipynb` buffers use `buftype=acwrite`; `:w` triggers export to the original file.

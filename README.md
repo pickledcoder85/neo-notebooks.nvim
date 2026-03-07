@@ -52,7 +52,9 @@ print("hello")
 - For tmux, enable passthrough so Kitty graphics reach Ghostty: `set -g allow-passthrough on`.
 - `image_pane_tmux_percent = number` percent width for auto-created tmux image pane (default 25).
 - `image_pane_spacing_lines = number` blank lines inserted between rendered images in the pane (default 1).
-- `image_size_mode = "pane"|"default"` when set to `"pane"`, size images to the tmux pane using `pane_width`/`pane_height`.
+- `image_size_mode = "pane"|"default"` controls image sizing.
+  - `"pane"` sizes pane-rendered images to the tmux pane using `pane_width`/`pane_height`.
+  - `"default"` uses fixed defaults (`image_default_rows`/`image_default_cols`) for inline sizing.
 - `image_pane_margin_cols = number` columns to subtract from pane width (default 2).
 - `image_pane_margin_rows = number` rows to subtract from pane height (default 5).
 - `image_pane_sizes = {25,33,50}` toggle sizes for `<leader>pt` (percent of window width).
@@ -63,8 +65,7 @@ print("hello")
 - `image_pane_cell_ratio = 2.0` cell height/width ratio used for aspect correction.
 - `image_max_rows = number` caps image height in rows (default 30).
 - `image_default_rows = number` default image height in rows when no metadata is available (default 6).
-- `image_default_cols = number` default image width in cols when no metadata is available (default 12).
-- `image_size_mode = "default" | "metadata"` controls whether we always use the default size (default) or use image metadata for sizing.
+- `image_default_cols = number` default image width in cols (default 12).
   - `image_fallback = "placeholder"` shows a notice when images cannot render.
   - `mpl_backend = "Agg"` forces a non-GUI backend for inline capture (prevents popup windows).
   - `plt.show()` is intercepted to signal an inline capture without a GUI popup.
@@ -118,7 +119,6 @@ require("neo_notebooks").setup({
   image_max_rows = 30,
   image_default_rows = 6,
   image_default_cols = 12,
-  image_size_mode = "default",
   image_fallback = "placeholder",
   mpl_backend = "Agg",
   filetypes = { "neo_notebook", "ipynb" },
@@ -364,7 +364,8 @@ Export:
 ```
 
 Notes:
-- This is a best-effort conversion of cell sources only (no outputs or rich metadata).
+- `.ipynb` metadata, execution counts, and cell outputs are preserved on import/export.
+- Existing outputs are rendered on import for code cells.
 - Markdown and code cells are supported; other cell types are treated as code.
 - Import drops a leading blank code cell if it appears before the first markdown cell.
 

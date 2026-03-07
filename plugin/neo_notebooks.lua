@@ -284,6 +284,9 @@ local function run_cell_with_output(line, cell)
   if nb.config.output == "inline" then
     exec.run_cell(bufnr, line, {
       on_output = function(payload, cell_id, duration_ms)
+        if vim.b[bufnr] and vim.b[bufnr].neo_notebooks_is_ipynb and cell_id and payload and payload.items then
+          require("neo_notebooks.ipynb").update_cell_output(bufnr, cell_id, payload)
+        end
         output.show_payload(bufnr, {
           id = cell_id or cell.id,
           start = cell.start,
