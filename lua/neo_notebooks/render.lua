@@ -1,5 +1,6 @@
 local cells = require("neo_notebooks.cells")
 local output = require("neo_notebooks.output")
+local mutation = require("neo_notebooks.mutation")
 local config = require("neo_notebooks").config
 local containment = require("neo_notebooks.containment")
 local spinner = require("neo_notebooks.spinner")
@@ -515,7 +516,7 @@ local function clear_tail_pad(bufnr)
     end
   end
   if can_remove then
-    vim.api.nvim_buf_set_lines(bufnr, total - pad, total, false, {})
+    mutation.apply(bufnr, total - pad, total, {}, false)
     set_buf_var(bufnr, "neo_notebooks_tail_pad", 0)
   end
 end
@@ -555,7 +556,7 @@ local function ensure_tail_pad(bufnr, lines)
   for _ = 1, lines do
     table.insert(blanks, "")
   end
-  vim.api.nvim_buf_set_lines(bufnr, line_count, line_count, false, blanks)
+  mutation.apply(bufnr, line_count, line_count, blanks, false)
   set_buf_var(bufnr, "neo_notebooks_tail_pad", lines)
 end
 

@@ -1,4 +1,5 @@
 local M = {}
+local mutation = require("neo_notebooks.mutation")
 
 local MARKER_PATTERN = "^# %%%% %[(%w+)%]%s*$"
 
@@ -106,9 +107,7 @@ function M.insert_cell_below(bufnr, line, cell_type)
   if cell and cell.finish then
     insert_line = cell.finish + 1
   end
-  vim.api.nvim_buf_set_lines(bufnr, insert_line, insert_line, false, { marker, "" })
-  local index = require("neo_notebooks.index")
-  index.mark_dirty(bufnr)
+  mutation.apply(bufnr, insert_line, insert_line, { marker, "" }, { index_sync = "mark_dirty" })
   return insert_line
 end
 
@@ -122,12 +121,12 @@ function M.toggle_cell_type(bufnr, line)
 
   local current = marker_line:match(MARKER_PATTERN)
   if not current then
-    vim.api.nvim_buf_set_lines(bufnr, cell.start, cell.start + 1, false, { "# %% [code]" })
+    mutation.apply(bufnr, cell.start, cell.start + 1, { "# %% [code]" }, false)
     return
   end
 
   local next_type = current == "code" and "markdown" or "code"
-  vim.api.nvim_buf_set_lines(bufnr, cell.start, cell.start + 1, false, { "# %% [" .. next_type .. "]" })
+  mutation.apply(bufnr, cell.start, cell.start + 1, { "# %% [" .. next_type .. "]" }, false)
 end
 
 function M.is_markdown_cell(bufnr, line)

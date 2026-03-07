@@ -854,4 +854,10 @@ NeoNotebookSnakeCell
   - insert-enter synthetic pad-line write path,
   - pending-virtual-indent trim writes,
   - `guard_delete_current_line` mutate-line fallback.
+- Migrated targeted cross-module call sites to helper:
+  - `cells.insert_cell_below`,
+  - `cells.toggle_cell_type` marker rewrites,
+  - `snake.ensure_board_rows`,
+  - `snake.stop` cell deletion path,
+  - `render` tail-pad add/remove writes (`ensure_tail_pad` / `clear_tail_pad`).
 - Behavior remains unchanged for migrated paths; tests remain green.

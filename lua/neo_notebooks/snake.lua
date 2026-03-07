@@ -1,5 +1,6 @@
 local index = require("neo_notebooks.index")
 local config = require("neo_notebooks").config
+local mutation = require("neo_notebooks.mutation")
 
 local M = {}
 M.ns = vim.api.nvim_create_namespace("neo_notebooks_snake")
@@ -150,8 +151,7 @@ local function ensure_board_rows(bufnr, state)
   for _ = 1, required do
     table.insert(blanks, "")
   end
-  vim.api.nvim_buf_set_lines(bufnr, start_line, end_line, false, blanks)
-  index.mark_dirty(bufnr)
+  mutation.apply(bufnr, start_line, end_line, blanks, { index_sync = "mark_dirty" })
   return true
 end
 
@@ -341,11 +341,10 @@ function M.stop(bufnr, opts)
   local entry = index.get_by_id(bufnr, state.cell_id)
   if entry and opts.delete_cell then
     vim.api.nvim_buf_clear_namespace(bufnr, M.ns, entry.start + 1, entry.finish + 1)
-    vim.api.nvim_buf_set_lines(bufnr, entry.start, entry.finish + 1, false, {})
+    mutation.apply(bufnr, entry.start, entry.finish + 1, {}, { index_sync = "mark_dirty" })
     local line_count = vim.api.nvim_buf_line_count(bufnr)
     local target_line = math.max(1, math.min(entry.start + 1, line_count))
     pcall(vim.api.nvim_win_set_cursor, 0, { target_line, 0 })
-    index.mark_dirty(bufnr)
   elseif entry then
     vim.api.nvim_buf_clear_namespace(bufnr, M.ns, entry.start + 1, entry.finish + 1)
   end
