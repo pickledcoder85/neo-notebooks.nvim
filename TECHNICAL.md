@@ -54,6 +54,10 @@ This document summarizes implementation choices and the evolution of core featur
   - Owns conversion between nbformat output objects and NeoNotebook typed output items.
 - `lua/neo_notebooks/formats/ipynb_codec.lua`
   - Owns `.ipynb` document decode/encode and import/export cell/document assembly helpers.
+- `lua/neo_notebooks/formats/notebook_adapter.lua`
+  - Owns buffer-facing format adapter workflows (`import/export/open`, state synchronization, output-state updates).
+- `lua/neo_notebooks/ipynb.lua`
+  - Compatibility shim that re-exports `lua/neo_notebooks/formats/notebook_adapter.lua`.
 - `lua/neo_notebooks/containment.lua`
   - Canonical cursor/cell geometry helper.
   - Computes active cell identity, editable body bounds, and protected floor.

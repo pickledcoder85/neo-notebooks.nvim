@@ -1,0 +1,241 @@
+local cells = require("neo_notebooks.cells")
+local index = require("neo_notebooks.index")
+local output = require("neo_notebooks.output")
+local jupytext_percent = require("neo_notebooks.formats.jupytext_percent")
+local ipynb_outputs = require("neo_notebooks.formats.ipynb_outputs")
+local ipynb_codec = require("neo_notebooks.formats.ipynb_codec")
+
+local M = {}
+
+local function read_file(path)
+  local ok, data = pcall(vim.fn.readfile, path)
+  if not ok then
+    return nil, "Failed to read file"
+  end
+  return table.concat(data, "\n")
+end
+
+local function read_file_lines(path)
+  local ok, data = pcall(vim.fn.readfile, path)
+  if not ok then
+    return nil, "Failed to read file"
+  end
+  return data
+end
+
+local function write_file(path, content)
+  local ok, err = pcall(vim.fn.writefile, vim.split(content, "\n", { plain = true }), path)
+  if not ok then
+    return nil, err
+  end
+  return true
+end
+
+local function get_state(bufnr)
+  local ok, value = pcall(vim.api.nvim_buf_get_var, bufnr, "neo_notebooks_ipynb_state")
+  if ok and type(value) == "table" then
+    return value
+  end
+  local state = {
+    nbformat = 4,
+    nbformat_minor = 5,
+    metadata = {},
+    cells = {},
+    order = {},
+    exec_count = 0,
+  }
+  pcall(vim.api.nvim_buf_set_var, bufnr, "neo_notebooks_ipynb_state", state)
+  return state
+end
+
+local function set_state(bufnr, state)
+  pcall(vim.api.nvim_buf_set_var, bufnr, "neo_notebooks_ipynb_state", state)
+end
+
+function M.import_ipynb(path, bufnr)
+  bufnr = bufnr or 0
+  local content, err = read_file(path)
+  if not content then
+    return nil, err
+  end
+
+  local doc, decode_err = ipynb_codec.decode_document(content)
+  if not doc then
+    return nil, decode_err
+  end
+
+  local cells_in = ipynb_codec.prepare_import_cells(doc.cells or {})
+  local lines = ipynb_codec.cells_to_buffer_lines(cells_in)
+
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+
+  local state = get_state(bufnr)
+  state.nbformat = doc.nbformat or 4
+  state.nbformat_minor = doc.nbformat_minor or 5
+  state.metadata = doc.metadata or {}
+  state.cells = {}
+  state.order = {}
+  state.exec_count = 0
+
+  local idx = index.rebuild(bufnr)
+  for i, cell in ipairs(cells_in) do
+    local entry = idx.list[i]
+    if entry then
+      local cell_id = entry.id
+      local exec_count = cell.execution_count
+      if type(exec_count) == "number" then
+        state.exec_count = math.max(state.exec_count, exec_count)
+      end
+      state.cells[cell_id] = {
+        cell_type = cell.cell_type or entry.type,
+        metadata = cell.metadata or {},
+        attachments = cell.attachments or {},
+        outputs = cell.outputs or {},
+        execution_count = exec_count,
+      }
+      table.insert(state.order, cell_id)
+    end
+  end
+  set_state(bufnr, state)
+
+  output.clear_all(bufnr)
+  for _, entry in ipairs(idx.list) do
+      local stored = state.cells[entry.id]
+      if stored and stored.outputs and entry.type == "code" then
+      local items = ipynb_outputs.outputs_to_items(stored.outputs)
+      if #items > 0 then
+        output.show_payload(bufnr, {
+          id = entry.id,
+          start = entry.start,
+          finish = entry.finish,
+          type = entry.type,
+        }, { items = items }, {})
+      end
+    end
+  end
+  return true
+end
+
+function M.export_ipynb(path, bufnr)
+  bufnr = bufnr or 0
+  local list = cells.get_cells(bufnr)
+  local idx = index.rebuild(bufnr)
+  local state = get_state(bufnr)
+  local cells_out = ipynb_codec.build_export_cells(bufnr, list, idx, state)
+  local doc = ipynb_codec.build_document(
+    state,
+    cells_out,
+    vim.b[bufnr] and vim.b[bufnr].neo_notebooks_is_jupytext,
+    jupytext_percent.default_metadata
+  )
+  local json, json_err = ipynb_codec.encode_document(doc)
+  if not json then
+    return nil, json_err
+  end
+  return write_file(path, json)
+end
+
+function M.import_jupytext(path, bufnr)
+  bufnr = bufnr or 0
+  local lines_in, err = read_file_lines(path)
+  if not lines_in then
+    return nil, err
+  end
+  if not vim.api.nvim_get_option_value("modifiable", { buf = bufnr }) then
+    return nil, "Target buffer is not modifiable"
+  end
+
+  local cells_in, parsed_meta = jupytext_percent.parse(lines_in)
+  local lines = ipynb_codec.cells_to_buffer_lines(cells_in)
+  local ok_set, set_err = pcall(vim.api.nvim_buf_set_lines, bufnr, 0, -1, false, lines)
+  if not ok_set then
+    return nil, tostring(set_err)
+  end
+
+  local state = get_state(bufnr)
+  state.nbformat = 4
+  state.nbformat_minor = 5
+  state.metadata = parsed_meta or {}
+  state.metadata.jupytext = vim.tbl_deep_extend("force", jupytext_percent.default_metadata(), state.metadata.jupytext or {})
+  state.cells = {}
+  state.order = {}
+  state.exec_count = 0
+
+  local idx = index.rebuild(bufnr)
+  for i, src_cell in ipairs(cells_in) do
+    local entry = idx.list[i]
+    if entry then
+      local cell_id = entry.id
+      state.cells[cell_id] = {
+        cell_type = src_cell.cell_type or entry.type,
+        metadata = {},
+        attachments = {},
+        outputs = {},
+        execution_count = nil,
+      }
+      table.insert(state.order, cell_id)
+    end
+  end
+  set_state(bufnr, state)
+  vim.b[bufnr].neo_notebooks_is_jupytext = true
+  output.clear_all(bufnr)
+  return true
+end
+
+function M.open_jupytext(path)
+  vim.cmd("enew")
+  local bufnr = vim.api.nvim_get_current_buf()
+  vim.api.nvim_buf_set_name(bufnr, path .. ".nn")
+  vim.b[bufnr].neo_notebooks_enabled = true
+  local ok, err = M.import_jupytext(path, bufnr)
+  if not ok then
+    return nil, err, bufnr
+  end
+  return true, nil, bufnr
+end
+
+function M.update_cell_output(bufnr, cell_id, payload)
+  bufnr = bufnr or 0
+  if not cell_id or not payload or type(payload) ~= "table" then
+    return
+  end
+  local state = get_state(bufnr)
+  local existing = state.cells[cell_id] or {}
+  if payload.items then
+    existing.outputs = ipynb_outputs.items_to_outputs(payload.items)
+    state.exec_count = (state.exec_count or 0) + 1
+    existing.execution_count = state.exec_count
+  end
+  state.cells[cell_id] = existing
+  set_state(bufnr, state)
+end
+
+function M.open_ipynb(path)
+  local existing = vim.fn.bufnr(path)
+  if existing ~= -1 then
+    local bufnr = existing
+    vim.api.nvim_buf_set_option(bufnr, "buftype", "acwrite")
+    vim.api.nvim_buf_set_option(bufnr, "swapfile", false)
+    vim.api.nvim_buf_set_option(bufnr, "modifiable", true)
+    vim.b[bufnr].neo_notebooks_enabled = true
+    vim.api.nvim_buf_call(bufnr, function()
+      vim.cmd("setfiletype python")
+    end)
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, {})
+    local ok, err = M.import_ipynb(path, bufnr)
+    return ok, err, bufnr
+  end
+  vim.cmd("enew")
+  local bufnr = vim.api.nvim_get_current_buf()
+  vim.api.nvim_buf_set_name(bufnr, path)
+  vim.api.nvim_buf_set_option(bufnr, "buftype", "acwrite")
+  vim.api.nvim_buf_set_option(bufnr, "swapfile", false)
+  vim.b[bufnr].neo_notebooks_enabled = true
+  vim.api.nvim_buf_call(bufnr, function()
+    vim.cmd("setfiletype python")
+  end)
+  local ok, err = M.import_ipynb(path, bufnr)
+  return ok, err, bufnr
+end
+
+return M

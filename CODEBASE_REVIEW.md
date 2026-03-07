@@ -869,7 +869,7 @@ NeoNotebookSnakeCell
 ## Phase Worklist - Phase 5: Format Layer Split
 
 - Phase: 5 - format layer split
-- Status: in_progress
+- Status: closed
 - Related sweep findings:
   - Sweep 1: finding 4
   - Sweep 2: finding 4
@@ -904,6 +904,9 @@ NeoNotebookSnakeCell
 - Added `lua/neo_notebooks/formats/ipynb_codec.lua`:
   - JSON decode/encode helpers for notebook documents.
   - import/export cell/document assembly helpers (line normalization, leading blank-code normalization, metadata/doc build).
+- Added `lua/neo_notebooks/formats/notebook_adapter.lua`:
+  - buffer-facing format adapter flows (`import_ipynb`, `export_ipynb`, `import_jupytext`, open flows, output-state updates).
+  - retained public API compatibility via `lua/neo_notebooks/ipynb.lua` shim re-export.
 - Updated `ipynb.lua` to consume the extracted parser module for Jupytext import and metadata defaults.
 - Updated `ipynb.lua` to consume extracted output conversion helpers.
 - Updated `ipynb.lua` to consume extracted document assembly/parsing helpers.
