@@ -180,9 +180,7 @@ function M.duplicate_cell(bufnr, line)
   local lines = vim.api.nvim_buf_get_lines(bufnr, cell.start, cell.finish + 1, false)
   local insert_at = cell.finish + 1
 
-  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, lines)
-  local index = require("neo_notebooks.index")
-  index.mark_dirty(bufnr)
+  mutation.apply(bufnr, insert_at, insert_at, lines, { index_sync = "mark_dirty" })
   local new_start = insert_at
   vim.api.nvim_win_set_cursor(0, { new_start + 2, 0 })
   M.clamp_cursor_to_cell_left(bufnr, { force = true, clamp_to_line = true })
@@ -207,12 +205,10 @@ function M.split_cell(bufnr, line)
   end
 
   local marker = "# %% [" .. cell.type .. "]"
-  vim.api.nvim_buf_set_lines(bufnr, line, line, false, { marker })
+  mutation.apply(bufnr, line, line, { marker }, { index_sync = "mark_dirty" })
   if cell.id then
     output.clear_by_id(bufnr, cell.id)
   end
-  local index = require("neo_notebooks.index")
-  index.mark_dirty(bufnr)
   vim.api.nvim_win_set_cursor(0, { line + 2, 0 })
   vim.cmd("startinsert")
 end
@@ -296,9 +292,7 @@ function M.delete_cell(bufnr, line)
       cell.finish = entry.finish
     end
   end
-  vim.api.nvim_buf_set_lines(bufnr, cell.start, cell.finish + 1, false, {})
-  local index = require("neo_notebooks.index")
-  index.mark_dirty(bufnr)
+  mutation.apply(bufnr, cell.start, cell.finish + 1, {}, { index_sync = "mark_dirty" })
   local line_count = vim.api.nvim_buf_line_count(bufnr)
   local target = math.max(1, cell.start + 1)
   target = math.min(target, math.max(1, line_count))
@@ -354,22 +348,18 @@ local function move_once(bufnr, direction)
   local current = list[idx]
   local swap = list[idx + direction]
   local id = current.id
-  local cell_type = current.type
-  local swap_id = swap.id
-  local swap_type = swap.type
   local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
   local current_len = current.finish - current.start + 1
 
-  vim.api.nvim_buf_set_lines(bufnr, current.start, current.finish + 1, false, {})
+  mutation.apply(bufnr, current.start, current.finish + 1, {}, false)
   local insert_at = direction < 0 and swap.start or (swap.finish - current_len + 1)
-  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, current_lines)
+  mutation.apply(bufnr, insert_at, insert_at, current_lines, { index_sync = "mark_dirty" })
   if id then
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
   local max_line = vim.api.nvim_buf_line_count(bufnr)
   local target = math.min(insert_at + 2, max_line)
   vim.api.nvim_win_set_cursor(0, { target, 0 })
-  index.mark_dirty(bufnr)
 end
 
 function M.move_cell_up(bufnr, line, count)
@@ -409,16 +399,14 @@ function M.move_cell_top(bufnr)
   end
   local current = list[idx]
   local id = current.id
-  local cell_type = current.type
   local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
-  vim.api.nvim_buf_set_lines(bufnr, current.start, current.finish + 1, false, {})
+  mutation.apply(bufnr, current.start, current.finish + 1, {}, false)
   local insert_at = list[1].start
-  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, current_lines)
+  mutation.apply(bufnr, insert_at, insert_at, current_lines, { index_sync = "mark_dirty" })
   if id then
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
   vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
-  index.mark_dirty(bufnr)
 end
 
 function M.move_cell_bottom(bufnr)
@@ -442,16 +430,14 @@ function M.move_cell_bottom(bufnr)
   end
   local current = list[idx]
   local id = current.id
-  local cell_type = current.type
   local current_lines = vim.api.nvim_buf_get_lines(bufnr, current.start, current.finish + 1, false)
-  vim.api.nvim_buf_set_lines(bufnr, current.start, current.finish + 1, false, {})
+  mutation.apply(bufnr, current.start, current.finish + 1, {}, false)
   local insert_at = list[#list].finish + 1
-  vim.api.nvim_buf_set_lines(bufnr, insert_at, insert_at, false, current_lines)
+  mutation.apply(bufnr, insert_at, insert_at, current_lines, { index_sync = "mark_dirty" })
   if id then
     vim.api.nvim_buf_set_extmark(bufnr, index.ns, insert_at, 0, { id = id })
   end
   vim.api.nvim_win_set_cursor(0, { insert_at + 2, 0 })
-  index.mark_dirty(bufnr)
 end
 
 function M.toggle_output_mode()
@@ -748,7 +734,7 @@ function M.normalize_spacing(bufnr)
 
   for i = #remove, 1, -1 do
     local r = remove[i]
-    vim.api.nvim_buf_set_lines(bufnr, r.start, r.stop, false, {})
+    mutation.apply(bufnr, r.start, r.stop, {}, false)
   end
 end
 

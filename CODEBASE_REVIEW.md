@@ -842,4 +842,11 @@ NeoNotebookSnakeCell
   - `actions.open_line_above`,
   - `actions.handle_paste_below` protected-zone insertion,
   - `containment.ensure_body_line`.
+- Migrated structural edit paths to helper:
+  - `actions.duplicate_cell`,
+  - `actions.split_cell`,
+  - `actions.delete_cell`,
+  - `actions.move_cell_up` / `actions.move_cell_down`,
+  - `actions.move_cell_top` / `actions.move_cell_bottom`,
+  - `actions.normalize_spacing`.
 - Behavior remains unchanged for migrated paths; tests remain green.
