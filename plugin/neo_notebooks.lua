@@ -256,7 +256,7 @@ clear_snake_keymaps = function(bufnr)
   for _, lhs in ipairs(locked) do
     pcall(vim.keymap.del, "n", lhs, { buffer = bufnr })
   end
-  for _, lhs in ipairs({ "h", "j", "k", "l", "<Esc>" }) do
+  for _, lhs in ipairs({ "h", "j", "k", "l", "<Esc>", "<leader>" }) do
     pcall(vim.keymap.del, "n", lhs, { buffer = bufnr })
   end
   if vim.b[bufnr] then
@@ -289,6 +289,9 @@ set_snake_keymaps = function(bufnr)
   end, opts)
   vim.keymap.set("n", "<Esc>", function()
     snake.stop(bufnr, { delete_cell = true, reason = "esc" })
+  end, opts)
+  vim.keymap.set("n", "<leader>", function()
+    snake.toggle_pause(bufnr)
   end, opts)
   local locked = {
     "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",

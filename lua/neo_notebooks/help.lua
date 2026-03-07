@@ -57,7 +57,7 @@ function M.show()
     "  :NeoNotebookOutputClearAll clear output for all cells",
     "  :NeoNotebookOutputCollapseToggle toggle output collapse",
     "  :NeoNotebookOutputPrint    print output for cell",
-    "  :NeoNotebookSnakeCell      insert/play snake; <Esc>/game over deletes snake cell",
+    "  :NeoNotebookSnakeCell      insert/play snake; <leader> pause, <Esc>/game over deletes cell",
     "",
     "Keymaps:",
   }

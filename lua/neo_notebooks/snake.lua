@@ -5,6 +5,7 @@ local M = {}
 M.ns = vim.api.nvim_create_namespace("neo_notebooks_snake")
 
 local state_by_buf = {}
+local best_score_by_buf = {}
 local snake_hl_ready = false
 
 math.randomseed(os.time())
@@ -82,8 +83,8 @@ local function render_chunks(state)
   end
 
   local lines = {
-    { { "snake: auto-move, h/j/k/l turn, <Esc> exit", "NeoNotebookSnakeHud" } },
-    { { string.format("score: %d", state.score), "NeoNotebookSnakeHud" } },
+    { { "snake: auto-move, h/j/k/l turn, <leader> pause, <Esc> exit", "NeoNotebookSnakeHud" } },
+    { { string.format("score: %d   best: %d%s", state.score, state.best_score or 0, state.paused and "   [paused]" or ""), "NeoNotebookSnakeHud" } },
     { { "┌" .. string.rep("─", state.width) .. "┐", "NeoNotebookSnakeBorder" } },
   }
   for y = 1, state.height do
@@ -130,27 +131,11 @@ local function board_left_col(entry)
   return pad + 1
 end
 
-local function board_cell_width(entry)
-  if entry and entry.layout and entry.layout.left_col and entry.layout.right_col then
-    return math.max(1, (entry.layout.right_col - entry.layout.left_col) + 1)
-  end
-  local win_width = vim.api.nvim_win_get_width(0)
-  local ratio = config.cell_width_ratio or 0.9
-  local width = math.floor(win_width * ratio)
-  width = math.max(config.cell_min_width or 60, width)
-  width = math.min(config.cell_max_width or win_width, width)
-  width = math.min(width, win_width)
-  return math.max(10, width)
-end
-
-local function resolve_board_width(entry, opts)
+local function resolve_board_width(_entry, opts)
   if opts and opts.width ~= nil then
     return math.max(8, tonumber(opts.width) or 18)
   end
-  local cell_width = board_cell_width(entry)
-  -- Keep the board (including box chars) inside the notebook cell interior.
-  local derived = cell_width - 4
-  return math.max(8, derived)
+  return 20
 end
 
 local function ensure_board_rows(bufnr, state)
@@ -209,13 +194,15 @@ function M.start(bufnr, cell_id, opts)
   require("neo_notebooks.render").render(bufnr)
   entry = index.get_by_id(bufnr, cell_id) or entry
   local width = resolve_board_width(entry, opts)
-  local height = math.max(5, tonumber(opts.height) or 5)
+  local height = math.max(5, tonumber(opts.height) or 10)
   local state = {
     cell_id = cell_id,
     width = width,
     height = height,
     dir = "right",
     score = 0,
+    best_score = best_score_by_buf[bufnr] or 0,
+    paused = false,
     alive = true,
     on_exit = opts.on_exit,
     tick_ms = math.max(40, tonumber(opts.tick_ms) or 200),
@@ -276,6 +263,10 @@ function M.move(bufnr, direction)
     render_overlay(bufnr, state)
     return true
   end
+  if state.paused then
+    render_overlay(bufnr, state)
+    return true
+  end
 
   if direction then
     local ok_dir, err_dir = M.set_direction(bufnr, direction)
@@ -307,6 +298,8 @@ function M.move(bufnr, direction)
   table.insert(state.snake, 1, { x = nx, y = ny })
   if state.apple and nx == state.apple.x and ny == state.apple.y then
     state.score = state.score + 1
+    state.best_score = math.max(state.best_score or 0, state.score)
+    best_score_by_buf[bufnr] = state.best_score
     state.apple = random_apple(state)
     if state.auto then
       state.tick_ms = math.max(state.min_tick_ms, state.tick_ms - state.speed_step_ms)
@@ -324,6 +317,17 @@ function M.move(bufnr, direction)
 
   render_overlay(bufnr, state)
   return true
+end
+
+function M.toggle_pause(bufnr)
+  bufnr = bufnr or 0
+  local state = find_state(bufnr)
+  if not state then
+    return nil, "Snake mode is not active"
+  end
+  state.paused = not state.paused
+  render_overlay(bufnr, state)
+  return true, state.paused and "paused" or "running"
 end
 
 function M.stop(bufnr, opts)
@@ -345,6 +349,7 @@ function M.stop(bufnr, opts)
   elseif entry then
     vim.api.nvim_buf_clear_namespace(bufnr, M.ns, entry.start + 1, entry.finish + 1)
   end
+  best_score_by_buf[bufnr] = math.max(best_score_by_buf[bufnr] or 0, state.score or 0)
   state_by_buf[bufnr] = nil
   if type(state.on_exit) == "function" then
     pcall(state.on_exit, opts.reason or "stopped")
