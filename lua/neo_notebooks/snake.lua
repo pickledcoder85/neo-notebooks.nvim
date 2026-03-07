@@ -1,6 +1,8 @@
 local index = require("neo_notebooks.index")
+local config = require("neo_notebooks").config
 
 local M = {}
+M.ns = vim.api.nvim_create_namespace("neo_notebooks_snake")
 
 local state_by_buf = {}
 
@@ -66,29 +68,73 @@ local function render_lines(state)
   end
 
   local lines = {
-    "# neo_notebooks snake mode: h/j/k/l move, <Esc> exit",
-    string.format("# score: %d", state.score),
-    "# +" .. string.rep("-", state.width) .. "+",
+    "snake: auto-move, h/j/k/l turn, <Esc> exit",
+    string.format("score: %d", state.score),
+    "┌" .. string.rep("─", state.width) .. "┐",
   }
   for y = 1, state.height do
-    table.insert(lines, "# |" .. table.concat(grid[y], "") .. "|")
+    table.insert(lines, "│" .. table.concat(grid[y], "") .. "│")
   end
-  table.insert(lines, "# +" .. string.rep("-", state.width) .. "+")
+  table.insert(lines, "└" .. string.rep("─", state.width) .. "┘")
   if not state.alive then
-    table.insert(lines, "# game over (<Esc> to exit snake mode)")
+    table.insert(lines, "game over (<Esc> to exit snake mode)")
   end
   return lines
 end
 
-local function write_cell(bufnr, state)
+local function board_left_col(entry)
+  if entry and entry.layout and entry.layout.left_col then
+    return entry.layout.left_col + 1
+  end
+  local win_width = vim.api.nvim_win_get_width(0)
+  local ratio = config.cell_width_ratio or 0.9
+  local width = math.floor(win_width * ratio)
+  width = math.max(config.cell_min_width or 60, width)
+  width = math.min(config.cell_max_width or win_width, width)
+  width = math.min(width, win_width)
+  width = math.max(10, width)
+  local pad = math.max(0, math.floor((win_width - width) / 2))
+  return pad + 1
+end
+
+local function ensure_board_rows(bufnr, state)
+  local entry = index.get_by_id(bufnr, state.cell_id)
+  if not entry then
+    return false
+  end
+  local required = state.height + 4
+  local start_line = entry.start + 1
+  local end_line = entry.finish + 1
+  local blanks = {}
+  for _ = 1, required do
+    table.insert(blanks, "")
+  end
+  vim.api.nvim_buf_set_lines(bufnr, start_line, end_line, false, blanks)
+  index.mark_dirty(bufnr)
+  return true
+end
+
+local function render_overlay(bufnr, state)
   local entry = index.get_by_id(bufnr, state.cell_id)
   if not entry then
     return false
   end
   local start_line = entry.start + 1
   local end_line = entry.finish + 1
-  vim.api.nvim_buf_set_lines(bufnr, start_line, end_line, false, render_lines(state))
-  index.mark_dirty(bufnr)
+  vim.api.nvim_buf_clear_namespace(bufnr, M.ns, start_line, end_line)
+  local lines = render_lines(state)
+  local left = board_left_col(entry)
+  for i, line in ipairs(lines) do
+    local lnum = start_line + i - 1
+    if lnum <= end_line then
+      vim.api.nvim_buf_set_extmark(bufnr, M.ns, lnum, 0, {
+        virt_text = { { line, "Comment" } },
+        virt_text_pos = "overlay",
+        virt_text_win_col = left,
+        priority = 160,
+      })
+    end
+  end
   return true
 end
 
@@ -126,7 +172,12 @@ function M.start(bufnr, cell_id, opts)
   }
   state.apple = random_apple(state)
   state_by_buf[bufnr] = state
-  write_cell(bufnr, state)
+  if not ensure_board_rows(bufnr, state) then
+    state_by_buf[bufnr] = nil
+    return nil, "Snake mode could not prepare cell rows"
+  end
+  require("neo_notebooks.render").render(bufnr)
+  render_overlay(bufnr, state)
   if state.auto then
     state.timer = vim.fn.timer_start(state.tick_ms, vim.schedule_wrap(function()
       if not state_by_buf[bufnr] then
@@ -163,7 +214,7 @@ function M.move(bufnr, direction)
     return nil, "Snake mode is not active"
   end
   if not state.alive then
-    write_cell(bufnr, state)
+    render_overlay(bufnr, state)
     return true
   end
 
@@ -212,7 +263,7 @@ function M.move(bufnr, direction)
     table.remove(state.snake)
   end
 
-  write_cell(bufnr, state)
+  render_overlay(bufnr, state)
   return true
 end
 
@@ -226,17 +277,14 @@ function M.stop(bufnr, opts)
   stop_timer(state)
   local entry = index.get_by_id(bufnr, state.cell_id)
   if entry and opts.delete_cell then
+    vim.api.nvim_buf_clear_namespace(bufnr, M.ns, entry.start + 1, entry.finish + 1)
     vim.api.nvim_buf_set_lines(bufnr, entry.start, entry.finish + 1, false, {})
     local line_count = vim.api.nvim_buf_line_count(bufnr)
     local target_line = math.max(1, math.min(entry.start + 1, line_count))
     pcall(vim.api.nvim_win_set_cursor, 0, { target_line, 0 })
     index.mark_dirty(bufnr)
   elseif entry then
-    vim.api.nvim_buf_set_lines(bufnr, entry.start + 1, entry.finish + 1, false, {
-      "# snake mode exited",
-      "",
-    })
-    index.mark_dirty(bufnr)
+    vim.api.nvim_buf_clear_namespace(bufnr, M.ns, entry.start + 1, entry.finish + 1)
   end
   state_by_buf[bufnr] = nil
   if type(state.on_exit) == "function" then

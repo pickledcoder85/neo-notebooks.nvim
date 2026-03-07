@@ -341,8 +341,17 @@ with_buf({
   local ok_start, err = snake.start(buf, cell.id, { width = 10, height = 6, auto = false })
   ok(ok_start, err)
   ok(snake.is_active(buf), "snake mode active after start")
-  local line = vim.api.nvim_buf_get_lines(buf, cell.start + 1, cell.start + 2, false)[1] or ""
-  ok(line:find("snake mode", 1, true) ~= nil, "snake instructions rendered")
+  local marks = vim.api.nvim_buf_get_extmarks(buf, snake.ns, { 0, 0 }, { -1, -1 }, { details = true })
+  local saw_overlay = false
+  for _, mark in ipairs(marks) do
+    local details = mark[4]
+    local vt = details and details.virt_text
+    if vt and vt[1] and (vt[1][1] or ""):find("snake:", 1, true) then
+      saw_overlay = true
+      break
+    end
+  end
+  ok(saw_overlay, "snake overlay rendered")
   local ok_move, err_move = snake.move(buf, "right")
   ok(ok_move, err_move)
   local stopped = snake.stop(buf, { delete_cell = true })
