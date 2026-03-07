@@ -227,6 +227,7 @@ This document summarizes implementation choices and the evolution of core featur
 - Open creates a new buffer, sets `filetype=python`, and imports content.
 - When `auto_open_ipynb` is enabled, reading a `.ipynb` auto-opens it into a scratch buffer.
 - `.ipynb` buffers use `buftype=acwrite`; `:w` triggers export to the original file.
+- After import/open setup mutations, undo baseline is reset to prevent `u` from rolling back to raw JSON view.
 
 ## Auto-render and keymaps
 

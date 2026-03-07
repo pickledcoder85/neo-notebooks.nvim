@@ -371,6 +371,7 @@ Notes:
 - Existing outputs are rendered on import for code cells.
 - Markdown and code cells are supported; other cell types are treated as code.
 - Import drops a leading blank code cell if it appears before the first markdown cell.
+- After `.ipynb` import/open, undo baseline is reset so extra `u` does not revert to raw JSON import state.
 
 ### Filetypes
 
