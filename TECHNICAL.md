@@ -27,47 +27,18 @@ This document summarizes implementation choices and the evolution of core featur
   - keep `ARCHITECTURE_FLOWCHARTS.md` updated with current/target diagrams and phase progress;
   - keep `CODEBASE_REVIEW.md` phase status and checklists in sync with implemented changes.
 
-### Feature worklist: Streaming UX defaults v1
+### Recently completed feature work
 
-- Phase: `draft -> simplify -> updated -> implement` (active branch: `feature/streaming-ux-defaults-v1`).
-- Scope:
-  - define one core default non-`tqdm` progress rendering style for streaming output.
-  - preserve raw output compatibility for non-progress lines and opt-out users.
-- Files to touch:
-  - `lua/neo_notebooks/exec.lua` (stream/final-output progress-line formatter),
-  - `lua/neo_notebooks/init.lua` (default config knobs),
-  - `tests/integration.lua` (default-style regression coverage),
-  - `README.md`, `TODO.md`, `TECHNICAL.md` (docs gate),
-  - `ARCHITECTURE_FLOWCHARTS.md` if flow contract changes.
-- Tests:
-  - run `tests/core_contract.lua`,
-  - run `tests/integration.lua`,
-  - run `tests/performance.lua`.
-- Acceptance criteria:
-  - recognized `*_PROGRESS <pct>% (<done>/<total>)` lines render in bar style by default.
-  - supported overrides are `bar`, `pct`, `ratio`, and `raw`.
-  - existing `tqdm` carriage-return replacement behavior remains stable.
-  - no queue/session regressions in integration lane.
-
-### Feature worklist: Interop reliability v1
-
-- Phase: `draft -> simplify -> updated -> implement` (active branch: `feature/interop-reliability-v1`).
-- Scope:
-  - enforce deterministic errors for malformed `.ipynb` document shapes.
-  - normalize imported cell payloads so interop remains valid even with nonstandard producers.
-- Files to touch:
-  - `lua/neo_notebooks/formats/ipynb_codec.lua` (decode validation + cell normalization),
-  - `lua/neo_notebooks/formats/ipynb_outputs.lua` (safe malformed-field extraction),
-  - `tests/core_contract.lua` (malformed/error-path and normalization invariants),
-  - docs gate files (`README.md`, `TODO.md`, `TECHNICAL.md`, architecture note if flow changes).
-- Tests:
-  - run `tests/core_contract.lua`,
-  - run `tests/integration.lua`,
-  - run `tests/performance.lua`.
-- Acceptance criteria:
-  - malformed top-level/cells-shape `.ipynb` imports fail with readable errors.
+- Streaming UX defaults v1:
+  - non-`tqdm` progress lines render in bar style by default.
+  - overrides supported: `bar`, `pct`, `ratio`, `raw`.
+  - carriage-return replacement semantics remain stable for `tqdm`-style progress.
+- Interop reliability v1/v2:
+  - malformed `.ipynb` document shapes fail with readable errors.
   - unknown/nonstandard imported cell types fall back to `code`.
   - string `source` imports as stable lines and exports as valid `.ipynb`.
+  - object-shaped `cells` payloads are rejected (must be list-shaped).
+  - malformed code-cell `outputs` containers normalize to safe list defaults.
 
 ## Error/notify policy
 
@@ -145,9 +116,9 @@ This document summarizes implementation choices and the evolution of core featur
   has changed and `interrupt_on_rerun` is enabled, the active request is interrupted
   and the new run starts immediately.
 
-## Kernel controls (Phase 7 in progress)
+## Kernel controls (implemented)
 
-- Kernel/session control UX is planned as keymap-first, with command aliases retained.
+- Kernel/session control UX is keymap-first, with command aliases retained.
 - Proposed default controls under `<leader>k*`:
   - `<leader>kr`: restart kernel session
   - `<leader>ki`: interrupt active execution
@@ -166,7 +137,7 @@ This document summarizes implementation choices and the evolution of core featur
   - `pause` means dispatch pause (hold dequeue/start of new requests), not OS-level process suspend.
   - `kernel_recovery_retries` (default `1`) controls bounded dispatch-time auto-recovery attempts.
 
-## Planned kernel status visibility (Phase 7)
+## Kernel status visibility (implemented)
 
 - Primary channel: statusline integration via lightweight API:
   - `require("neo_notebooks").kernel_status()`

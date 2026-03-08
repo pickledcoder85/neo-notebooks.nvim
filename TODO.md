@@ -22,32 +22,17 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Next
 
-- Priority 1: Performance/scalability hardening follow-through:
-  - Profile render/index/scheduler hot paths on large notebooks.
-  - Add stress tests for high output volume and long-running edit/render loops.
-  - Define and enforce baseline regression thresholds (render latency, queue latency) for CI/local gates.
-  - Progress update:
-    - Added synthetic large fixtures (`tests/fixtures/perf`) and optional `tests/performance.lua` lane with conservative timing budgets for import/index/render/export.
-    - Added execution stress coverage for batch compute, large streamed output, and fetch-style large-data read (`file://` payload), with optional real network fetch gate.
-    - Streaming-depth v1: live stream preview now uses event-order merging with a global preview cap, plus carriage-return sanitization and placeholder configurability.
-    - Manual soak fixture now supports non-`tqdm` progress styles (`pct`, `ratio`, `bar`) for UX testing of default streaming behavior.
-    - Added profile-based threshold policy for performance lane (`conservative|strict`) plus optional budget scaling knob for environment variability.
-
-- Priority 2: Reliability contracts for format interop follow-through:
-  - Expand Jupytext fixture corpus with additional real-world repos.
-  - Tighten round-trip invariants for metadata/outputs across NeoNotebooks and IDEs (cross-IDE coverage).
-  - Progress update:
-    - Added malformed `.ipynb` shape validation (top-level and `cells` field) with explicit errors.
-    - Added import normalization for unknown cell types, string `source`, and malformed metadata/attachments/outputs.
-    - Added core-contract tests for malformed-shape rejection and normalization/export invariants.
-    - Tightened `.ipynb` shape validation to reject object-shaped `cells` (must be a JSON list), and normalized malformed output containers to empty output lists on export.
-
-- Priority 3: UI/Neovim integration polish:
+- Priority 1: UI/Neovim integration polish:
   - Close cursor/alignment edge cases under resize/split/tab transitions.
   - Further stabilize keymap/lifecycle behavior across buffer attach/detach flows.
   - Improve long-running execution status visibility.
 
-- Priority 4: Architecture formalization + cleanup sweep:
+- Priority 2: Maintenance hardening:
+  - Keep performance lane thresholds calibrated (`conservative|strict` + scale) as test environments evolve.
+  - Continue interop fixture expansion for Jupytext and malformed nbformat producers.
+  - Add targeted regression tests for any newly discovered edge cases.
+
+- Priority 3: Architecture formalization + cleanup sweep:
   - Revisit module boundaries, dependency direction, and state ownership.
   - Remove dead code and tighten high-risk error paths.
   - Add regression tests around refactored hotspots.
@@ -63,6 +48,17 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Done (recent)
 
+- Performance/scalability hardening follow-through:
+  - Added synthetic large fixtures (`tests/fixtures/perf`) and optional `tests/performance.lua` lane with timing budgets for import/index/render/export.
+  - Added execution stress coverage for batch compute, large streamed output, and fetch-style large-data read (`file://` payload), with optional real network fetch gate.
+  - Added profile-based threshold policy for performance lane (`conservative|strict`) plus optional budget scaling knob.
+- Interop reliability follow-through:
+  - Added malformed `.ipynb` shape validation (top-level and `cells` field) with explicit errors.
+  - Added import normalization for unknown cell types, string `source`, and malformed metadata/attachments/outputs.
+  - Tightened `.ipynb` shape validation to reject object-shaped `cells` (must be a JSON list), and normalized malformed output containers to empty output lists on export.
+- Documentation/cleanup sweep:
+  - Reconciled `README.md`/`TECHNICAL.md`/`TODO.md`/`ARCHITECTURE_FLOWCHARTS.md`/`CODEBASE_REVIEW.md` with current merged behavior and phase status.
+  - Performed dead-code scan; no low-risk runtime deletions identified without behavior/compatibility risk.
 - Improved markdown rendering polish:
   - Inline markdown overlay for headings and emphasis/code spans.
   - Fenced code blocks (` ```lang ... ``` `) rendered with markdown-aware highlight groups.
