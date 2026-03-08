@@ -315,6 +315,11 @@ Current Phase 7 baseline:
 
 - Headless tests live in `tests/run.lua`.
 - Jupytext compatibility fixtures live in `tests/fixtures/jupytext/` and are validated in headless tests.
+- Fixture coverage includes:
+  - upstream README/docs examples,
+  - mixed marker variants (`[md]`, indented `# %%`),
+  - malformed header fallback cases (missing closing `# ---`),
+  - import error paths (missing file, non-modifiable target buffer).
 - Test lanes:
   - `tests/core_contract.lua` (required core signal; skips optional kitty backend assertions)
   - `tests/integration.lua` (broad workflow signal; skips optional kitty backend assertions)

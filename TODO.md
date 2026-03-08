@@ -8,6 +8,8 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Initial `py:percent` open/import support landed (`:NeoNotebookImportJupytext` / `:NeoNotebookOpenJupytext`).
   - Initial `metadata.jupytext` seed + `.ipynb` export round-trip landed.
   - Initial compatibility fixtures from official Jupytext README/docs landed (`tests/fixtures/jupytext`).
+  - Added robustness fixtures for mixed marker styles (`[md]`, indented `# %%`) and malformed header fallback behavior.
+  - Added import error-path tests (missing file, non-modifiable target buffer).
   - Expand fixture corpus with additional real-world repos to further reduce format drift risk.
 - Structured codebase review sweeps (see `CODEBASE_REVIEW.md`):
   - Sweep 1: contract map (completed; module/API/state/UI artifacts documented).

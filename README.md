@@ -447,9 +447,10 @@ Open in a new notebook-view buffer:
 ```
 
 Notes:
-- Supports Jupytext percent cell markers (`# %%`, `# %% [markdown]`, `# %% [md]`).
+- Supports Jupytext percent cell markers (`# %%`, `# %% [markdown]`, `# %% [md]`), including indented marker lines.
 - Markdown percent lines are converted to normal markdown cell text in NeoNotebook view.
 - A default `metadata.jupytext` block is seeded when missing.
+- Malformed/partial Jupytext headers (for example missing closing `# ---`) fall back safely to default metadata.
 - Exporting to `.ipynb` preserves/round-trips `metadata.jupytext`.
 
 ### Filetypes

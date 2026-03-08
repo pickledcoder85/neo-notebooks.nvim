@@ -379,6 +379,54 @@ with_buf({ "" }, function(buf)
   eq(idx.list[3].type, "code", "docs fixture third code")
 end)
 
+-- Test: jupytext fixture supports indented marker lines and [md] shorthand
+with_buf({ "" }, function(buf)
+  local path = fixture_root .. "/mixed_marker_styles.py"
+  local ok_import, err = ipynb.import_jupytext(path, buf)
+  ok(ok_import, err)
+
+  local idx = index.rebuild(buf)
+  eq(#idx.list, 2, "mixed-style fixture parsed into two cells")
+  eq(idx.list[1].type, "markdown", "first cell markdown from [md] marker")
+  eq(idx.list[2].type, "code", "second cell code from indented marker")
+
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, 8, false)
+  eq(lines[1], "# %% [markdown]", "normalized markdown marker")
+  eq(lines[2], "Mixed Marker Styles", "markdown content decommented")
+  eq(lines[8], "# %% [code]", "normalized code marker")
+end)
+
+-- Test: jupytext header missing closer falls back to default metadata and still imports cells
+with_buf({ "" }, function(buf)
+  local path = fixture_root .. "/header_missing_closer.py"
+  local ok_import, err = ipynb.import_jupytext(path, buf)
+  ok(ok_import, err)
+
+  local idx = index.rebuild(buf)
+  ok(#idx.list >= 2, "missing-closer fixture still parsed into cells")
+  eq(idx.list[#idx.list].type, "code", "final parsed cell remains code")
+
+  local state = vim.api.nvim_buf_get_var(buf, "neo_notebooks_ipynb_state")
+  ok(state.metadata and state.metadata.jupytext, "default jupytext metadata seeded on malformed header")
+  eq(state.metadata.jupytext.text_representation.format_name, "percent", "default format preserved on malformed header")
+end)
+
+-- Test: import_jupytext returns readable errors for missing files and non-modifiable buffers
+with_buf({ "# %% [code]", "x = 1" }, function(buf)
+  local missing = vim.fn.tempname() .. ".py"
+  local ok_missing, err_missing = ipynb.import_jupytext(missing, buf)
+  ok(ok_missing == nil, "missing-file import fails")
+  ok(type(err_missing) == "string" and err_missing:find("Failed to read file", 1, true) ~= nil, "missing-file error message")
+
+  vim.api.nvim_set_option_value("modifiable", false, { buf = buf })
+  local tmp = vim.fn.tempname() .. ".py"
+  local ok_write = pcall(vim.fn.writefile, { "# %% [code]", "x = 2" }, tmp)
+  ok(ok_write, "wrote temp jupytext file for non-modifiable test")
+  local ok_ro, err_ro = ipynb.import_jupytext(tmp, buf)
+  ok(ok_ro == nil, "non-modifiable import fails")
+  ok(type(err_ro) == "string" and err_ro:find("not modifiable", 1, true) ~= nil, "non-modifiable error message")
+end)
+
 -- Test: kernel queue pause/resume toggles paused session state
 with_buf({
   "# %% [code]",

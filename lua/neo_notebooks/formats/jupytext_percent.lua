@@ -25,13 +25,14 @@ local function parse_header(lines)
   if not lines or #lines == 0 then
     return nil, 1
   end
-  if lines[1] ~= "# ---" then
+  local first = tostring(lines[1] or ""):gsub("^\239\187\191", "")
+  if vim.trim(first) ~= "# ---" then
     return nil, 1
   end
   local body = {}
   local end_idx = nil
   for i = 2, #lines do
-    if lines[i] == "# ---" then
+    if vim.trim(tostring(lines[i] or "")) == "# ---" then
       end_idx = i
       break
     end
@@ -92,7 +93,7 @@ local function parse_percent_cell_type(line)
   if type(line) ~= "string" then
     return nil
   end
-  if not line:match("^#%s*%%%%") then
+  if not line:match("^%s*#%s*%%%%") then
     return nil
   end
   local tag = line:match("%[(.-)%]") or ""
@@ -104,16 +105,17 @@ local function parse_percent_cell_type(line)
 end
 
 local function markdown_from_percent_line(line)
-  if line == "#" then
+  local body = line:match("^%s*#(.*)$")
+  if not body then
+    return line
+  end
+  if body == "" then
     return ""
   end
-  if line:sub(1, 2) == "# " then
-    return line:sub(3)
+  if body:sub(1, 1) == " " then
+    return body:sub(2)
   end
-  if line:sub(1, 1) == "#" then
-    return line:sub(2)
-  end
-  return line
+  return body
 end
 
 function M.parse(lines)
