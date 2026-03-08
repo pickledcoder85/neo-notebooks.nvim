@@ -5,6 +5,8 @@ best-effort summary based on existing documentation and recent commits.
 
 ## Unreleased
 
+- Documentation/state sync:
+  - Reconciled `README.md`, `TODO.md`, `TECHNICAL.md`, `ARCHITECTURE_FLOWCHARTS.md`, and `CODEBASE_REVIEW.md` to reflect current merged phase/feature status.
 - Kernel/session robustness:
   - Added dead active-request reconciliation when kernel exits mid-flight.
   - Stale busy state is now cleared (`kernel:error`) and next-run recovery path is preserved.

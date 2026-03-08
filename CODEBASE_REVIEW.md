@@ -91,7 +91,7 @@ After each sweep implementation branch:
 
 - Date: 2026-03-07
 - Sweep owner: Codex (GPT-5)
-- Status: open
+- Status: closed
 
 ### Files reviewed
 
@@ -154,7 +154,7 @@ After each sweep implementation branch:
 
 - Date: 2026-03-07
 - Sweep owner: Codex (GPT-5)
-- Status: open
+- Status: closed
 
 ### Files reviewed
 
@@ -219,7 +219,7 @@ After each sweep implementation branch:
 
 - Date: 2026-03-07
 - Sweep owner: Codex (GPT-5)
-- Status: open
+- Status: closed
 
 ### Files reviewed
 
@@ -278,7 +278,7 @@ After each sweep implementation branch:
 
 - Date: 2026-03-07
 - Sweep owner: Codex (GPT-5)
-- Status: open
+- Status: closed
 
 ### Objectives
 
@@ -382,7 +382,7 @@ After each sweep implementation branch:
 
 - Date: 2026-03-07
 - Sweep owner: Codex (GPT-5)
-- Status: open
+- Status: closed
 
 ### Files reviewed
 
@@ -981,7 +981,7 @@ NeoNotebookSnakeCell
 ## Phase Worklist - Phase 7: Kernel/Session State Machine and Recovery
 
 - Phase: 7 - kernel/session robustness
-- Status: in_progress
+- Status: closed
 - Related sweep findings:
   - Sweep 1: findings 6, 7
   - Sweep 2: findings 5, 8
