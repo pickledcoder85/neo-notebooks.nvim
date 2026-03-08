@@ -219,11 +219,22 @@ function M.register(ctx)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookOutputCollapseToggle", function()
-    actions.toggle_output_collapse(0)
+    local collapsed, err = actions.toggle_output_collapse(0)
+    if collapsed == nil then
+      vim.notify(err or "NeoNotebook: no output to collapse", vim.log.levels.WARN)
+      return
+    end
+    local label = collapsed and "collapsed" or "expanded"
+    vim.notify("NeoNotebook: output " .. label, vim.log.levels.INFO)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookOutputPrint", function()
-    actions.print_output(0)
+    local text, err = actions.print_output(0)
+    if not text then
+      vim.notify(err or "NeoNotebook: no output to print", vim.log.levels.WARN)
+      return
+    end
+    vim.notify(text, vim.log.levels.INFO)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookImageClear", function()
@@ -261,7 +272,10 @@ function M.register(ctx)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookCellYank", function()
-    actions.yank_cell(0)
+    local ok = actions.yank_cell(0)
+    if ok then
+      vim.notify("NeoNotebook: cell yanked", vim.log.levels.INFO)
+    end
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookCellMoveUp", function()

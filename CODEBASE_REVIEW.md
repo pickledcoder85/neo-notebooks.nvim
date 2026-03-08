@@ -911,3 +911,36 @@ NeoNotebookSnakeCell
 - Updated `ipynb.lua` to consume extracted output conversion helpers.
 - Updated `ipynb.lua` to consume extracted document assembly/parsing helpers.
 - No user-visible behavior change; current test lanes remain green.
+
+## Phase Worklist - Phase 6: Error/Notify Policy
+
+- Phase: 6 - error/notify policy
+- Status: in_progress
+- Related sweep findings:
+  - Sweep 1: finding 7
+  - Sweep 2: finding 8
+
+### Detailed task list (current slice)
+
+1. Move user-facing notify ownership to command boundary for selected high-churn actions.
+2. Keep internal action layer returning structured results (`ok/value`, `nil/err`) without direct notify side effects.
+3. Validate no behavior regressions in headless lanes.
+
+### Exact files touched (current slice)
+
+- `lua/neo_notebooks/actions.lua`
+- `lua/neo_notebooks/entrypoint/commands.lua`
+
+### Tests run
+
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/core_contract.lua" -c qa`
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/integration.lua" -c qa`
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_skip_optional_kitty=1" -c "luafile tests/run.lua" -c qa`
+- `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/optional_kitty.lua" -c qa` (expected non-kitty optional failure signal)
+
+### Phase 6 Progress Notes (Current Iteration)
+
+- `actions.print_output` now returns `(text)` or `(nil, err)` instead of notifying directly.
+- `actions.toggle_output_collapse` now returns `(collapsed:boolean)` or `(nil, err)` instead of notifying directly.
+- `actions.yank_cell` now returns success signal; command layer owns success notification.
+- `entrypoint/commands.lua` now performs user notifications for `NeoNotebookOutputPrint`, `NeoNotebookOutputCollapseToggle`, and `NeoNotebookCellYank`.

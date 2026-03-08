@@ -249,11 +249,10 @@ function M.print_output(bufnr, line)
   end
   local lines = cell.id and output.get_display_lines(bufnr, cell.id) or nil
   if not lines or #lines == 0 then
-    vim.notify("NeoNotebook: no output to print", vim.log.levels.WARN)
-    return
+    return nil, "NeoNotebook: no output to print"
   end
   local text = table.concat(lines, "\n")
-  vim.notify(text, vim.log.levels.INFO)
+  return text
 end
 
 function M.toggle_output_collapse(bufnr, line)
@@ -269,15 +268,13 @@ function M.toggle_output_collapse(bufnr, line)
   end
   local entry = cell.id and output.get_entry(bufnr, cell.id) or nil
   if not entry then
-    vim.notify("NeoNotebook: no output to collapse", vim.log.levels.WARN)
-    return
+    return nil, "NeoNotebook: no output to collapse"
   end
   local next_state = output.toggle_collapse(bufnr, cell.id)
   if next_state == nil then
-    return
+    return nil, "NeoNotebook: output collapse toggle failed"
   end
-  local label = next_state and "collapsed" or "expanded"
-  vim.notify("NeoNotebook: output " .. label, vim.log.levels.INFO)
+  return next_state
 end
 
 function M.delete_cell(bufnr, line)
@@ -319,7 +316,7 @@ function M.yank_cell(bufnr, line)
   end
   local lines = vim.api.nvim_buf_get_lines(bufnr, cell.start, cell.finish + 1, false)
   vim.fn.setreg("\"", lines)
-  vim.notify("NeoNotebook: cell yanked", vim.log.levels.INFO)
+  return true
 end
 
 local function move_once(bufnr, direction)

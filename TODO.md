@@ -19,6 +19,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Phase 3 (completed): entrypoint decomposition (keymap/lifecycle/command wiring extracted with bootstrap module).
   - Phase 4 (completed): mutation/render contract consolidation (shared mutation helper + named modes + migrated high-traffic call sites).
   - Phase 5 (completed): format layer split (Jupytext parser + output codec + ipynb codec + notebook adapter split).
+  - Phase 6 (in progress): error/notify policy (command-boundary notify migration started).
 
 ## Next
 
