@@ -977,3 +977,105 @@ NeoNotebookSnakeCell
   - `actions` stores/returns guard reasons through `consume_last_guard_reason`.
   - `entrypoint/keymaps.lua` now owns guard warning notifications for `dd`, `d`, `x`, `D`, visual `d`, `<BS>`, and `<Del>` guard flows.
 - Closure audit: remaining non-debug `vim.notify` calls are now confined to boundary surfaces (`entrypoint/commands.lua`, `entrypoint/keymaps.lua`, `entrypoint/lifecycle.lua`), with internal-module notify usage limited to debug-gated paths.
+
+## Phase Worklist - Phase 7: Kernel/Session State Machine and Recovery
+
+- Phase: 7 - kernel/session robustness
+- Status: in_progress
+- Related sweep findings:
+  - Sweep 1: findings 6, 7
+  - Sweep 2: findings 5, 8
+  - Sweep 5: findings 2, 4
+
+### Detailed task list (draft -> optimize -> execution)
+
+1. Define explicit runtime state contract (docs first)
+- States: `idle`, `running`, `interrupting`, `restarting`, `error`.
+- Define allowed transitions and invalid transitions.
+- Define boundary behavior for `run`, `interrupt`, `restart` in each state.
+- Define user-facing status messages per transition/failure class.
+
+2. Add a dedicated session-state owner module
+- Introduce `lua/neo_notebooks/session_state.lua` to own:
+  - current state per buffer,
+  - transition validation/enforcement,
+  - last error/reason + transition timestamp.
+- Keep implementation lightweight (in-memory Lua tables + buffer-scoped state only).
+
+3. Integrate state transitions into execution pipeline
+- Wire `exec.lua` enqueue/dispatch/response/failure paths to state transitions.
+- Ensure no ghost-active state after response, interrupt, or job failure.
+- Ensure queue drainer is state-aware and deterministic.
+
+4. Add bounded recovery policy for stale/dead sessions
+- Detect dead/stale job before dispatch.
+- Apply bounded auto-recovery (single restart attempt by default).
+- Return structured failure when recovery fails; never loop indefinitely.
+
+5. Boundary UX and command behavior
+- Keep user notifications at boundary modules:
+  - `entrypoint/commands.lua`
+  - `entrypoint/keymaps.lua`
+  - `entrypoint/lifecycle.lua`
+- Add clear transition and failure messaging (`interrupting`, `restart complete`, `recovery failed`, etc.).
+
+6. Test contract and regression lanes
+- Add integration tests for:
+  - `idle -> running -> idle` base flow,
+  - interrupt transition paths,
+  - restart with queued work,
+  - dead-session auto-recovery success path,
+  - dead-session recovery failure -> `error` state.
+- Re-run required lanes after each slice.
+
+7. Documentation closure
+- Keep `ARCHITECTURE_FLOWCHARTS.md`, `TECHNICAL.md`, and `TODO.md` synchronized per slice.
+- Mark phase complete only after transition tests and manual checklist are satisfied.
+
+### Exact files to touch (planned)
+
+- `lua/neo_notebooks/session_state.lua` (new)
+- `lua/neo_notebooks/exec.lua`
+- `lua/neo_notebooks/session.lua`
+- `lua/neo_notebooks/entrypoint/commands.lua`
+- `lua/neo_notebooks/entrypoint/keymaps.lua`
+- `lua/neo_notebooks/entrypoint/lifecycle.lua`
+- `tests/integration.lua`
+- `tests/core_contract.lua` (if state invariants fit better here)
+- `CODEBASE_REVIEW.md`
+- `ARCHITECTURE_FLOWCHARTS.md`
+- `TECHNICAL.md`
+- `TODO.md`
+
+### Tests to add/update
+
+- `integration`: execution-state transition tests and recovery-path tests.
+- `core_contract` (optional): state transition validator unit-style checks.
+- Existing lanes remain required:
+  - `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/core_contract.lua" -c qa`
+  - `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/integration.lua" -c qa`
+  - `nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_skip_optional_kitty=1" -c "luafile tests/run.lua" -c qa`
+  - `nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/optional_kitty.lua" -c qa` (expected optional failure signal on non-kitty setups)
+
+### Acceptance criteria
+
+- Explicit state machine exists and is documented with validated transitions.
+- No ambiguous/stuck execution state after interrupt/restart/failure scenarios.
+- Dead-session auto-recovery is bounded, deterministic, and test-covered.
+- Boundary notifications accurately reflect state transitions/failures.
+- Required lanes are green; optional kitty lane behavior remains isolated.
+
+### Manual validation checklist
+
+- Start long-running cell, interrupt, then immediately run another cell: state and UX remain consistent.
+- Restart while queue is non-empty: queue behavior is deterministic and documented.
+- Simulate session death (or force job stop), then run cell: auto-recovery behavior matches policy.
+- Confirm no persistent false "running/busy" state in notebook UX after failures.
+
+### Rollback plan
+
+- Revert Phase 7 commits as a set:
+  - remove `session_state.lua`,
+  - restore prior `exec/session` behavior,
+  - remove state-transition tests,
+  - restore docs phase status.

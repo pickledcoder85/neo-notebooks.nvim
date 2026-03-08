@@ -10,6 +10,7 @@ Living visual map of current architecture and planned refactor state.
 - Phase 4 (Mutation/Render Contract): complete (shared mutation helper + named mutation modes + migrated high-traffic call sites).
 - Phase 5 (Format Layer Split): complete (Jupytext parser + output codec + ipynb codec + buffer adapter split).
 - Phase 6 (Error/Notify Policy): complete (boundary-owned notify flows for commands/keymaps/lifecycle; internal notify paths reduced to explicit debug-gated diagnostics).
+- Phase 7 (Kernel/Session Robustness): in progress (state-machine + bounded recovery plan documented; implementation pending).
 
 ## Reading Guide
 
@@ -286,6 +287,44 @@ Target:
       | debug logs behind    |
       | explicit debug flags |
       +----------------------+
+```
+
+---
+
+## Phase 7: Kernel/Session State Machine and Recovery
+
+Current: session readiness is inferred from queue/job behavior instead of an explicit user-visible state contract.  
+Why not ideal: interrupt/restart/failure paths can feel ambiguous when state transitions race with queued requests.  
+Target: explicit per-buffer execution state machine with validated transitions and bounded recovery policy.  
+Benefit: deterministic behavior, clearer UX, and tighter tests for failure handling.
+Definition of done: state transitions are documented, implemented, and covered by integration tests.
+
+Current:
+```text
+run request
+  |
+  v
+queue/session checks (implicit)
+  |
+  +--> dispatch
+  +--> maybe restart
+  +--> maybe fail
+```
+
+Target:
+```text
++------------------------------+
+| session_state (per buffer)   |
+| idle/running/interrupting/   |
+| restarting/error             |
++------------------------------+
+      |        |         |
+      |        |         +--> validates transition + reason
+      |        v
+      |   exec/session paths
+      |   (enqueue/dispatch/interrupt/restart/resp)
+      v
+boundary notifications + status UX
 ```
 
 ---

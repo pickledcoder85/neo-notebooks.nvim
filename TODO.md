@@ -20,24 +20,43 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Phase 4 (completed): mutation/render contract consolidation (shared mutation helper + named modes + migrated high-traffic call sites).
   - Phase 5 (completed): format layer split (Jupytext parser + output codec + ipynb codec + notebook adapter split).
   - Phase 6 (completed): error/notify policy (boundary-owned notifications + debug-gated internal notify paths).
+  - Phase 7 (in progress): kernel/session state machine + recovery policy planning (docs gate complete before implementation).
 
 ## Next
 
-- Kernel/session robustness:
-  - Clear restart/interrupt/status behavior with reliable state transitions.
-  - Better failure-mode UX around stale kernel state and reconnect flows.
-- Performance/scalability hardening:
-  - Profiling + optimization passes for large notebooks and high output volume.
-  - Stress tests for render/index/update loops on long-running sessions.
-- UX polish/stability hardening:
-  - Additional round-trip guarantees and regression coverage for cross-IDE workflows.
-  - Focused quality pass on notebook ergonomics and edge-case behavior.
-- Architecture formalization sweep:
-  - Revisit module boundaries, event flow, and state ownership.
-  - Simplify dependency direction and document architectural invariants.
-- Refactor/hardening cleanup sweep:
-  - Remove dead code and tighten error-path handling.
-  - Refactor high-risk paths for robustness and add regression tests around them.
+- Priority 1: Kernel/session robustness (highest impact):
+  - Why now (current fragility):
+    - Ambiguous session state after interrupt/restart paths can leave users unsure whether execution requests are accepted.
+    - Stale/failed Python job recovery can require manual retries or restart commands.
+    - Run-queue behavior is robust but not yet backed by an explicit state-machine contract.
+  - Deliverables:
+    - Explicit execution state machine (`idle`, `running`, `interrupting`, `restarting`, `error`) with documented transitions.
+    - Deterministic restart/interrupt UX (clear success/failure status and next action guidance).
+    - Automatic stale-session recovery policy (retry vs restart) with bounded retries.
+  - Acceptance criteria:
+    - No stuck "busy" UI state after interrupt/restart/failure scenarios.
+    - Reproducible behavior for queued runs across restart/interrupt boundaries.
+    - Integration tests for state transitions and recovery flows.
+
+- Priority 2: Performance/scalability hardening:
+  - Profile render/index/scheduler hot paths on large notebooks.
+  - Add stress tests for high output volume and long-running edit/render loops.
+  - Define baseline metrics (render latency, queue latency) and regression thresholds.
+
+- Priority 3: Reliability contracts for format interop:
+  - Expand Jupytext fixture corpus with additional real-world repos.
+  - Add malformed-input/error-path fixtures for `.ipynb` and Jupytext.
+  - Tighten round-trip invariants for metadata/outputs across NeoNotebooks and IDEs.
+
+- Priority 4: UI/Neovim integration polish:
+  - Close cursor/alignment edge cases under resize/split/tab transitions.
+  - Further stabilize keymap/lifecycle behavior across buffer attach/detach flows.
+  - Improve long-running execution status visibility.
+
+- Priority 5: Architecture formalization + cleanup sweep:
+  - Revisit module boundaries, dependency direction, and state ownership.
+  - Remove dead code and tighten high-risk error paths.
+  - Add regression tests around refactored hotspots.
 
 ## Later
 
