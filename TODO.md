@@ -4,6 +4,31 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Now
 
+- Streaming UX defaults v1 (active feature branch: `feature/streaming-ux-defaults-v1`):
+  - Goal: establish one polished default non-`tqdm` streaming progress UX in core runtime (no user config needed for common case), with optional escape-hatch config for advanced users.
+  - Implementation plan (updated):
+    - Add core stream-progress formatting policy in `lua/neo_notebooks/exec.lua` for plain text progress lines like `*_PROGRESS 30% (25500/85000)`.
+    - Add config defaults in `lua/neo_notebooks/init.lua`:
+      - `stream_progress_style = "bar"` (default),
+      - `stream_progress_bar_width = 20`.
+    - Keep fallback compatibility:
+      - supported styles: `bar` (default), `pct`, `ratio`, `raw`.
+      - only rewrite recognized progress lines; leave all other output untouched.
+    - Update fixture defaults in `tests/fixtures/perf/manual_exec_soak.*` to align with core default behavior.
+  - Tests to add/update:
+    - Extend `tests/integration.lua` with a streaming progress-format test validating default `bar` rendering.
+    - Ensure existing carriage-return/replacement tests still pass with style defaults.
+    - Re-run `tests/core_contract.lua`, `tests/integration.lua`, `tests/performance.lua`.
+  - Acceptance criteria:
+    - Default streaming output for recognized non-`tqdm` progress lines renders in bar format:
+      - `[######........] 30% (25500/85000)` style.
+    - No regressions in existing stream replacement, queue, interrupt, and restart behavior.
+    - Documentation gate reconciled (`README.md`, `TODO.md`, `TECHNICAL.md`, and architecture note if flow changed).
+  - Progress update:
+    - Core progress formatting policy landed in `exec.lua` for live preview + final output formatting.
+    - Default config landed (`stream_progress_style="bar"`, `stream_progress_bar_width=20`).
+    - Integration coverage added for default bar-style formatting.
+
 - Jupytext interoperability (next major task):
   - Initial `py:percent` open/import support landed (`:NeoNotebookImportJupytext` / `:NeoNotebookOpenJupytext`).
   - Initial `metadata.jupytext` seed + `.ipynb` export round-trip landed.

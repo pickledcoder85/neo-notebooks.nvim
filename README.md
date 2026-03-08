@@ -88,11 +88,14 @@ print("hello")
 - Streaming stdout/stderr is now rendered incrementally while a cell runs (including batch-progress text).
 - Carriage-return progress updates (for example `tqdm`) are handled as in-place line replacement during execution.
 - Live stream preview preserves event arrival order and applies one global preview cap across streams.
+- Recognized non-`tqdm` progress lines (for example `SOAK_PROGRESS 30% (25500/85000)`) render as bars by default.
 - Streaming safety caps are configurable:
   - `stream_preview_max_lines` (default `400`)
   - `stream_render_interval_ms` (default `80`)
   - `stream_render_min_delta` (default `50`)
   - `stream_placeholder_text` (default `"cell executing..."`)
+  - `stream_progress_style` (default `"bar"`; supports `"bar"|"pct"|"ratio"|"raw"`)
+  - `stream_progress_bar_width` (default `20`)
 - After execution, inline output includes a right-aligned timing line (e.g. `[8.56ms]`).
 - Moving cells preserves outputs by stable cell ID.
 - `:NeoNotebookCellSelect` selects the current cell body.
@@ -172,6 +175,8 @@ require("neo_notebooks").setup({
   stream_render_interval_ms = 80,
   stream_render_min_delta = 50,
   stream_placeholder_text = "cell executing...",
+  stream_progress_style = "bar",
+  stream_progress_bar_width = 20,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",

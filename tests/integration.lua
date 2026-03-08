@@ -1176,4 +1176,48 @@ with_buf({
   nb.config.stream_render_min_delta = old_delta
 end)
 
+-- Test: recognized non-tqdm progress lines render with default bar style
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  vim.b[buf].neo_notebooks_enabled = true
+  local old_style = nb.config.stream_progress_style
+  local old_width = nb.config.stream_progress_bar_width
+  nb.config.stream_progress_style = "bar"
+  nb.config.stream_progress_bar_width = 20
+
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "# %% [code]",
+    "for i in range(1, 4):",
+    "    pct = i * 25",
+    "    done = i * 250",
+    "    print(f'SOAK_PROGRESS {pct}% ({done}/1000)')",
+  })
+  local state = index.rebuild(buf)
+  local cell = state.list[1]
+  local done = false
+  local ok_run, err = exec.run_cell(buf, 1, {
+    cell_id = cell.id,
+    on_output = function()
+      done = true
+    end,
+  })
+  ok(ok_run, err)
+
+  local settled = wait_for(function()
+    local st = exec.get_session_state(buf)
+    return done and st and st.active_request == false and st.queue_len == 0 and st.state == "idle"
+  end, 5000, 20)
+  ok(settled, "progress-style test settled")
+
+  local lines = output.get_lines(buf, cell.id) or {}
+  local joined = table.concat(lines, "\n")
+  ok(joined:find("SOAK_PROGRESS [#####", 1, true) ~= nil, "progress line rendered with bar style")
+  ok(joined:find("25% (250/1000)", 1, true) ~= nil, "progress percent/ratio preserved with bar")
+
+  nb.config.stream_progress_style = old_style
+  nb.config.stream_progress_bar_width = old_width
+end)
+
 print('integration tests passed')
