@@ -55,6 +55,7 @@ M.config = {
   stream_preview_max_lines = 400,
   stream_render_interval_ms = 80,
   stream_render_min_delta = 50,
+  stream_placeholder_text = "cell executing...",
   keymaps = {
     new_code = "<leader><leader>ac",
     new_markdown = "<leader><leader>am",

@@ -57,6 +57,8 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Progress update:
     - Added synthetic large fixtures (`tests/fixtures/perf`) and optional `tests/performance.lua` lane with conservative timing budgets for import/index/render/export.
     - Added execution stress coverage for batch compute, large streamed output, and fetch-style large-data read (`file://` payload), with optional real network fetch gate.
+    - Streaming-depth v1: live stream preview now uses event-order merging with a global preview cap, plus carriage-return sanitization and placeholder configurability.
+    - Manual soak fixture now supports non-`tqdm` progress styles (`pct`, `ratio`, `bar`) for UX testing of default streaming behavior.
 
 - Priority 3: Reliability contracts for format interop:
   - Expand Jupytext fixture corpus with additional real-world repos.
@@ -89,6 +91,10 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Fenced code blocks (` ```lang ... ``` `) rendered with markdown-aware highlight groups.
   - Fence markers remain visible for editing context.
 - Added optional viewport virtual padding (`viewport_virtual_padding`) so notebook cells keep top/bottom breathing room while scrolling.
+- Streaming-depth polish:
+  - Live preview preserves event order across streams, uses a global preview cap, and strips raw carriage returns from stream chunks.
+  - Added `stream_placeholder_text` config for execution placeholder customization.
+  - Added integration coverage for live preview cap + carriage-return replacement behavior.
 - Tree-sitter fenced Python token coloring in markdown cells.
 - Optional markdown cell rendering polish (conceal/theme controls for inline markdown overlays).
 - Fix undo (`u`) keeping cursor position within current cell (avoid jump to buffer end).

@@ -87,10 +87,12 @@ print("hello")
 - While a cell runs, an inline placeholder output shows `cell executing...`.
 - Streaming stdout/stderr is now rendered incrementally while a cell runs (including batch-progress text).
 - Carriage-return progress updates (for example `tqdm`) are handled as in-place line replacement during execution.
+- Live stream preview preserves event arrival order and applies one global preview cap across streams.
 - Streaming safety caps are configurable:
   - `stream_preview_max_lines` (default `400`)
   - `stream_render_interval_ms` (default `80`)
   - `stream_render_min_delta` (default `50`)
+  - `stream_placeholder_text` (default `"cell executing..."`)
 - After execution, inline output includes a right-aligned timing line (e.g. `[8.56ms]`).
 - Moving cells preserves outputs by stable cell ID.
 - `:NeoNotebookCellSelect` selects the current cell body.
@@ -166,6 +168,10 @@ require("neo_notebooks").setup({
   interrupt_on_rerun = true,
   skip_unchanged_rerun = true,
   kernel_recovery_retries = 1,
+  stream_preview_max_lines = 400,
+  stream_render_interval_ms = 80,
+  stream_render_min_delta = 50,
+  stream_placeholder_text = "cell executing...",
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",
@@ -238,6 +244,7 @@ require("neo_notebooks").setup({
   run-all/above/below), so outputs land in predictable order.
 - Notebook buffers set `scrolloff` to keep a few lines visible below the cursor.
 - Notebook buffers can also render virtual viewport padding (`viewport_virtual_padding`) to preserve top/bottom breathing room while scrolling.
+- Non-`tqdm` progress shape is producer-controlled; `tests/fixtures/perf/manual_exec_soak.*` includes `pct`, `ratio`, and `bar` examples.
 - This is a minimal experimental baseline and intended to be expanded.
 
 ### Cell index cache

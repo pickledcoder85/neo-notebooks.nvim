@@ -218,9 +218,10 @@ def _emit_message(obj):
         pass
 
 class _NeoStream(io.TextIOBase):
-    def __init__(self, req_id, stream_name):
+    def __init__(self, req_id, stream_name, seq_counter):
         self.req_id = req_id
         self.stream_name = stream_name
+        self.seq_counter = seq_counter
         self._seg = []
         self._lines = []
 
@@ -236,12 +237,14 @@ class _NeoStream(io.TextIOBase):
             self._lines[-1] = text
         else:
             self._lines.append(text)
+        self.seq_counter["n"] += 1
         _emit_message({
             "kind": "stream",
             "id": self.req_id,
             "stream": self.stream_name,
             "text": text,
             "replace": True if replace else False,
+            "seq": self.seq_counter["n"],
         })
 
     def write(self, s):
@@ -272,8 +275,9 @@ class _NeoStream(io.TextIOBase):
 def handle(obj):
     code = obj.get("code", "")
     req_id = obj.get("id")
-    out_buf = _NeoStream(req_id, "stdout")
-    err_buf = _NeoStream(req_id, "stderr")
+    stream_seq = {"n": 0}
+    out_buf = _NeoStream(req_id, "stdout", stream_seq)
+    err_buf = _NeoStream(req_id, "stderr", stream_seq)
     _maybe_patch_rich_console()
     globals_dict["__neo_notebooks_show_called"] = False
     _maybe_patch_matplotlib_show()
@@ -477,21 +481,67 @@ local function resolve_pending_cell(pending, resolved_cell_id)
   return cell
 end
 
+local function init_pending_stream_state(pending)
+  pending.stream_events = pending.stream_events or {}
+  pending.stream_last_by_stream = pending.stream_last_by_stream or {}
+end
+
+local function normalize_stream_text(text)
+  if not text or text == "" then
+    return ""
+  end
+  return tostring(text):gsub("\r", "")
+end
+
+local function trim_stream_preview(pending, preview_max)
+  while #pending.stream_events > preview_max do
+    table.remove(pending.stream_events, 1)
+    for stream, idx in pairs(pending.stream_last_by_stream or {}) do
+      local next_idx = idx - 1
+      if next_idx < 1 then
+        pending.stream_last_by_stream[stream] = nil
+      else
+        pending.stream_last_by_stream[stream] = next_idx
+      end
+    end
+  end
+end
+
+local function upsert_stream_event(pending, stream, text, replace, preview_max)
+  text = normalize_stream_text(text)
+  if text == "" then
+    return
+  end
+  init_pending_stream_state(pending)
+  local last_idx = pending.stream_last_by_stream[stream]
+  if replace and last_idx and pending.stream_events[last_idx] then
+    pending.stream_events[last_idx].text = text
+    return
+  end
+  pending.stream_events[#pending.stream_events + 1] = { stream = stream, text = text }
+  pending.stream_last_by_stream[stream] = #pending.stream_events
+  trim_stream_preview(pending, preview_max)
+end
+
+local function merged_stream_preview_lines(pending, placeholder)
+  local merged = { placeholder }
+  for _, item in ipairs(pending.stream_events or {}) do
+    merged[#merged + 1] = item.text
+  end
+  return merged
+end
+
 local function apply_stream_event(session, pending, resp, resolved_cell_id)
   local nb = require("neo_notebooks")
   local cfg = nb.config or {}
   local preview_max = tonumber(nb.config.stream_preview_max_lines) or 400
-  preview_max = math.max(50, math.floor(preview_max))
+  preview_max = math.max(10, math.floor(preview_max))
   local interval_ms = tonumber(cfg.stream_render_interval_ms) or 80
   interval_ms = math.max(10, math.floor(interval_ms))
   local min_delta = tonumber(cfg.stream_render_min_delta) or 50
   min_delta = math.max(1, math.floor(min_delta))
 
-  pending.stream_lines = pending.stream_lines or { stdout = {}, stderr = {}, traceback = {} }
   local stream = resp.stream or "stdout"
-  if not pending.stream_lines[stream] then
-    pending.stream_lines[stream] = {}
-  end
 
   local text = tostring(resp.text or "")
   local chunks = vim.split(text, "\n", { plain = true })
@@ -501,15 +551,7 @@ local function apply_stream_event(session, pending, resp, resolved_cell_id)
 
   for _, chunk in ipairs(chunks) do
     if chunk ~= "" then
-      local lines = pending.stream_lines[stream]
-      if resp.replace == true and #lines > 0 then
-        lines[#lines] = chunk
-      else
-        lines[#lines + 1] = chunk
-        if #lines > preview_max then
-          table.remove(lines, 1)
-        end
-      end
+      upsert_stream_event(pending, stream, chunk, resp.replace == true, preview_max)
     end
   end
 
@@ -523,15 +565,11 @@ local function apply_stream_event(session, pending, resp, resolved_cell_id)
   pending.stream_last_render_ms = now
   pending.stream_dirty = 0
 
-  local merged = {}
-  -- Keep a stable execution placeholder at line 1 while streaming output arrives.
-  merged[#merged + 1] = "cell executing..."
-  for _, name in ipairs({ "stdout", "stderr", "traceback" }) do
-    local lines = pending.stream_lines[name] or {}
-    for _, line in ipairs(lines) do
-      merged[#merged + 1] = line
-    end
+  local placeholder = cfg.stream_placeholder_text
+  if type(placeholder) ~= "string" or placeholder == "" then
+    placeholder = "cell executing..."
   end
+  local merged = merged_stream_preview_lines(pending, placeholder)
 
   local cell = resolve_pending_cell(pending, resolved_cell_id)
   if cell then
