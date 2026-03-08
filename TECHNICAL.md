@@ -315,6 +315,7 @@ Current Phase 7 baseline:
 
 - Headless tests live in `tests/run.lua`.
 - Jupytext compatibility fixtures live in `tests/fixtures/jupytext/` and are validated in headless tests.
+- Performance fixtures live in `tests/fixtures/perf/` and are used by a dedicated stress lane.
 - Fixture coverage includes:
   - upstream README/docs examples,
   - mixed marker variants (`[md]`, indented `# %%`),
@@ -324,6 +325,7 @@ Current Phase 7 baseline:
   - `tests/core_contract.lua` (required core signal; skips optional kitty backend assertions)
   - `tests/integration.lua` (broad workflow signal; skips optional kitty backend assertions)
   - `tests/optional_kitty.lua` (kitty/image backend assertions; optional in non-kitty environments)
+  - `tests/performance.lua` (optional stress/perf signal over large synthetic fixtures with conservative timing budgets)
   - integration lane includes snake lifecycle/keymap ownership transition assertions.
 
 ## .ipynb import/export

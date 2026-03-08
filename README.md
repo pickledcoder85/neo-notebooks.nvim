@@ -288,6 +288,12 @@ nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_ski
 
 # Optional kitty/image backend lane (expected failure signal on non-kitty setups)
 nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/optional_kitty.lua" -c qa
+
+# Optional performance/scalability lane (large synthetic fixtures + timing budgets)
+nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/performance.lua" -c qa
+
+# Run dispatcher + include performance lane
+nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_skip_optional_kitty=1" -c "let g:neo_notebooks_test_include_performance=1" -c "luafile tests/run.lua" -c qa
 ```
 
 ### Automatic first cell

@@ -54,6 +54,8 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Profile render/index/scheduler hot paths on large notebooks.
   - Add stress tests for high output volume and long-running edit/render loops.
   - Define baseline metrics (render latency, queue latency) and regression thresholds.
+  - Progress update:
+    - Added synthetic large fixtures (`tests/fixtures/perf`) and optional `tests/performance.lua` lane with conservative timing budgets for import/index/render/export.
 
 - Priority 3: Reliability contracts for format interop:
   - Expand Jupytext fixture corpus with additional real-world repos.
