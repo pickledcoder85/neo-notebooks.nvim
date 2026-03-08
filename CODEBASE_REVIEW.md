@@ -1139,6 +1139,10 @@ NeoNotebookSnakeCell
 - Added regression coverage:
   - integration lane asserts default `<leader>k*` kernel keymaps are registered,
   - core lane asserts queue pause/resume toggles session paused state.
+- Fixed pause-state consistency:
+  - restart/stop paths now explicitly clear paused flag,
+  - added regression tests for pause reset on restart/stop.
+- Hardened restart async clamp callback against invalid/deleted buffers.
 - Validation:
   - required lanes green (`core_contract`, `integration`, `run.lua` with optional kitty skipped),
   - optional kitty lane preserves expected failure signal in non-kitty environments.

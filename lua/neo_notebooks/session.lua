@@ -6,7 +6,7 @@ local M = {}
 
 function M.restart(bufnr)
   bufnr = bufnr or 0
-  session_state.transition(bufnr, "restarting", { reason = "restart_requested", force = true })
+  session_state.transition(bufnr, "restarting", { reason = "restart_requested", force = true, paused = false })
   local win = vim.api.nvim_get_current_win()
   local cursor = vim.api.nvim_win_get_cursor(win)
   exec.stop_session(bufnr)
@@ -16,12 +16,12 @@ function M.restart(bufnr)
     if vim.api.nvim_win_is_valid(win) then
       vim.api.nvim_win_set_cursor(win, cursor)
       local ok_actions, actions = pcall(require, "neo_notebooks.actions")
-      if ok_actions and actions then
+      if ok_actions and actions and vim.api.nvim_buf_is_valid(bufnr) then
         actions.clamp_cursor_to_cell_left(bufnr)
       end
     end
   end)
-  session_state.transition(bufnr, "idle", { reason = "restart_complete", force = true })
+  session_state.transition(bufnr, "idle", { reason = "restart_complete", force = true, paused = false })
   return true
 end
 

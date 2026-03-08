@@ -13,6 +13,7 @@ local index_mod = require('neo_notebooks.index')
 local ipynb = require('neo_notebooks.ipynb')
 local nb = require('neo_notebooks')
 local exec = require('neo_notebooks.exec')
+local session = require('neo_notebooks.session')
 local fixture_root = vim.fn.getcwd() .. '/tests/fixtures/jupytext'
 
 -- Test: default strict containment mode is soft
@@ -388,6 +389,34 @@ with_buf({
   eq(paused_flag, false, "toggle from paused returns false (resumed)")
   local resumed = exec.get_session_state(buf)
   ok(resumed.paused == false, "session state paused=false after resume")
+end)
+
+-- Test: restart clears paused flag
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  exec.pause_queue(buf)
+  local before = exec.get_session_state(buf)
+  ok(before.paused == true, "paused before restart")
+  session.restart(buf)
+  local after = exec.get_session_state(buf)
+  ok(after.paused == false, "restart clears paused flag")
+  eq(after.state, "idle", "restart returns state to idle")
+end)
+
+-- Test: stop clears paused flag and sets stopped state
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  exec.pause_queue(buf)
+  local before = exec.get_session_state(buf)
+  ok(before.paused == true, "paused before stop")
+  exec.stop_session(buf)
+  local after = exec.get_session_state(buf)
+  ok(after.paused == false, "stop clears paused flag")
+  eq(after.state, "stopped", "stop sets state stopped")
 end)
 
 print('core_contract tests passed')

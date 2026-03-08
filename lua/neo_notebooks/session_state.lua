@@ -72,6 +72,9 @@ function M.transition(bufnr, next_state, opts)
   local current = ensure_state(bufnr)
   if current.state == next_state then
     current.reason = opts.reason
+    if opts.paused ~= nil then
+      current.paused = opts.paused == true
+    end
     current.updated_at = now_ms()
     return true
   end
@@ -85,6 +88,9 @@ function M.transition(bufnr, next_state, opts)
 
   current.state = next_state
   current.reason = opts.reason
+  if opts.paused ~= nil then
+    current.paused = opts.paused == true
+  end
   current.updated_at = now_ms()
   return true
 end

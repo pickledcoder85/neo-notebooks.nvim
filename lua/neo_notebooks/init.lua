@@ -166,6 +166,9 @@ function M.kernel_status(bufnr)
   if not state or not state.state then
     return "stopped"
   end
+  if state.state == "stopped" then
+    return "stopped"
+  end
   if state.paused then
     return "paused"
   end

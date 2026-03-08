@@ -567,7 +567,7 @@ function M.stop_session(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local session = sessions[bufnr]
   if not session then
-    session_state.transition(bufnr, "stopped", { reason = "session_missing_stop", force = true })
+    session_state.transition(bufnr, "stopped", { reason = "session_missing_stop", force = true, paused = false })
     return true
   end
   spinner.stop_all(bufnr)
@@ -575,7 +575,7 @@ function M.stop_session(bufnr)
     vim.fn.jobstop(session.job)
   end
   sessions[bufnr] = nil
-  session_state.transition(bufnr, "stopped", { reason = "session_stopped", force = true })
+  session_state.transition(bufnr, "stopped", { reason = "session_stopped", force = true, paused = false })
   return true
 end
 
