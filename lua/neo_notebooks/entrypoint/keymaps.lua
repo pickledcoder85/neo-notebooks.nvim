@@ -19,6 +19,21 @@ function M.new(ctx)
   local should_enable = ctx.should_enable
   local render_if_enabled = ctx.render_if_enabled
 
+  local function notify_guard_reason(bufnr)
+    local reason = actions.consume_last_guard_reason(bufnr)
+    if reason and reason ~= "" then
+      vim.notify(reason, vim.log.levels.WARN)
+    end
+  end
+
+  local function guard_expr(bufnr, fn)
+    local keys = fn()
+    if keys == "" then
+      notify_guard_reason(bufnr)
+    end
+    return keys
+  end
+
   local function clear_snake_keymaps(bufnr)
     bufnr = bufnr or 0
     local locked = vim.b[bufnr] and vim.b[bufnr].neo_notebooks_snake_locked_keys or {}
@@ -398,16 +413,23 @@ function M.new(ctx)
         actions.handle_enter_insert(bufnr)
       end, { silent = true, buffer = bufnr })
       vim.keymap.set("i", "<BS>", function()
-        return actions.guard_backspace_in_insert(bufnr)
+        return guard_expr(bufnr, function()
+          return actions.guard_backspace_in_insert(bufnr)
+        end)
       end, { silent = true, buffer = bufnr, expr = true })
       vim.keymap.set("i", "<Del>", function()
-        return actions.guard_delete_in_insert(bufnr)
+        return guard_expr(bufnr, function()
+          return actions.guard_delete_in_insert(bufnr)
+        end)
       end, { silent = true, buffer = bufnr, expr = true })
       vim.keymap.set("n", "dd", function()
-        return actions.guard_delete_current_line(bufnr)
+        return guard_expr(bufnr, function()
+          return actions.guard_delete_current_line(bufnr)
+        end)
       end, { silent = true, buffer = bufnr, expr = true, replace_keycodes = false })
       vim.keymap.set("n", "d", function()
         actions.handle_delete_motion(bufnr)
+        notify_guard_reason(bufnr)
       end, { silent = true, buffer = bufnr })
       vim.keymap.set("n", "p", function()
         actions.handle_paste_below(bufnr)
@@ -416,13 +438,19 @@ function M.new(ctx)
         actions.handle_undo(bufnr, vim.v.count1)
       end, opts)
       vim.keymap.set("n", "x", function()
-        return actions.guard_delete_char(bufnr)
+        return guard_expr(bufnr, function()
+          return actions.guard_delete_char(bufnr)
+        end)
       end, { silent = true, buffer = bufnr, expr = true, replace_keycodes = false })
       vim.keymap.set("n", "D", function()
-        return actions.guard_delete_to_eol(bufnr)
+        return guard_expr(bufnr, function()
+          return actions.guard_delete_to_eol(bufnr)
+        end)
       end, { silent = true, buffer = bufnr, expr = true, replace_keycodes = false })
       vim.keymap.set("x", "d", function()
-        return actions.guard_visual_delete(bufnr)
+        return guard_expr(bufnr, function()
+          return actions.guard_visual_delete(bufnr)
+        end)
       end, { silent = true, buffer = bufnr, expr = true, replace_keycodes = false })
     end
   end

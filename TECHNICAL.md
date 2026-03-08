@@ -31,7 +31,7 @@ This document summarizes implementation choices and the evolution of core featur
 
 - Internal modules should prefer returning `(ok/value)` or `(nil, err)` over direct `vim.notify` side effects.
 - Command boundaries (entrypoint command handlers) are the preferred owner of user-facing notifications.
-- Current migration status: started for output print/collapse and cell yank flows.
+- Current migration status: started for output print/collapse, cell yank, and containment guard-warning flows (keymap boundary owns warnings).
 - Never merge and delete a feature branch until manual testing has been completed
   and explicitly approved. After implementing a revised feature plan, provide a
   manual test checklist for approval before merging/deleting the branch.

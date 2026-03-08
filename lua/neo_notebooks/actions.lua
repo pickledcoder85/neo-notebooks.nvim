@@ -11,19 +11,26 @@ local function contained_open_line_below_keys(bufnr)
   return string.format("<C-o><Cmd>lua require('neo_notebooks.actions').open_line_below(%d)<CR>", bufnr)
 end
 
+local function set_last_guard_reason(bufnr, reason)
+  bufnr = bufnr or 0
+  if vim.b[bufnr] then
+    vim.b[bufnr].neo_notebooks_last_guard_reason = reason
+  end
+end
+
 local function decision_keys(bufnr, decision)
   if decision.action == "block" then
-    if decision.reason and decision.reason ~= "" then
-      vim.notify(decision.reason, vim.log.levels.WARN)
-    end
+    set_last_guard_reason(bufnr, decision.reason)
     return ""
   end
   if decision.action == "redirect" then
+    set_last_guard_reason(bufnr, nil)
     if decision.target == "open_line_below" then
       return contained_open_line_below_keys(bufnr)
     end
     return ""
   end
+  set_last_guard_reason(bufnr, nil)
   return decision.keys or ""
 end
 
@@ -61,11 +68,10 @@ local function guarded_delete_range(bufnr, start, target)
   end
 
   if #deletes == 0 and #clears == 0 then
-    if reason and reason ~= "" then
-      vim.notify(reason, vim.log.levels.WARN)
-    end
+    set_last_guard_reason(bufnr, reason)
     return false
   end
+  set_last_guard_reason(bufnr, nil)
 
   if #clears > 0 then
     table.sort(clears)
@@ -82,6 +88,15 @@ local function guarded_delete_range(bufnr, start, target)
     end
   end
   return true
+end
+
+function M.consume_last_guard_reason(bufnr)
+  bufnr = bufnr or 0
+  local reason = vim.b[bufnr] and vim.b[bufnr].neo_notebooks_last_guard_reason or nil
+  if vim.b[bufnr] then
+    vim.b[bufnr].neo_notebooks_last_guard_reason = nil
+  end
+  return reason
 end
 
 function M.handle_delete_motion(bufnr)

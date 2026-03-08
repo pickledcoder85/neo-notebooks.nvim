@@ -944,3 +944,7 @@ NeoNotebookSnakeCell
 - `actions.toggle_output_collapse` now returns `(collapsed:boolean)` or `(nil, err)` instead of notifying directly.
 - `actions.yank_cell` now returns success signal; command layer owns success notification.
 - `entrypoint/commands.lua` now performs user notifications for `NeoNotebookOutputPrint`, `NeoNotebookOutputCollapseToggle`, and `NeoNotebookCellYank`.
+- Guard/policy warning path migrated for containment keymaps:
+  - `actions.decision_keys` no longer notifies directly on blocked decisions.
+  - `actions` stores/returns guard reasons through `consume_last_guard_reason`.
+  - `entrypoint/keymaps.lua` now owns guard warning notifications for `dd`, `d`, `x`, `D`, visual `d`, `<BS>`, and `<Del>` guard flows.
