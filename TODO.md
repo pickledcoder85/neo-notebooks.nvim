@@ -40,6 +40,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
     - Added malformed `.ipynb` shape validation (top-level and `cells` field) with explicit errors.
     - Added import normalization for unknown cell types, string `source`, and malformed metadata/attachments/outputs.
     - Added core-contract tests for malformed-shape rejection and normalization/export invariants.
+    - Tightened `.ipynb` shape validation to reject object-shaped `cells` (must be a JSON list), and normalized malformed output containers to empty output lists on export.
 
 - Priority 3: UI/Neovim integration polish:
   - Close cursor/alignment edge cases under resize/split/tab transitions.

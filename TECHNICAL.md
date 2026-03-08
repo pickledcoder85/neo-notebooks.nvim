@@ -399,8 +399,10 @@ Current Phase 7 baseline:
 
 - Import reads `.ipynb` JSON, preserves notebook/cell metadata and outputs, and converts cells to marker format.
 - Import rejects malformed notebook shapes (for example top-level list docs or non-list `cells`) with explicit errors.
+- Import also rejects object-shaped `cells` maps (for example `{ "a": {...} }`) to enforce list-only cell arrays.
 - Import normalizes unknown/nonstandard `cell_type` values to `code` and supports string `source` payloads.
 - Import normalizes malformed metadata/attachments/outputs containers to safe defaults.
+- Malformed code-cell `outputs` containers that are not lists are normalized to an empty list on export.
 - Import drops a leading blank code cell when followed by markdown (common notebook artifact).
 - Import renders existing code-cell outputs using the typed output pipeline.
 - Export writes a full `.ipynb` with cell sources, metadata, execution counts, and outputs.
