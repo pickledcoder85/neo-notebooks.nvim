@@ -47,13 +47,28 @@ BATCHES = TARGET_TOTAL_ITERS // BATCH_SIZE
 MIX = 131
 MOD = 1_000_003
 USE_TQDM = True
+NON_TQDM_PROGRESS_STYLE = "pct"  # pct | ratio | bar
 
 print("CONFIG", {
     "BATCHES": BATCHES,
     "BATCH_SIZE": BATCH_SIZE,
     "TOTAL_ITERS": BATCHES * BATCH_SIZE,
     "USE_TQDM": USE_TQDM,
+    "NON_TQDM_PROGRESS_STYLE": NON_TQDM_PROGRESS_STYLE,
 })
+
+def emit_progress(prefix, completed, total, style="pct"):
+    pct = int((completed / total) * 100)
+    if style == "ratio":
+        print(f"{prefix} {completed}/{total}")
+        return
+    if style == "bar":
+        width = 20
+        filled = int((completed / total) * width)
+        bar = "#" * filled + "." * (width - filled)
+        print(f"{prefix} [{bar}] {pct}% ({completed}/{total})")
+        return
+    print(f"{prefix} {pct}% ({completed}/{total})")
 
 # %% [code]
 # Multi-core soak variant (bypasses the GIL via processes).
@@ -102,8 +117,7 @@ else:
         total_mc = (total_mc + part) % MOD
         completed += 1
         if (not USE_TQDM) and (completed % max(1, CHUNKS // 20) == 0):
-            pct = int((completed / CHUNKS) * 100)
-            print(f"MULTICORE_PROGRESS {pct}% ({completed}/{CHUNKS})")
+            emit_progress("MULTICORE_PROGRESS", completed, CHUNKS, NON_TQDM_PROGRESS_STYLE)
 
     for p in procs:
         p.join()
@@ -129,8 +143,7 @@ for b in iters:
         subtotal = (subtotal + v) % MOD
     acc = (acc + subtotal) % MOD
     if (not USE_TQDM) and ((b + 1) % progress_step == 0):
-        pct = int(((b + 1) / BATCHES) * 100)
-        print(f"SOAK_PROGRESS {pct}% ({b+1}/{BATCHES})")
+        emit_progress("SOAK_PROGRESS", b + 1, BATCHES, NON_TQDM_PROGRESS_STYLE)
 
 elapsed = time.perf_counter() - start
 print("SOAK_DONE", acc)

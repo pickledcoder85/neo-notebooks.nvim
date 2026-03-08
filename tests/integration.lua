@@ -1052,4 +1052,128 @@ with_buf({
   eq(pos[1], 5, "contained k clamps within active cell")
 end)
 
+-- Test: streaming preview keeps executing placeholder and applies preview cap
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  vim.b[buf].neo_notebooks_enabled = true
+  local old_preview = nb.config.stream_preview_max_lines
+  local old_interval = nb.config.stream_render_interval_ms
+  local old_delta = nb.config.stream_render_min_delta
+  nb.config.stream_preview_max_lines = 40
+  nb.config.stream_render_interval_ms = 10
+  nb.config.stream_render_min_delta = 1
+
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "# %% [code]",
+    "import time",
+    "for i in range(220):",
+    "    print(f'STREAM_ROW:{i}')",
+    "time.sleep(0.25)",
+  })
+  local state = index.rebuild(buf)
+  local cell = state.list[1]
+  local done = false
+  local ok_run, err = exec.run_cell(buf, 1, {
+    cell_id = cell.id,
+    on_output = function()
+      done = true
+    end,
+  })
+  ok(ok_run, err)
+
+  local saw_live = wait_for(function()
+    local ok_store, store = pcall(vim.api.nvim_buf_get_var, buf, "neo_notebooks_output_store")
+    if not ok_store or type(store) ~= "table" then
+      return false
+    end
+    local entry = store[cell.id]
+    if not entry or entry.executing ~= true or type(entry.lines) ~= "table" or #entry.lines == 0 then
+      return false
+    end
+    local first = entry.lines[1] or ""
+    local has_placeholder = first:find("cell executing", 1, true) ~= nil
+    local capped = #entry.lines <= 41
+    return has_placeholder and capped
+  end, 3000, 20)
+  ok(saw_live, "streaming preview shows executing placeholder and respects live cap")
+
+  local settled = wait_for(function()
+    local st = exec.get_session_state(buf)
+    return done and st and st.active_request == false and st.queue_len == 0 and st.state == "idle"
+  end, 6000, 20)
+  ok(settled, "streaming preview test settled")
+
+  nb.config.stream_preview_max_lines = old_preview
+  nb.config.stream_render_interval_ms = old_interval
+  nb.config.stream_render_min_delta = old_delta
+end)
+
+-- Test: carriage-return stream updates replace a single live progress line
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  vim.b[buf].neo_notebooks_enabled = true
+  local old_interval = nb.config.stream_render_interval_ms
+  local old_delta = nb.config.stream_render_min_delta
+  nb.config.stream_render_interval_ms = 10
+  nb.config.stream_render_min_delta = 1
+
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    "# %% [code]",
+    "import time",
+    "for i in range(60):",
+    "    pct = int(((i + 1) / 60) * 100)",
+    "    print(f'PROGRESS {pct}%', end='\\r', flush=True)",
+    "    time.sleep(0.004)",
+    "print('PROGRESS done')",
+  })
+  local state = index.rebuild(buf)
+  local cell = state.list[1]
+  local done = false
+  local ok_run, err = exec.run_cell(buf, 1, {
+    cell_id = cell.id,
+    on_output = function()
+      done = true
+    end,
+  })
+  ok(ok_run, err)
+
+  local saw_live_replace = wait_for(function()
+    local ok_store, store = pcall(vim.api.nvim_buf_get_var, buf, "neo_notebooks_output_store")
+    if not ok_store or type(store) ~= "table" then
+      return false
+    end
+    local entry = store[cell.id]
+    if not entry or entry.executing ~= true or type(entry.lines) ~= "table" then
+      return false
+    end
+    local progress_lines = 0
+    for i = 2, #entry.lines do
+      local line = entry.lines[i] or ""
+      if line:find("PROGRESS ", 1, true) then
+        progress_lines = progress_lines + 1
+      end
+    end
+    return progress_lines <= 1
+  end, 3000, 20)
+  ok(saw_live_replace, "carriage-return stream replacement keeps one live progress line")
+
+  local settled = wait_for(function()
+    local st = exec.get_session_state(buf)
+    return done and st and st.active_request == false and st.queue_len == 0 and st.state == "idle"
+  end, 6000, 20)
+  ok(settled, "carriage-return stream test settled")
+
+  local final_lines = output.get_lines(buf, cell.id) or {}
+  local final_text = table.concat(final_lines, "\n")
+  ok(final_text:find("PROGRESS done", 1, true) ~= nil, "final output contains completion marker")
+  ok(final_text:find("\r", 1, true) == nil, "final output strips raw carriage returns")
+
+  nb.config.stream_render_interval_ms = old_interval
+  nb.config.stream_render_min_delta = old_delta
+end)
+
 print('integration tests passed')

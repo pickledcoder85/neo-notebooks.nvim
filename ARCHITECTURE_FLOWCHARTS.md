@@ -14,6 +14,7 @@ Living visual map of current architecture and planned refactor state.
 - Phase 8 (Performance/Scalability Lane): in progress (synthetic large fixtures + optional performance lane with timing budgets landed; threshold tuning and regression policy tightening pending).
 - Streaming execution output protocol (incremental stdout/stderr with carriage-return line replacement) landed for long-running cell UX.
 - Streaming path now includes render-pressure controls (preview cap + throttled refresh cadence) to protect UI responsiveness.
+- Streaming-depth v1: live stream preview now merges by event arrival order (cross-stream), uses a single global preview cap, and supports configurable execution placeholder text.
 
 ## Reading Guide
 
@@ -177,6 +178,28 @@ Performance lane + fixture flow:
 +-----------------------------+
 | regression signal           |
 | (latency budget checks)     |
++-----------------------------+
+```
+
+Streaming event flow (current):
+```text
++-----------------------------+
+| Python _NeoStream           |
+| emits {kind=stream, seq}    |
++-----------------------------+
+               |
+               v
++-----------------------------+
+| exec.apply_stream_event     |
+| append/replace event list   |
+| trim global preview cap     |
++-----------------------------+
+               |
+               v
++-----------------------------+
+| output.show_inline          |
+| line1=placeholder+spinner   |
+| line2+=live stream preview  |
 +-----------------------------+
 ```
 
