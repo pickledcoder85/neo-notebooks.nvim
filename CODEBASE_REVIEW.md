@@ -1127,6 +1127,18 @@ NeoNotebookSnakeCell
 - Added initial status API surface:
   - `exec.get_session_state(bufnr)`,
   - `require("neo_notebooks").kernel_status(bufnr)` normalized status string for statusline/lualine consumers.
+- Added kernel control command surface:
+  - `NeoNotebookKernelRestart`,
+  - `NeoNotebookKernelInterrupt`,
+  - `NeoNotebookKernelStop`,
+  - `NeoNotebookKernelPauseToggle`,
+  - `NeoNotebookKernelStatus`.
+- Added keymap-first kernel controls (config-driven):
+  - `kernel_restart`, `kernel_interrupt`, `kernel_stop`, `kernel_pause`, `kernel_status`.
+- Queue pause behavior now gates dispatch/drain start via session state pause flag (dispatch pause only; no process suspend).
+- Added regression coverage:
+  - integration lane asserts default `<leader>k*` kernel keymaps are registered,
+  - core lane asserts queue pause/resume toggles session paused state.
 - Validation:
   - required lanes green (`core_contract`, `integration`, `run.lua` with optional kitty skipped),
   - optional kitty lane preserves expected failure signal in non-kitty environments.

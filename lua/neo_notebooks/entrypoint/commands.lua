@@ -96,6 +96,20 @@ function M.register(ctx)
     vim.notify(message, summary.first_level or vim.log.levels.WARN)
   end
 
+  local function kernel_status_text(bufnr)
+    local state = exec.get_session_state(bufnr)
+    local name = state and state.state or "stopped"
+    if state and state.paused then
+      name = "paused"
+    elseif name == "idle" then
+      name = "ok"
+    end
+    local queue_len = state and state.queue_len or 0
+    local active = state and state.active_request and "yes" or "no"
+    local alive = state and state.alive and "yes" or "no"
+    return string.format("NeoNotebook: kernel=%s queue=%d active=%s alive=%s", name, queue_len, active, alive)
+  end
+
   vim.api.nvim_create_user_command("NeoNotebookRender", function()
     render.render(0)
   end, {})
@@ -327,6 +341,37 @@ function M.register(ctx)
     if ok then
       vim.notify("NeoNotebook: Python session restarted", vim.log.levels.INFO)
     end
+  end, {})
+
+  vim.api.nvim_create_user_command("NeoNotebookKernelRestart", function()
+    local ok = session.restart(0)
+    if ok then
+      vim.notify("NeoNotebook: kernel restarted", vim.log.levels.INFO)
+    end
+  end, {})
+
+  vim.api.nvim_create_user_command("NeoNotebookKernelInterrupt", function()
+    local ok, err, level = exec.interrupt(0)
+    if not ok and err then
+      vim.notify(err, level or vim.log.levels.WARN)
+      return
+    end
+    vim.notify("NeoNotebook: interrupt requested", vim.log.levels.INFO)
+  end, {})
+
+  vim.api.nvim_create_user_command("NeoNotebookKernelStop", function()
+    exec.stop_session(0)
+    vim.notify("NeoNotebook: kernel stopped", vim.log.levels.INFO)
+  end, {})
+
+  vim.api.nvim_create_user_command("NeoNotebookKernelPauseToggle", function()
+    local paused = exec.toggle_pause_queue(0)
+    local label = paused and "paused" or "resumed"
+    vim.notify("NeoNotebook: kernel queue " .. label, vim.log.levels.INFO)
+  end, {})
+
+  vim.api.nvim_create_user_command("NeoNotebookKernelStatus", function()
+    vim.notify(kernel_status_text(0), vim.log.levels.INFO)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookOutputToggle", function()

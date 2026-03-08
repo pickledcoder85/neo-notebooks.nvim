@@ -568,7 +568,7 @@ function M.stop_session(bufnr)
   local session = sessions[bufnr]
   if not session then
     session_state.transition(bufnr, "stopped", { reason = "session_missing_stop", force = true })
-    return
+    return true
   end
   spinner.stop_all(bufnr)
   if is_job_alive(session.job) then
@@ -576,6 +576,7 @@ function M.stop_session(bufnr)
   end
   sessions[bufnr] = nil
   session_state.transition(bufnr, "stopped", { reason = "session_stopped", force = true })
+  return true
 end
 
 local function build_request(bufnr, line, opts)
@@ -647,8 +648,11 @@ local function dispatch_request(session, req)
   vim.fn.chansend(session.job, payload .. "\n")
 end
 
-local function make_queue_drainer(session)
+local function make_queue_drainer(session, bufnr)
   return function()
+    if session_state.is_paused(bufnr) then
+      return
+    end
     if session.active_request_id then
       return
     end
@@ -698,7 +702,7 @@ function M.enqueue_cell(bufnr, line, opts)
     end
   end
   if not session.drain_queue then
-    session.drain_queue = make_queue_drainer(session)
+    session.drain_queue = make_queue_drainer(session, bufnr)
   end
   local pushed = false
   if config.interrupt_on_rerun and session.active_request_id == nil then
@@ -714,6 +718,55 @@ end
 
 function M.run_cell(bufnr, line, opts)
   return M.enqueue_cell(bufnr, line, opts)
+end
+
+function M.interrupt(bufnr)
+  bufnr = resolve_bufnr(bufnr)
+  local session = sessions[bufnr]
+  if not session or not is_job_alive(session.job) then
+    session_state.transition(bufnr, "stopped", { reason = "interrupt_without_session", force = true })
+    return nil, "NeoNotebook: no active kernel session", vim.log.levels.WARN
+  end
+  local active_id = session.active_request_id
+  if not active_id then
+    return nil, "NeoNotebook: no active execution to interrupt", vim.log.levels.INFO
+  end
+  local pending = session.pending and session.pending[active_id] or nil
+  if pending then
+    pending.interrupted = true
+  end
+  local pid = vim.fn.jobpid(session.job)
+  if pid and pid > 0 then
+    pcall(vim.loop.kill, pid, "sigint")
+  end
+  session_state.transition(bufnr, "interrupting", { reason = "interrupt_requested", force = true })
+  return true
+end
+
+function M.pause_queue(bufnr)
+  bufnr = resolve_bufnr(bufnr)
+  session_state.set_paused(bufnr, true, { reason = "queue_paused" })
+  return true
+end
+
+function M.resume_queue(bufnr)
+  bufnr = resolve_bufnr(bufnr)
+  session_state.set_paused(bufnr, false, { reason = "queue_resumed" })
+  local session = sessions[bufnr]
+  if session and session.drain_queue then
+    session.drain_queue()
+  end
+  return true
+end
+
+function M.toggle_pause_queue(bufnr)
+  bufnr = resolve_bufnr(bufnr)
+  if session_state.is_paused(bufnr) then
+    M.resume_queue(bufnr)
+    return false
+  end
+  M.pause_queue(bufnr)
+  return true
 end
 
 function M.clear_cell_hash(bufnr, cell_id)
@@ -733,7 +786,15 @@ end
 
 function M.get_session_state(bufnr)
   bufnr = resolve_bufnr(bufnr)
-  return session_state.get(bufnr)
+  local state = session_state.get(bufnr)
+  local session = sessions[bufnr]
+  local active = session and session.active_request_id ~= nil or false
+  local queue_len = session and #session.queue or 0
+  local alive = session and is_job_alive(session.job) or false
+  state.active_request = active
+  state.queue_len = queue_len
+  state.alive = alive
+  return state
 end
 
 function M._get_hash_store_for_test(bufnr)

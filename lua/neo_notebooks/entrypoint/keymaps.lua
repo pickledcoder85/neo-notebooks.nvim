@@ -10,6 +10,7 @@ function M.new(ctx)
   local actions = ctx.actions
   local run_all = ctx.run_all
   local session = ctx.session
+  local exec = ctx.exec
   local stats = ctx.stats
   local run_subset = ctx.run_subset
   local help = ctx.help
@@ -327,6 +328,57 @@ function M.new(ctx)
         if ok then
           vim.notify("NeoNotebook: Python session restarted", vim.log.levels.INFO)
         end
+      end, opts)
+    end
+
+    if maps.kernel_restart then
+      vim.keymap.set("n", maps.kernel_restart, function()
+        vim.cmd("NeoNotebookKernelRestart")
+      end, opts)
+    end
+
+    if maps.kernel_interrupt then
+      vim.keymap.set("n", maps.kernel_interrupt, function()
+        local ok, err, level = exec.interrupt(0)
+        if not ok and err then
+          vim.notify(err, level or vim.log.levels.WARN)
+          return
+        end
+        vim.notify("NeoNotebook: interrupt requested", vim.log.levels.INFO)
+      end, opts)
+    end
+
+    if maps.kernel_stop then
+      vim.keymap.set("n", maps.kernel_stop, function()
+        exec.stop_session(0)
+        vim.notify("NeoNotebook: kernel stopped", vim.log.levels.INFO)
+      end, opts)
+    end
+
+    if maps.kernel_pause then
+      vim.keymap.set("n", maps.kernel_pause, function()
+        local paused = exec.toggle_pause_queue(0)
+        local label = paused and "paused" or "resumed"
+        vim.notify("NeoNotebook: kernel queue " .. label, vim.log.levels.INFO)
+      end, opts)
+    end
+
+    if maps.kernel_status then
+      vim.keymap.set("n", maps.kernel_status, function()
+        local state = exec.get_session_state(0)
+        local name = state and state.state or "stopped"
+        if state and state.paused then
+          name = "paused"
+        elseif name == "idle" then
+          name = "ok"
+        end
+        local queue_len = state and state.queue_len or 0
+        local active = state and state.active_request and "yes" or "no"
+        local alive = state and state.alive and "yes" or "no"
+        vim.notify(
+          string.format("NeoNotebook: kernel=%s queue=%d active=%s alive=%s", name, queue_len, active, alive),
+          vim.log.levels.INFO
+        )
       end, opts)
     end
 

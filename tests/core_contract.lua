@@ -12,6 +12,7 @@ local render = require('neo_notebooks.render')
 local index_mod = require('neo_notebooks.index')
 local ipynb = require('neo_notebooks.ipynb')
 local nb = require('neo_notebooks')
+local exec = require('neo_notebooks.exec')
 local fixture_root = vim.fn.getcwd() .. '/tests/fixtures/jupytext'
 
 -- Test: default strict containment mode is soft
@@ -371,6 +372,22 @@ with_buf({ "" }, function(buf)
   eq(idx.list[1].type, "markdown", "docs fixture first markdown")
   eq(idx.list[2].type, "markdown", "docs fixture title marker markdown")
   eq(idx.list[3].type, "code", "docs fixture third code")
+end)
+
+-- Test: kernel queue pause/resume toggles paused session state
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  local ok_pause = exec.pause_queue(buf)
+  ok(ok_pause, "pause queue succeeds")
+  local paused = exec.get_session_state(buf)
+  ok(paused.paused == true, "session state paused=true")
+
+  local paused_flag = exec.toggle_pause_queue(buf)
+  eq(paused_flag, false, "toggle from paused returns false (resumed)")
+  local resumed = exec.get_session_state(buf)
+  ok(resumed.paused == false, "session state paused=false after resume")
 end)
 
 print('core_contract tests passed')

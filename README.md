@@ -75,6 +75,11 @@ print("hello")
 - `:NeoNotebookCellMoveDown` moves the current cell down.
 - `:NeoNotebookRunAll` runs all code cells.
 - `:NeoNotebookRestart` restarts the Python session and clears outputs.
+- `:NeoNotebookKernelRestart` restarts the kernel session.
+- `:NeoNotebookKernelInterrupt` sends an interrupt to active execution.
+- `:NeoNotebookKernelStop` stops/shuts down the current kernel session.
+- `:NeoNotebookKernelPauseToggle` pauses/resumes queue dispatch (does not suspend the process).
+- `:NeoNotebookKernelStatus` shows kernel state details.
 - `:NeoNotebookOutputToggle` toggles output mode between inline and floating.
 - While a cell is executing, a spinner animates on the first inline output row.
 - While a cell runs, an inline placeholder output shows `cell executing...`.
@@ -175,6 +180,11 @@ require("neo_notebooks").setup({
     move_bottom = "<leader>mgg",
     run_all = "<leader>ra",
     restart = "<leader>rs",
+    kernel_restart = "<leader>kr",
+    kernel_interrupt = "<leader>ki",
+    kernel_stop = "<leader>ks",
+    kernel_pause = "<leader>kp",
+    kernel_status = "<leader>kk",
     toggle_output = "<leader>tt",
     toggle_output_collapse = "<leader>of",
     select_cell = "<leader>vs",
@@ -368,6 +378,11 @@ Note: `<M-...>` means the Meta key (typically `Alt` on most keyboards).
 When the pane is collapsed with `<leader>pc`, new images are saved to disk and not auto-rendered until the pane is reopened (use `<leader>pt` or `:NeoNotebookImagePaneTest` to reopen).
 - `<leader>ra` run all code cells
 - `<leader>rs` restart python session
+- `<leader>kr` kernel restart
+- `<leader>ki` kernel interrupt
+- `<leader>ks` kernel stop
+- `<leader>kp` kernel pause/resume queue dispatch
+- `<leader>kk` kernel status
 - `<leader>vs` select current cell body
 - `<leader>ns` show cell stats
 - `<leader>rk` run all code cells above

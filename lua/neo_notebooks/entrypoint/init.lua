@@ -31,6 +31,7 @@ function M.setup(opts)
     actions = actions,
     run_all = run_all,
     session = session,
+    exec = exec,
     stats = stats,
     run_subset = run_subset,
     help = help,

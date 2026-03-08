@@ -127,6 +127,11 @@ with_buf({
   vim.b[buf].neo_notebooks_enabled = true
   nb.setup({})
   ok(has_buf_map(buf, "n", "<leader>sg"), "default snake keymap registered")
+  ok(has_buf_map(buf, "n", "<leader>kr"), "default kernel restart keymap registered")
+  ok(has_buf_map(buf, "n", "<leader>ki"), "default kernel interrupt keymap registered")
+  ok(has_buf_map(buf, "n", "<leader>ks"), "default kernel stop keymap registered")
+  ok(has_buf_map(buf, "n", "<leader>kp"), "default kernel pause keymap registered")
+  ok(has_buf_map(buf, "n", "<leader>kk"), "default kernel status keymap registered")
 end)
 
 -- Test: snake mode keymaps lock and restore on exit
