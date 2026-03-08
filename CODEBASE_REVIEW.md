@@ -915,7 +915,7 @@ NeoNotebookSnakeCell
 ## Phase Worklist - Phase 6: Error/Notify Policy
 
 - Phase: 6 - error/notify policy
-- Status: in_progress
+- Status: completed
 - Related sweep findings:
   - Sweep 1: finding 7
   - Sweep 2: finding 8
@@ -972,3 +972,4 @@ NeoNotebookSnakeCell
   - `actions.decision_keys` no longer notifies directly on blocked decisions.
   - `actions` stores/returns guard reasons through `consume_last_guard_reason`.
   - `entrypoint/keymaps.lua` now owns guard warning notifications for `dd`, `d`, `x`, `D`, visual `d`, `<BS>`, and `<Del>` guard flows.
+- Closure audit: remaining non-debug `vim.notify` calls are now confined to boundary surfaces (`entrypoint/commands.lua`, `entrypoint/keymaps.lua`, `entrypoint/lifecycle.lua`), with internal-module notify usage limited to debug-gated paths.
