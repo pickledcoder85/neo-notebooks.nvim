@@ -139,6 +139,7 @@ This document summarizes implementation choices and the evolution of core featur
 Current Phase 7 baseline:
 - `kernel_status()` is now available and returns normalized strings (`ok`, `paused`, or raw state names).
 - Session state defaults to `stopped` before first run; transitions now enforce a stricter state machine contract (no direct `stopped -> running` bypass).
+- Kernel status mapping/format/highlight semantics are centralized in `kernel_status.lua` so badge, panel, notify output, and statusline use one canonical source.
 - Kernel control keymaps/commands and dispatch pause gating are implemented.
 - Persistent kernel status panel toggle is implemented via `<leader>kk` / `:NeoNotebookKernelStatusToggle`.
 - Optional virtual status badge is implemented via `kernel_status_virtual = true`.

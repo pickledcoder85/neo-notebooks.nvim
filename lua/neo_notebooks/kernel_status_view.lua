@@ -12,24 +12,7 @@ local function resolve_bufnr(bufnr)
 end
 
 local function status_snapshot(bufnr)
-  local exec = require("neo_notebooks.exec")
-  local state = exec.get_session_state(bufnr)
-  local name = state and state.state or "stopped"
-  if state and state.paused then
-    name = "paused"
-  elseif name == "idle" then
-    name = "ok"
-  end
-  local queue_len = state and state.queue_len or 0
-  local active = state and state.active_request and "yes" or "no"
-  local alive = state and state.alive and "yes" or "no"
-  return {
-    name = name,
-    queue_len = queue_len,
-    active = active,
-    alive = alive,
-    reason = state and state.reason or "-",
-  }
+  return require("neo_notebooks.kernel_status").snapshot(bufnr)
 end
 
 local function status_lines(snapshot)
@@ -45,16 +28,7 @@ local function status_lines(snapshot)
 end
 
 local function state_hl(name)
-  if name == "ok" then
-    return "String"
-  end
-  if name == "running" or name == "interrupting" or name == "restarting" or name == "paused" then
-    return "WarningMsg"
-  end
-  if name == "error" or name == "stopped" then
-    return "ErrorMsg"
-  end
-  return "Identifier"
+  return require("neo_notebooks.kernel_status").highlight(name)
 end
 
 local function panel_col(width)

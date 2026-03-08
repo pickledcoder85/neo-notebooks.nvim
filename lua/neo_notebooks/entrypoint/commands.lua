@@ -98,21 +98,7 @@ function M.register(ctx)
   end
 
   local function kernel_status_text(bufnr)
-    local state = exec.get_session_state(bufnr)
-    local name = state and state.state or "stopped"
-    if state and state.paused then
-      name = "paused"
-    elseif name == "idle" then
-      name = "ok"
-    end
-    local queue_len = state and state.queue_len or 0
-    local active = state and state.active_request and "yes" or "no"
-    local alive = state and state.alive and "yes" or "no"
-    local reason = state and state.reason or nil
-    if reason and reason ~= "" then
-      return string.format("NeoNotebook: kernel=%s queue=%d active=%s alive=%s reason=%s", name, queue_len, active, alive, reason)
-    end
-    return string.format("NeoNotebook: kernel=%s queue=%d active=%s alive=%s", name, queue_len, active, alive)
+    return require("neo_notebooks.kernel_status").format_notify(bufnr)
   end
 
   vim.api.nvim_create_user_command("NeoNotebookRender", function()

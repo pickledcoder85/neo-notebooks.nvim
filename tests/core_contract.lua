@@ -17,6 +17,7 @@ local session = require('neo_notebooks.session')
 local badge = require('neo_notebooks.kernel_status_badge')
 local viewport_padding = require('neo_notebooks.viewport_padding')
 local session_state = require('neo_notebooks.session_state')
+local kernel_status = require('neo_notebooks.kernel_status')
 local fixture_root = vim.fn.getcwd() .. '/tests/fixtures/jupytext'
 
 -- Test: default strict containment mode is soft
@@ -460,6 +461,11 @@ with_buf({
   local after = session_state.get(buf)
   eq(after.state, "stopped", "state remains stopped after invalid transition")
 end)
+
+-- Test: canonical kernel status mapping is stable
+ok(kernel_status.normalize_name({ state = "idle", paused = false }) == "ok", "idle maps to ok")
+ok(kernel_status.normalize_name({ state = "running", paused = true }) == "paused", "paused overrides running")
+ok(kernel_status.normalize_name({ state = "stopped", paused = false }) == "stopped", "stopped remains stopped")
 
 -- Test: virtual kernel badge renders when enabled and clears when disabled
 with_buf({

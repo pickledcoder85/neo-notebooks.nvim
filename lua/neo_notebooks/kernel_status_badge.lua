@@ -11,16 +11,7 @@ local function resolve_bufnr(bufnr)
 end
 
 local function state_hl(name)
-  if name == "ok" then
-    return "String"
-  end
-  if name == "running" or name == "interrupting" or name == "restarting" or name == "paused" then
-    return "WarningMsg"
-  end
-  if name == "error" or name == "stopped" then
-    return "ErrorMsg"
-  end
-  return "Identifier"
+  return require("neo_notebooks.kernel_status").highlight(name)
 end
 
 function M.clear(bufnr)
