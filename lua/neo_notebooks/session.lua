@@ -6,7 +6,7 @@ local M = {}
 
 function M.restart(bufnr)
   bufnr = bufnr or 0
-  session_state.transition(bufnr, "restarting", { reason = "restart_requested", force = true, paused = false })
+  session_state.transition(bufnr, "restarting", { reason = "restart_requested", paused = false })
   local win = vim.api.nvim_get_current_win()
   local cursor = vim.api.nvim_win_get_cursor(win)
   exec.stop_session(bufnr)
@@ -21,7 +21,7 @@ function M.restart(bufnr)
       end
     end
   end)
-  session_state.transition(bufnr, "idle", { reason = "restart_complete", force = true, paused = false })
+  session_state.transition(bufnr, "idle", { reason = "restart_complete", paused = false })
   return true
 end
 

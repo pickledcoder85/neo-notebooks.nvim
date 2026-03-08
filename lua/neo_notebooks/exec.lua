@@ -492,7 +492,7 @@ local function ensure_session(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local session = sessions[bufnr]
   if session and is_job_alive(session.job) then
-    session_state.transition(bufnr, "idle", { reason = "session_reused", force = true })
+    session_state.transition(bufnr, "idle", { reason = "session_reused" })
     return session
   end
 
@@ -553,18 +553,18 @@ local function ensure_session(bufnr)
     end,
   })
   if not ok_jobstart then
-    session_state.transition(bufnr, "error", { reason = "session_start_failed", force = true })
+    session_state.transition(bufnr, "error", { reason = "session_start_failed" })
     return nil, tostring(job)
   end
   session.job = job
 
   if session.job <= 0 then
-    session_state.transition(bufnr, "error", { reason = "session_start_failed", force = true })
+    session_state.transition(bufnr, "error", { reason = "session_start_failed" })
     return nil, "Failed to start Python session"
   end
 
   sessions[bufnr] = session
-  session_state.transition(bufnr, "idle", { reason = "session_started", force = true })
+  session_state.transition(bufnr, "idle", { reason = "session_started" })
   return session
 end
 
@@ -572,7 +572,7 @@ function M.stop_session(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local session = sessions[bufnr]
   if not session then
-    session_state.transition(bufnr, "stopped", { reason = "session_missing_stop", force = true, paused = false })
+    session_state.transition(bufnr, "stopped", { reason = "session_missing_stop", paused = false })
     return true
   end
   spinner.stop_all(bufnr)
@@ -580,7 +580,7 @@ function M.stop_session(bufnr)
     vim.fn.jobstop(session.job)
   end
   sessions[bufnr] = nil
-  session_state.transition(bufnr, "stopped", { reason = "session_stopped", force = true, paused = false })
+  session_state.transition(bufnr, "stopped", { reason = "session_stopped", paused = false })
   return true
 end
 
@@ -670,7 +670,6 @@ local function make_queue_drainer(session, bufnr)
           if req._recovery_attempts > retries then
             session_state.transition(bufnr, "error", {
               reason = "kernel_recovery_failed",
-              force = true,
               paused = false,
             })
             if req.on_output then
@@ -684,7 +683,6 @@ local function make_queue_drainer(session, bufnr)
           if not recovered then
             session_state.transition(bufnr, "error", {
               reason = "kernel_recovery_failed: " .. tostring(err or "unknown"),
-              force = true,
               paused = false,
             })
             if req.on_output then
@@ -767,7 +765,7 @@ function M.interrupt(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local session = sessions[bufnr]
   if not session or not is_job_alive(session.job) then
-    session_state.transition(bufnr, "stopped", { reason = "interrupt_without_session", force = true })
+    session_state.transition(bufnr, "stopped", { reason = "interrupt_without_session" })
     return nil, "NeoNotebook: no active kernel session", vim.log.levels.WARN
   end
   local active_id = session.active_request_id
@@ -782,7 +780,7 @@ function M.interrupt(bufnr)
   if pid and pid > 0 then
     pcall(vim.loop.kill, pid, "sigint")
   end
-  session_state.transition(bufnr, "interrupting", { reason = "interrupt_requested", force = true })
+  session_state.transition(bufnr, "interrupting", { reason = "interrupt_requested" })
   return true
 end
 

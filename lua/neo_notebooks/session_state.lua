@@ -10,12 +10,12 @@ M.STATES = {
 }
 
 local ALLOWED = {
-  idle = { running = true, restarting = true, stopped = true, error = true },
+  idle = { running = true, interrupting = true, restarting = true, stopped = true, error = true },
   running = { idle = true, interrupting = true, restarting = true, error = true, stopped = true },
-  interrupting = { idle = true, running = true, restarting = true, error = true, stopped = true },
+  interrupting = { idle = true, restarting = true, error = true, stopped = true },
   restarting = { idle = true, error = true, stopped = true },
-  error = { idle = true, restarting = true, stopped = true, running = true },
-  stopped = { idle = true, restarting = true, running = true, error = true },
+  error = { idle = true, restarting = true, stopped = true },
+  stopped = { idle = true, restarting = true, error = true },
 }
 
 local state_by_buf = {}
@@ -38,7 +38,7 @@ local function ensure_state(bufnr)
     return state
   end
   state = {
-    state = "idle",
+    state = "stopped",
     reason = nil,
     paused = false,
     updated_at = now_ms(),
@@ -99,7 +99,7 @@ function M.reset(bufnr, opts)
   bufnr = resolve_bufnr(bufnr)
   opts = opts or {}
   state_by_buf[bufnr] = {
-    state = opts.state or "idle",
+    state = opts.state or "stopped",
     reason = opts.reason,
     paused = opts.paused == true,
     updated_at = now_ms(),

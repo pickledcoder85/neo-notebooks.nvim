@@ -16,6 +16,7 @@ local exec = require('neo_notebooks.exec')
 local session = require('neo_notebooks.session')
 local badge = require('neo_notebooks.kernel_status_badge')
 local viewport_padding = require('neo_notebooks.viewport_padding')
+local session_state = require('neo_notebooks.session_state')
 local fixture_root = vim.fn.getcwd() .. '/tests/fixtures/jupytext'
 
 -- Test: default strict containment mode is soft
@@ -434,6 +435,30 @@ with_buf({
   local state = exec.get_session_state(buf)
   eq(state.state, "error", "session state becomes error on start failure")
   nb.config.python_cmd = prev
+end)
+
+-- Test: default session state is stopped before first run
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  session_state.clear(buf)
+  local state = exec.get_session_state(buf)
+  eq(state.state, "stopped", "default session state is stopped")
+  eq(nb.kernel_status(buf), "stopped", "kernel_status maps default to stopped")
+end)
+
+-- Test: direct stopped->running transition is rejected
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  session_state.reset(buf, { state = "stopped" })
+  local ok_transition, err = session_state.transition(buf, "running")
+  ok(ok_transition == nil, "invalid transition should fail")
+  ok(type(err) == "string" and err:find("invalid session transition", 1, true) ~= nil, "invalid transition error text")
+  local after = session_state.get(buf)
+  eq(after.state, "stopped", "state remains stopped after invalid transition")
 end)
 
 -- Test: virtual kernel badge renders when enabled and clears when disabled

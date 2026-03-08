@@ -30,7 +30,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
     - Stale/failed Python job recovery can require manual retries or restart commands.
     - Run-queue behavior is robust but not yet backed by an explicit state-machine contract.
   - Deliverables:
-    - Explicit execution state machine (`idle`, `running`, `interrupting`, `restarting`, `error`) with documented transitions.
+    - Explicit execution state machine (`stopped`, `idle`, `running`, `interrupting`, `restarting`, `error`) with documented transitions.
     - Deterministic restart/interrupt UX (clear success/failure status and next action guidance).
     - Automatic stale-session recovery policy (retry vs restart) with bounded retries.
     - Keymap-first kernel controls and state visibility:
@@ -67,6 +67,9 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Add regression tests around refactored hotspots.
 
 ## Later
+
+- UI parking lot (non-blocking polish bugs):
+  - Viewport virtual top padding can render inconsistently with large cells during certain navigation paths (notably `<C-n>` jumps when viewport lands mid-cell). Bottom padding is stable; top padding needs a more reliable viewport-anchor strategy.
 
 ## Lowest priority
 
