@@ -10,14 +10,14 @@ Living visual map of current architecture and planned refactor state.
 - Phase 4 (Mutation/Render Contract): complete (shared mutation helper + named mutation modes + migrated high-traffic call sites).
 - Phase 5 (Format Layer Split): complete (Jupytext parser + output codec + ipynb codec + buffer adapter split).
 - Phase 6 (Error/Notify Policy): complete (boundary-owned notify flows for commands/keymaps/lifecycle; internal notify paths reduced to explicit debug-gated diagnostics).
-- Phase 7 (Kernel/Session Robustness): in progress (state owner + transitions + kernel controls + queue-pause dispatch gating + bounded dispatch-time recovery + optional virtual badge landed; deeper recovery tests and final status-surface polish pending).
+- Phase 7 (Kernel/Session Robustness): complete (state owner + transitions + kernel controls + queue-pause dispatch gating + bounded dispatch-time recovery + optional virtual badge + dead-active-request reconciliation).
 - Phase 8 (Performance/Scalability Lane): in progress (synthetic large fixtures + optional performance lane with timing budgets landed; threshold tuning and regression policy tightening pending).
 - Streaming execution output protocol (incremental stdout/stderr with carriage-return line replacement) landed for long-running cell UX.
 - Streaming path now includes render-pressure controls (preview cap + throttled refresh cadence) to protect UI responsiveness.
 - Streaming-depth v1: live stream preview now merges by event arrival order (cross-stream), uses a single global preview cap, and supports configurable execution placeholder text.
-- Streaming UX defaults v1 (in progress): recognized non-`tqdm` progress lines are now policy-formatted (default `bar`) in both live preview and final output formatting.
-- Kernel robustness phase 2 (in progress): dead active-request reconciliation now clears stale `active_request` when kernel exits mid-flight and transitions state to `error` before next-request recovery.
-- Interop reliability v1 (in progress): `.ipynb` decode path now validates top-level/cells shapes and normalizes imported cell payloads (unknown type fallback + string-source normalization).
+- Streaming UX defaults v1: recognized non-`tqdm` progress lines are now policy-formatted (default `bar`) in both live preview and final output formatting.
+- Kernel robustness phase 2: dead active-request reconciliation now clears stale `active_request` when kernel exits mid-flight and transitions state to `error` before next-request recovery.
+- Interop reliability v1: `.ipynb` decode path now validates top-level/cells shapes and normalizes imported cell payloads (unknown type fallback + string-source normalization).
 
 ## Reading Guide
 

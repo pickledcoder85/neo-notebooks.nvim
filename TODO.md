@@ -4,72 +4,9 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Now
 
-- Interop reliability v1 (active feature branch: `feature/interop-reliability-v1`):
-  - Goal: harden malformed-input handling and tighten `.ipynb`/Jupytext normalization invariants.
-  - Implementation plan (updated):
-    - Reject malformed `.ipynb` top-level/cells shapes with readable import errors.
-    - Normalize imported cell payloads:
-      - unknown `cell_type` -> `code` fallback,
-      - string `source` -> normalized lines,
-      - non-table metadata/attachments/outputs -> safe defaults.
-    - Harden output field decoding for malformed table payloads in stream/display paths.
-  - Tests to add/update:
-    - Add core-contract coverage for malformed `.ipynb` top-level and invalid `cells` field.
-    - Add core-contract coverage for unknown cell types + string-source normalization and export invariant.
-    - Re-run `tests/core_contract.lua`, `tests/integration.lua`, `tests/performance.lua`.
-  - Acceptance criteria:
-    - Malformed `.ipynb` shape returns deterministic import errors (no silent partial import).
-    - Unknown/nonstandard cell types import as code fallback and export as valid nbformat code cells.
-    - String-source notebooks import with line-stable cell bodies.
-
-- Kernel/session robustness phase 2 (active feature branch: `feature/kernel-robustness-phase2-v1`):
-  - Goal: eliminate stale "busy" behavior when kernel process exits during an active request.
-  - Implementation plan (updated):
-    - Reconcile dead active requests in `lua/neo_notebooks/exec.lua` by clearing `active_request_id`, stopping spinner, and transitioning to `error` with explicit reason.
-    - Ensure reconciliation runs in both queue-drain path and `get_session_state()` so status surfaces cannot stay stale indefinitely.
-    - Preserve recovery ergonomics: next request can start a fresh session and continue normally.
-  - Tests to add/update:
-    - Add integration coverage for forced kernel death during active run, asserting:
-      - state transitions to non-busy `error`,
-      - subsequent request runs successfully and returns to `idle`.
-    - Re-run `tests/core_contract.lua`, `tests/integration.lua`, `tests/performance.lua`.
-  - Acceptance criteria:
-    - No stuck `running/interrupting` state after kernel exits mid-request.
-    - Status panel/badge/statusline reflect reconciled state.
-    - Follow-up execution recovers without manual process cleanup.
-
-- Streaming UX defaults v1 (active feature branch: `feature/streaming-ux-defaults-v1`):
-  - Goal: establish one polished default non-`tqdm` streaming progress UX in core runtime (no user config needed for common case), with optional escape-hatch config for advanced users.
-  - Implementation plan (updated):
-    - Add core stream-progress formatting policy in `lua/neo_notebooks/exec.lua` for plain text progress lines like `*_PROGRESS 30% (25500/85000)`.
-    - Add config defaults in `lua/neo_notebooks/init.lua`:
-      - `stream_progress_style = "bar"` (default),
-      - `stream_progress_bar_width = 20`.
-    - Keep fallback compatibility:
-      - supported styles: `bar` (default), `pct`, `ratio`, `raw`.
-      - only rewrite recognized progress lines; leave all other output untouched.
-    - Update fixture defaults in `tests/fixtures/perf/manual_exec_soak.*` to align with core default behavior.
-  - Tests to add/update:
-    - Extend `tests/integration.lua` with a streaming progress-format test validating default `bar` rendering.
-    - Ensure existing carriage-return/replacement tests still pass with style defaults.
-    - Re-run `tests/core_contract.lua`, `tests/integration.lua`, `tests/performance.lua`.
-  - Acceptance criteria:
-    - Default streaming output for recognized non-`tqdm` progress lines renders in bar format:
-      - `[######........] 30% (25500/85000)` style.
-    - No regressions in existing stream replacement, queue, interrupt, and restart behavior.
-    - Documentation gate reconciled (`README.md`, `TODO.md`, `TECHNICAL.md`, and architecture note if flow changed).
-  - Progress update:
-    - Core progress formatting policy landed in `exec.lua` for live preview + final output formatting.
-    - Default config landed (`stream_progress_style="bar"`, `stream_progress_bar_width=20`).
-    - Integration coverage added for default bar-style formatting.
-
-- Jupytext interoperability (next major task):
-  - Initial `py:percent` open/import support landed (`:NeoNotebookImportJupytext` / `:NeoNotebookOpenJupytext`).
-  - Initial `metadata.jupytext` seed + `.ipynb` export round-trip landed.
-  - Initial compatibility fixtures from official Jupytext README/docs landed (`tests/fixtures/jupytext`).
-  - Added robustness fixtures for mixed marker styles (`[md]`, indented `# %%`) and malformed header fallback behavior.
-  - Added import error-path tests (missing file, non-modifiable target buffer).
-  - Expand fixture corpus with additional real-world repos to further reduce format drift risk.
+- Docs/state sync:
+  - Keep `TODO.md`/`TECHNICAL.md`/`ARCHITECTURE_FLOWCHARTS.md` aligned with merged work before starting each new feature.
+  - Ensure `Now` only contains active, unmerged work.
 - Structured codebase review sweeps (see `CODEBASE_REVIEW.md`):
   - Sweep 1: contract map (completed; module/API/state/UI artifacts documented).
   - Sweep 2: architecture assessment (event flow, coupling hotspots, simplification opportunities).
@@ -81,61 +18,34 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Phase 4 (completed): mutation/render contract consolidation (shared mutation helper + named modes + migrated high-traffic call sites).
   - Phase 5 (completed): format layer split (Jupytext parser + output codec + ipynb codec + notebook adapter split).
   - Phase 6 (completed): error/notify policy (boundary-owned notifications + debug-gated internal notify paths).
-  - Phase 7 (in progress): kernel/session state machine + recovery policy (docs gate complete; state-owner, status API, kernel controls, persistent panel, optional virtual badge, queue-pause dispatch gating, and bounded dispatch-time auto-recovery landed).
+  - Phase 7 (completed): kernel/session state machine + recovery policy (state-owner, status API, kernel controls, persistent panel, optional virtual badge, queue-pause dispatch gating, bounded dispatch-time auto-recovery, and dead-active-request reconciliation landed).
 
 ## Next
 
-- Priority 1: Kernel/session robustness (highest impact):
-  - Why now (current fragility):
-    - Ambiguous session state after interrupt/restart paths can leave users unsure whether execution requests are accepted.
-    - Stale/failed Python job recovery can require manual retries or restart commands.
-    - Run-queue behavior is robust but not yet backed by an explicit state-machine contract.
-  - Deliverables:
-    - Explicit execution state machine (`stopped`, `idle`, `running`, `interrupting`, `restarting`, `error`) with documented transitions.
-    - Deterministic restart/interrupt UX (clear success/failure status and next action guidance).
-    - Automatic stale-session recovery policy (retry vs restart) with bounded retries.
-    - Keymap-first kernel controls and state visibility:
-      - `<leader>kr` restart, `<leader>ki` interrupt, `<leader>ks` stop, `<leader>kp` pause/unpause dispatch, `<leader>kk` toggle persistent kernel status panel.
-      - keep command aliases, but optimize daily workflow around short keymaps.
-    - Status visibility for users:
-      - lightweight `kernel_status()` API for statusline/lualine integration.
-      - virtual status badge (default on, configurable off) for users without statusline integration.
-      - canonical state colors: green=ok/idle, yellow=active transitional states, red=error/stopped.
-  - Acceptance criteria:
-    - No stuck "busy" UI state after interrupt/restart/failure scenarios.
-    - Reproducible behavior for queued runs across restart/interrupt boundaries.
-    - Integration tests for state transitions and recovery flows.
-    - Queue pause semantics are explicit (dispatch pause, not process suspend) and tested.
-  - Progress update:
-    - Added integration tests for queue pause/resume boundary, interrupt->restart recovery, and restart queue/active cleanup invariants.
-    - Phase 2: added dead-active-request reconciliation for mid-flight kernel exits so state does not remain stuck busy.
-    - Added integration test covering forced kernel death during active run followed by successful next-request recovery.
-
-- Priority 2: Performance/scalability hardening:
+- Priority 1: Performance/scalability hardening follow-through:
   - Profile render/index/scheduler hot paths on large notebooks.
   - Add stress tests for high output volume and long-running edit/render loops.
-  - Define baseline metrics (render latency, queue latency) and regression thresholds.
+  - Define and enforce baseline regression thresholds (render latency, queue latency) for CI/local gates.
   - Progress update:
     - Added synthetic large fixtures (`tests/fixtures/perf`) and optional `tests/performance.lua` lane with conservative timing budgets for import/index/render/export.
     - Added execution stress coverage for batch compute, large streamed output, and fetch-style large-data read (`file://` payload), with optional real network fetch gate.
     - Streaming-depth v1: live stream preview now uses event-order merging with a global preview cap, plus carriage-return sanitization and placeholder configurability.
     - Manual soak fixture now supports non-`tqdm` progress styles (`pct`, `ratio`, `bar`) for UX testing of default streaming behavior.
 
-- Priority 3: Reliability contracts for format interop:
+- Priority 2: Reliability contracts for format interop follow-through:
   - Expand Jupytext fixture corpus with additional real-world repos.
-  - Add malformed-input/error-path fixtures for `.ipynb` and Jupytext.
-  - Tighten round-trip invariants for metadata/outputs across NeoNotebooks and IDEs.
+  - Tighten round-trip invariants for metadata/outputs across NeoNotebooks and IDEs (cross-IDE coverage).
   - Progress update:
     - Added malformed `.ipynb` shape validation (top-level and `cells` field) with explicit errors.
     - Added import normalization for unknown cell types, string `source`, and malformed metadata/attachments/outputs.
     - Added core-contract tests for malformed-shape rejection and normalization/export invariants.
 
-- Priority 4: UI/Neovim integration polish:
+- Priority 3: UI/Neovim integration polish:
   - Close cursor/alignment edge cases under resize/split/tab transitions.
   - Further stabilize keymap/lifecycle behavior across buffer attach/detach flows.
   - Improve long-running execution status visibility.
 
-- Priority 5: Architecture formalization + cleanup sweep:
+- Priority 4: Architecture formalization + cleanup sweep:
   - Revisit module boundaries, dependency direction, and state ownership.
   - Remove dead code and tighten high-risk error paths.
   - Add regression tests around refactored hotspots.
