@@ -155,6 +155,8 @@ Current Phase 7 baseline:
 - Typed outputs are supported (text + image/png), with custom kitty graphics rendering in a dedicated image pane. When running inside tmux, the pane is created automatically and targeted via its TTY.
 - While a cell is executing, a spinner is rendered on the first inline output row.
 - While a cell runs, the output area shows a placeholder line.
+- Execution now supports incremental stream events from the Python worker; stdout/stderr lines are rendered live during execution.
+- Stream protocol supports carriage-return replacement semantics so `tqdm`-style progress updates replace the active line instead of only appending.
 - After execution, the inline output prepends a right-aligned timing line.
 - Execution duration is measured around the request/response boundary and stored per cell ID.
 - Spinner frames request immediate renders to avoid dropped updates.

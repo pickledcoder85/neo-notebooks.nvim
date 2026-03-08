@@ -85,6 +85,8 @@ print("hello")
 - `:NeoNotebookOutputToggle` toggles output mode between inline and floating.
 - While a cell is executing, a spinner animates on the first inline output row.
 - While a cell runs, an inline placeholder output shows `cell executing...`.
+- Streaming stdout/stderr is now rendered incrementally while a cell runs (including batch-progress text).
+- Carriage-return progress updates (for example `tqdm`) are handled as in-place line replacement during execution.
 - After execution, inline output includes a right-aligned timing line (e.g. `[8.56ms]`).
 - Moving cells preserves outputs by stable cell ID.
 - `:NeoNotebookCellSelect` selects the current cell body.

@@ -211,10 +211,70 @@ def _render_pandas_table(value, out_buf):
     console.print(table)
     return True
 
+def _emit_message(obj):
+    try:
+        sys.__stdout__.write(json.dumps(obj) + "\n")
+        sys.__stdout__.flush()
+    except Exception:
+        pass
+
+class _NeoStream(io.TextIOBase):
+    def __init__(self, req_id, stream_name):
+        self.req_id = req_id
+        self.stream_name = stream_name
+        self._seg = []
+        self._lines = []
+
+    def writable(self):
+        return True
+
+    def _push_segment(self, replace):
+        text = "".join(self._seg)
+        self._seg = []
+        if text == "":
+            return
+        if replace and self._lines:
+            self._lines[-1] = text
+        else:
+            self._lines.append(text)
+        _emit_message({
+            "kind": "stream",
+            "id": self.req_id,
+            "stream": self.stream_name,
+            "text": text,
+            "replace": True if replace else False,
+        })
+
+    def write(self, s):
+        if s is None:
+            return 0
+        if not isinstance(s, str):
+            s = str(s)
+        for ch in s:
+            if ch == "\r":
+                self._push_segment(True)
+            elif ch == "\n":
+                self._push_segment(False)
+            else:
+                self._seg.append(ch)
+        return len(s)
+
+    def flush(self):
+        self._push_segment(False)
+        return None
+
+    def value(self):
+        if self._seg:
+            self._push_segment(False)
+        if not self._lines:
+            return ""
+        return "\n".join(self._lines) + "\n"
+
 def handle(obj):
     code = obj.get("code", "")
-    out_buf = io.StringIO()
-    err_buf = io.StringIO()
+    req_id = obj.get("id")
+    out_buf = _NeoStream(req_id, "stdout")
+    err_buf = _NeoStream(req_id, "stderr")
     _maybe_patch_rich_console()
     globals_dict["__neo_notebooks_show_called"] = False
     _maybe_patch_matplotlib_show()
@@ -260,8 +320,8 @@ def handle(obj):
             trace = traceback.format_exc()
             interrupted = False
     items = []
-    out_val = out_buf.getvalue()
-    err_val = err_buf.getvalue()
+    out_val = out_buf.value()
+    err_val = err_buf.value()
     trace_val = trace
     if out_val:
         items.append({ "type": "text/plain", "data": out_val })
@@ -275,7 +335,7 @@ def handle(obj):
     if png_item:
         items.append(png_item)
     resp = {
-        "id": obj.get("id"),
+        "id": req_id,
         "ok": ok,
         "out": out_val,
         "err": err_val,
@@ -283,8 +343,7 @@ def handle(obj):
         "items": items,
         "interrupted": interrupted if 'interrupted' in locals() else False,
     }
-    sys.stdout.write(json.dumps(resp) + "\n")
-    sys.stdout.flush()
+    _emit_message(resp)
 
 for line in sys.stdin:
     line = line.strip()
@@ -294,8 +353,7 @@ for line in sys.stdin:
         obj = json.loads(line)
     except Exception:
         resp = {"id": None, "ok": False, "out": "", "err": "", "trace": "Invalid JSON"}
-        sys.stdout.write(json.dumps(resp) + "\n")
-        sys.stdout.flush()
+        _emit_message(resp)
         continue
     handle(obj)
 ]]
@@ -408,6 +466,65 @@ local function format_payload(resp)
   return lines
 end
 
+local function resolve_pending_cell(pending, resolved_cell_id)
+  local index_mod = require("neo_notebooks.index")
+  local cell = nil
+  if resolved_cell_id then
+    cell = index_mod.get_by_id(pending.bufnr, resolved_cell_id)
+  end
+  if not cell and pending.line then
+    cell = index_mod.find_cell(pending.bufnr, pending.line)
+  end
+  return cell
+end
+
+local function apply_stream_event(session, pending, resp, resolved_cell_id)
+  pending.stream_lines = pending.stream_lines or { stdout = {}, stderr = {}, traceback = {} }
+  local stream = resp.stream or "stdout"
+  if not pending.stream_lines[stream] then
+    pending.stream_lines[stream] = {}
+  end
+
+  local text = tostring(resp.text or "")
+  local chunks = vim.split(text, "\n", { plain = true })
+  if #chunks == 0 then
+    chunks = { text }
+  end
+
+  for _, chunk in ipairs(chunks) do
+    if chunk ~= "" then
+      local lines = pending.stream_lines[stream]
+      if resp.replace == true and #lines > 0 then
+        lines[#lines] = chunk
+      else
+        lines[#lines + 1] = chunk
+      end
+    end
+  end
+
+  local merged = {}
+  for _, name in ipairs({ "stdout", "stderr", "traceback" }) do
+    local lines = pending.stream_lines[name] or {}
+    for _, line in ipairs(lines) do
+      merged[#merged + 1] = line
+    end
+  end
+  if #merged == 0 then
+    merged = { "cell executing..." }
+  end
+
+  local cell = resolve_pending_cell(pending, resolved_cell_id)
+  if cell then
+    output.show_inline(pending.bufnr, {
+      id = cell.id,
+      start = cell.start,
+      finish = cell.finish,
+      type = cell.type,
+    }, merged, { executing = true })
+  end
+  refresh_kernel_ui(pending.bufnr)
+end
+
 local function handle_response(session, resp)
   if not resp or type(resp) ~= "table" then
     return
@@ -420,15 +537,23 @@ local function handle_response(session, resp)
   end
   local trace = resp.trace or ""
   local err = resp.err or ""
-  if resp.interrupted == true or (pending.interrupted and (trace:find("KeyboardInterrupt", 1, true) or err:find("KeyboardInterrupt", 1, true))) then
-    local resolved = pending.cell_id
-    if not resolved and pending.line then
-      local index = require("neo_notebooks.index")
-      local cell = index.find_cell(pending.bufnr, pending.line)
-      if cell then
-        resolved = cell.id
-      end
+  local resolved_cell_id = pending.cell_id
+  if not resolved_cell_id and pending.line then
+    local index = require("neo_notebooks.index")
+    local cell = index.find_cell(pending.bufnr, pending.line)
+    if cell then
+      resolved_cell_id = cell.id
+      pending.cell_id = resolved_cell_id
     end
+  end
+
+  if resp.kind == "stream" then
+    apply_stream_event(session, pending, resp, resolved_cell_id)
+    return
+  end
+
+  if resp.interrupted == true or (pending.interrupted and (trace:find("KeyboardInterrupt", 1, true) or err:find("KeyboardInterrupt", 1, true))) then
+    local resolved = resolved_cell_id
     local newer = false
     if resolved and pending.gen and session.cell_generation then
       local current = session.cell_generation[resolved]
@@ -456,15 +581,6 @@ local function handle_response(session, resp)
   local duration_ms = nil
   if pending.started_at then
     duration_ms = (vim.loop.hrtime() - pending.started_at) / 1e6
-  end
-  local resolved_cell_id = pending.cell_id
-  if not resolved_cell_id and pending.line then
-    local index = require("neo_notebooks.index")
-    local cell = index.find_cell(pending.bufnr, pending.line)
-    if cell then
-      resolved_cell_id = cell.id
-      pending.cell_id = resolved_cell_id
-    end
   end
   if duration_ms then
     local timing_id = resolved_cell_id

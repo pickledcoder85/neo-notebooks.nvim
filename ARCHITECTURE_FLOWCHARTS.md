@@ -12,6 +12,7 @@ Living visual map of current architecture and planned refactor state.
 - Phase 6 (Error/Notify Policy): complete (boundary-owned notify flows for commands/keymaps/lifecycle; internal notify paths reduced to explicit debug-gated diagnostics).
 - Phase 7 (Kernel/Session Robustness): in progress (state owner + transitions + kernel controls + queue-pause dispatch gating + bounded dispatch-time recovery + optional virtual badge landed; deeper recovery tests and final status-surface polish pending).
 - Phase 8 (Performance/Scalability Lane): in progress (synthetic large fixtures + optional performance lane with timing budgets landed; threshold tuning and regression policy tightening pending).
+- Streaming execution output protocol (incremental stdout/stderr with carriage-return line replacement) landed for long-running cell UX.
 
 ## Reading Guide
 
