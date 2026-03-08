@@ -167,6 +167,8 @@ Current Phase 7 baseline:
 - Optional virtual status badge is implemented via `kernel_status_virtual = true`.
 - Bounded dispatch-time auto-recovery is implemented for dead sessions (`kernel_recovery_retries`).
 - Integration coverage now includes queue pause/resume dispatch boundary and interrupt/restart recovery boundary flows.
+- Dead-active-request reconciliation is implemented: if the kernel exits mid-request, exec clears stale active state, marks `error`, and allows clean next-request recovery.
+- Integration coverage now includes forced kernel death during active execution with verified state reconciliation and follow-up successful execution.
 
 ## Output handling
 

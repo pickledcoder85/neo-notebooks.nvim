@@ -82,6 +82,7 @@ print("hello")
 - `:NeoNotebookKernelStatus` shows kernel state details (one-shot).
 - `:NeoNotebookKernelStatusToggle` toggles a persistent kernel status panel.
 - `:NeoNotebookKernelBadgeToggle` toggles the inline virtual kernel status badge.
+- If the kernel process exits during active execution, NeoNotebooks now reconciles stale busy state to `error` and allows clean recovery on the next run.
 - `:NeoNotebookOutputToggle` toggles output mode between inline and floating.
 - While a cell is executing, a spinner animates on the first inline output row.
 - While a cell runs, an inline placeholder output shows `cell executing...`.

@@ -221,6 +221,61 @@ with_buf({
   ok(after.paused == false, "restart clears paused flag")
 end)
 
+-- Test: dead active request is reconciled and queued work recovers after kernel restart
+with_buf({
+  "# %% [code]",
+  "import time",
+  "time.sleep(5.0)",
+  "print('first done')",
+  "# %% [code]",
+  "print('SECOND_OK')",
+}, function(buf)
+  vim.b[buf].neo_notebooks_enabled = true
+  index.rebuild(buf)
+  local ok_first, err_first = exec.run_cell(buf, 1)
+  ok(ok_first, err_first)
+
+  local reached_running = wait_for(function()
+    local st = exec.get_session_state(buf)
+    return st.state == "running" and st.active_request == true
+  end, 2500, 20)
+  ok(reached_running, "state reaches running before forced kernel death")
+
+  local pid = exec._get_session_jobpid_for_test(buf)
+  ok(type(pid) == "number" and pid > 0, "active kernel pid available for dead-session simulation")
+  local killed = pcall(vim.loop.kill, pid, "sigkill")
+  ok(killed, "forced kernel kill succeeds")
+
+  local reconciled = wait_for(function()
+    local st = exec.get_session_state(buf)
+    return st.active_request == false and st.state == "error"
+  end, 3000, 20)
+  ok(reconciled, "dead active request reconciles to non-busy error state")
+
+  local second_done = false
+  local second_text = ""
+  local ok_second, err_second = exec.run_cell(buf, 5, {
+    on_output = function(payload)
+      second_done = true
+      if type(payload) == "table" and payload.lines then
+        second_text = table.concat(payload.lines, "\n")
+      elseif type(payload) == "table" and type(payload[1]) == "string" then
+        second_text = table.concat(payload, "\n")
+      else
+        second_text = tostring(payload or "")
+      end
+    end,
+  })
+  ok(ok_second, err_second)
+
+  local recovered = wait_for(function()
+    local st = exec.get_session_state(buf)
+    return second_done and st.state == "idle" and st.active_request == false and st.queue_len == 0
+  end, 10000, 20)
+  ok(recovered, "session recovers and drains after dead active request")
+  ok(second_text:find("SECOND_OK", 1, true) ~= nil, "next request executes after recovery")
+end)
+
 -- Test: snake mode keymaps lock and restore on exit
 with_buf({
   "# %% [code]",

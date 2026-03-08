@@ -935,11 +935,46 @@ local function dispatch_request(session, req)
   vim.fn.chansend(session.job, payload .. "\n")
 end
 
+local function notify_dead_active_request(pending)
+  if not pending or not pending.on_output then
+    return
+  end
+  vim.schedule(function()
+    pending.on_output({ "[NeoNotebook] active execution lost (kernel exited); request was canceled." }, pending.cell_id, nil)
+  end)
+end
+
+local function reconcile_dead_active_request(session, bufnr)
+  if not session or not session.active_request_id then
+    return false
+  end
+  if is_job_alive(session.job) then
+    return false
+  end
+  local active_id = session.active_request_id
+  local pending = session.pending and session.pending[active_id] or nil
+  if pending and pending.cell_id then
+    spinner.stop(bufnr, pending.cell_id)
+  end
+  notify_dead_active_request(pending)
+  if session.pending then
+    session.pending[active_id] = nil
+  end
+  session.active_request_id = nil
+  session_state.transition(bufnr, "error", {
+    reason = "active_request_lost",
+    paused = false,
+  })
+  refresh_kernel_ui(bufnr)
+  return true
+end
+
 local function make_queue_drainer(session, bufnr)
   return function()
     if session_state.is_paused(bufnr) then
       return
     end
+    reconcile_dead_active_request(session, bufnr)
     if session.active_request_id then
       return
     end
@@ -1117,6 +1152,9 @@ function M.get_session_state(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local state = session_state.get(bufnr)
   local session = sessions[bufnr]
+  if session then
+    reconcile_dead_active_request(session, bufnr)
+  end
   local active = session and session.active_request_id ~= nil or false
   local queue_len = session and #session.queue or 0
   local alive = session and is_job_alive(session.job) or false
@@ -1134,6 +1172,19 @@ end
 function M._set_hash_store_for_test(bufnr, store)
   bufnr = resolve_bufnr(bufnr)
   set_hash_store(bufnr, store or {})
+end
+
+function M._get_session_jobpid_for_test(bufnr)
+  bufnr = resolve_bufnr(bufnr)
+  local session = sessions[bufnr]
+  if not session or not session.job then
+    return nil
+  end
+  local pid = vim.fn.jobpid(session.job)
+  if type(pid) ~= "number" or pid <= 0 then
+    return nil
+  end
+  return pid
 end
 
 return M
