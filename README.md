@@ -87,6 +87,10 @@ print("hello")
 - While a cell runs, an inline placeholder output shows `cell executing...`.
 - Streaming stdout/stderr is now rendered incrementally while a cell runs (including batch-progress text).
 - Carriage-return progress updates (for example `tqdm`) are handled as in-place line replacement during execution.
+- Streaming safety caps are configurable:
+  - `stream_preview_max_lines` (default `400`)
+  - `stream_render_interval_ms` (default `80`)
+  - `stream_render_min_delta` (default `50`)
 - After execution, inline output includes a right-aligned timing line (e.g. `[8.56ms]`).
 - Moving cells preserves outputs by stable cell ID.
 - `:NeoNotebookCellSelect` selects the current cell body.

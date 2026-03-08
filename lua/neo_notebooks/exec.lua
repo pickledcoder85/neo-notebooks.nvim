@@ -22,7 +22,6 @@ local function set_hash_store(bufnr, store)
   vim.api.nvim_buf_set_var(bufnr, "neo_notebooks_exec_hashes", store)
 end
 local request_id = 0
-
 local function refresh_kernel_ui(bufnr)
   if not bufnr or bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
@@ -479,6 +478,15 @@ local function resolve_pending_cell(pending, resolved_cell_id)
 end
 
 local function apply_stream_event(session, pending, resp, resolved_cell_id)
+  local nb = require("neo_notebooks")
+  local cfg = nb.config or {}
+  local preview_max = tonumber(nb.config.stream_preview_max_lines) or 400
+  preview_max = math.max(50, math.floor(preview_max))
+  local interval_ms = tonumber(cfg.stream_render_interval_ms) or 80
+  interval_ms = math.max(10, math.floor(interval_ms))
+  local min_delta = tonumber(cfg.stream_render_min_delta) or 50
+  min_delta = math.max(1, math.floor(min_delta))
+
   pending.stream_lines = pending.stream_lines or { stdout = {}, stderr = {}, traceback = {} }
   local stream = resp.stream or "stdout"
   if not pending.stream_lines[stream] then
@@ -498,9 +506,22 @@ local function apply_stream_event(session, pending, resp, resolved_cell_id)
         lines[#lines] = chunk
       else
         lines[#lines + 1] = chunk
+        if #lines > preview_max then
+          table.remove(lines, 1)
+        end
       end
     end
   end
+
+  pending.stream_dirty = (pending.stream_dirty or 0) + 1
+  local now = math.floor(vim.loop.hrtime() / 1e6)
+  local last = pending.stream_last_render_ms or 0
+  local should_render = (now - last) >= interval_ms or pending.stream_dirty >= min_delta
+  if not should_render and resp.replace ~= true then
+    return
+  end
+  pending.stream_last_render_ms = now
+  pending.stream_dirty = 0
 
   local merged = {}
   for _, name in ipairs({ "stdout", "stderr", "traceback" }) do

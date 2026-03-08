@@ -157,6 +157,10 @@ Current Phase 7 baseline:
 - While a cell runs, the output area shows a placeholder line.
 - Execution now supports incremental stream events from the Python worker; stdout/stderr lines are rendered live during execution.
 - Stream protocol supports carriage-return replacement semantics so `tqdm`-style progress updates replace the active line instead of only appending.
+- Stream rendering includes pressure controls to avoid UI lockups on huge output bursts:
+  - `stream_preview_max_lines` (cap retained live preview lines),
+  - `stream_render_interval_ms` (minimum render interval),
+  - `stream_render_min_delta` (minimum new stream events before forced render).
 - After execution, the inline output prepends a right-aligned timing line.
 - Execution duration is measured around the request/response boundary and stored per cell ID.
 - Spinner frames request immediate renders to avoid dropped updates.
