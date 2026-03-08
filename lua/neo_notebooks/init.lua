@@ -49,6 +49,7 @@ M.config = {
   notebook_scrolloff = 5,
   interrupt_on_rerun = true,
   skip_unchanged_rerun = true,
+  kernel_recovery_retries = 1,
   keymaps = {
     new_code = "<leader><leader>ac",
     new_markdown = "<leader><leader>am",

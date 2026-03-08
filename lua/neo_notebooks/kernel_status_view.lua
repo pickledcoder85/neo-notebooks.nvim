@@ -28,6 +28,7 @@ local function status_snapshot(bufnr)
     queue_len = queue_len,
     active = active,
     alive = alive,
+    reason = state and state.reason or "-",
   }
 end
 
@@ -38,7 +39,7 @@ local function status_lines(snapshot)
     string.format("queue:  %d", snapshot.queue_len),
     string.format("active: %s", snapshot.active),
     string.format("alive:  %s", snapshot.alive),
-    "",
+    string.format("reason: %s", tostring(snapshot.reason or "-")),
     "<leader>kk toggle",
   }
 end

@@ -107,6 +107,10 @@ function M.register(ctx)
     local queue_len = state and state.queue_len or 0
     local active = state and state.active_request and "yes" or "no"
     local alive = state and state.alive and "yes" or "no"
+    local reason = state and state.reason or nil
+    if reason and reason ~= "" then
+      return string.format("NeoNotebook: kernel=%s queue=%d active=%s alive=%s reason=%s", name, queue_len, active, alive, reason)
+    end
     return string.format("NeoNotebook: kernel=%s queue=%d active=%s alive=%s", name, queue_len, active, alive)
   end
 

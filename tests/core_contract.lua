@@ -417,6 +417,21 @@ with_buf({
   local after = exec.get_session_state(buf)
   ok(after.paused == false, "stop clears paused flag")
   eq(after.state, "stopped", "stop sets state stopped")
+  eq(nb.kernel_status(buf), "stopped", "kernel_status reports stopped after stop")
+end)
+
+-- Test: failed session start sets error state
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  local prev = nb.config.python_cmd
+  nb.config.python_cmd = "/path/that/does/not/exist/python"
+  local ok_run = exec.run_cell(buf, 1)
+  ok(not ok_run, "run fails when python command is invalid")
+  local state = exec.get_session_state(buf)
+  eq(state.state, "error", "session state becomes error on start failure")
+  nb.config.python_cmd = prev
 end)
 
 print('core_contract tests passed')

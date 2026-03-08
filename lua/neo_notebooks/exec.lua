@@ -511,7 +511,7 @@ local function ensure_session(bufnr)
     cell_generation = {},
   }
 
-  session.job = vim.fn.jobstart(cmd, {
+  local ok_jobstart, job = pcall(vim.fn.jobstart, cmd, {
     env = (function()
       local env = {}
       if config.mpl_backend and config.mpl_backend ~= "" then
@@ -552,6 +552,11 @@ local function ensure_session(bufnr)
       end
     end,
   })
+  if not ok_jobstart then
+    session_state.transition(bufnr, "error", { reason = "session_start_failed", force = true })
+    return nil, tostring(job)
+  end
+  session.job = job
 
   if session.job <= 0 then
     session_state.transition(bufnr, "error", { reason = "session_start_failed", force = true })
@@ -659,9 +664,47 @@ local function make_queue_drainer(session, bufnr)
     while #session.queue > 0 do
       local req = table.remove(session.queue, 1)
       if req and vim.api.nvim_buf_is_valid(req.bufnr) then
+        if not is_job_alive(session.job) then
+          local retries = (require("neo_notebooks").config.kernel_recovery_retries or 1)
+          req._recovery_attempts = (req._recovery_attempts or 0) + 1
+          if req._recovery_attempts > retries then
+            session_state.transition(bufnr, "error", {
+              reason = "kernel_recovery_failed",
+              force = true,
+              paused = false,
+            })
+            if req.on_output then
+              vim.schedule(function()
+                req.on_output({ "[NeoNotebook] kernel recovery failed; use <leader>kr to restart." }, req.cell_id, nil)
+              end)
+            end
+            return
+          end
+          local recovered, err = ensure_session(bufnr)
+          if not recovered then
+            session_state.transition(bufnr, "error", {
+              reason = "kernel_recovery_failed: " .. tostring(err or "unknown"),
+              force = true,
+              paused = false,
+            })
+            if req.on_output then
+              vim.schedule(function()
+                req.on_output({ "[NeoNotebook] kernel recovery failed; use <leader>kr to restart." }, req.cell_id, nil)
+              end)
+            end
+            return
+          end
+          session = recovered
+          if not session.drain_queue then
+            session.drain_queue = make_queue_drainer(session, bufnr)
+          end
+          table.insert(session.queue, 1, req)
+          goto continue
+        end
         dispatch_request(session, req)
         return
       end
+      ::continue::
     end
   end
 end

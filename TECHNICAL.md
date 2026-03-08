@@ -121,6 +121,7 @@ This document summarizes implementation choices and the evolution of core featur
   - `:NeoNotebookKernelStatusToggle`
 - Important semantics:
   - `pause` means dispatch pause (hold dequeue/start of new requests), not OS-level process suspend.
+  - `kernel_recovery_retries` (default `1`) controls bounded dispatch-time auto-recovery attempts.
 
 ## Planned kernel status visibility (Phase 7)
 
@@ -137,6 +138,7 @@ Current Phase 7 baseline:
 - `kernel_status()` is now available and returns normalized strings (`ok`, `paused`, or raw state names).
 - Kernel control keymaps/commands and dispatch pause gating are implemented.
 - Persistent kernel status panel toggle is implemented via `<leader>kk` / `:NeoNotebookKernelStatusToggle`.
+- Bounded dispatch-time auto-recovery is implemented for dead sessions (`kernel_recovery_retries`).
 - Optional virtual status badge is planned next slices.
 
 ## Output handling

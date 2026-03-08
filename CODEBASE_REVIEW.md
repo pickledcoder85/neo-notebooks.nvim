@@ -1137,9 +1137,14 @@ NeoNotebookSnakeCell
   - `kernel_restart`, `kernel_interrupt`, `kernel_stop`, `kernel_pause`, `kernel_status`.
 - `<leader>kk` now toggles a persistent kernel status panel (`NeoNotebookKernelStatusToggle`) instead of one-shot notify output.
 - Queue pause behavior now gates dispatch/drain start via session state pause flag (dispatch pause only; no process suspend).
+- Added bounded dispatch-time recovery:
+  - if job dies after enqueue but before dispatch, drainer attempts session recovery up to `kernel_recovery_retries` (default `1`).
+  - on recovery failure, session enters `error` state with reason for status surfaces.
 - Added regression coverage:
   - integration lane asserts default `<leader>k*` kernel keymaps are registered,
   - core lane asserts queue pause/resume toggles session paused state.
+- Added start-failure hardening:
+  - `ensure_session` now catches `jobstart` errors and returns structured failure instead of throwing.
 - Fixed pause-state consistency:
   - restart/stop paths now explicitly clear paused flag,
   - added regression tests for pause reset on restart/stop.
