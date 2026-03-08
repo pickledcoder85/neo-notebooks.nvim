@@ -550,8 +550,7 @@ local function ensure_session(bufnr)
   })
 
   if session.job <= 0 then
-    vim.notify("Failed to start Python session", vim.log.levels.ERROR)
-    return nil
+    return nil, "Failed to start Python session"
   end
 
   sessions[bufnr] = session
@@ -576,13 +575,11 @@ local function build_request(bufnr, line, opts)
   bufnr = resolve_bufnr(bufnr)
   local code, err = cells.get_cell_code(bufnr, line)
   if err then
-    vim.notify(err, vim.log.levels.WARN)
-    return nil
+    return nil, err, vim.log.levels.WARN
   end
 
   if code == nil or code == "" then
-    vim.notify("Cell is empty", vim.log.levels.INFO)
-    return nil
+    return nil, "Cell is empty", vim.log.levels.INFO
   end
 
   local cell_id = opts.cell_id
@@ -660,20 +657,20 @@ function M.enqueue_cell(bufnr, line, opts)
   bufnr = resolve_bufnr(bufnr)
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
   opts = opts or {}
-  local req = build_request(bufnr, line, opts)
+  local req, req_err, req_level = build_request(bufnr, line, opts)
   if not req then
-    return
+    return nil, req_err, req_level
   end
 
-  local session = ensure_session(bufnr)
+  local session, session_err = ensure_session(bufnr)
   if not session then
-    return
+    return nil, session_err or "Failed to start Python session", vim.log.levels.ERROR
   end
   local config = require("neo_notebooks").config
   if req.cell_id and config.skip_unchanged_rerun then
     local store = get_hash_store(bufnr)
     if store[req.cell_id] and store[req.cell_id] == req.code_hash then
-      return
+      return true
     end
   end
   if req.cell_id and config.interrupt_on_rerun then
@@ -703,10 +700,11 @@ function M.enqueue_cell(bufnr, line, opts)
     table.insert(session.queue, req)
   end
   session.drain_queue()
+  return true
 end
 
 function M.run_cell(bufnr, line, opts)
-  M.enqueue_cell(bufnr, line, opts)
+  return M.enqueue_cell(bufnr, line, opts)
 end
 
 function M.clear_cell_hash(bufnr, cell_id)

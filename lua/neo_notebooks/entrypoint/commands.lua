@@ -55,7 +55,7 @@ function M.register(ctx)
       cell.finish = entry.finish
     end
     if nb.config.output == "inline" then
-      exec.run_cell(bufnr, line, {
+      local ok, err, level = exec.run_cell(bufnr, line, {
         on_output = function(payload, cell_id, duration_ms)
           if vim.b[bufnr] and vim.b[bufnr].neo_notebooks_is_ipynb and cell_id and payload and payload.items then
             require("neo_notebooks.ipynb").update_cell_output(bufnr, cell_id, payload)
@@ -69,8 +69,14 @@ function M.register(ctx)
         end,
         cell_id = cell.id,
       })
+      if not ok and err then
+        vim.notify(err, level or vim.log.levels.WARN)
+      end
     else
-      exec.run_cell(bufnr, line)
+      local ok, err, level = exec.run_cell(bufnr, line)
+      if not ok and err then
+        vim.notify(err, level or vim.log.levels.WARN)
+      end
     end
   end
 
@@ -162,7 +168,10 @@ function M.register(ctx)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookMarkdownPreview", function()
-    markdown.preview_cell(0)
+    local ok, err, level = markdown.preview_cell(0)
+    if not ok and err then
+      vim.notify(err, level or vim.log.levels.WARN)
+    end
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookCellOverlayToggle", function()
@@ -332,11 +341,19 @@ function M.register(ctx)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookCellSave", function()
-    editor.save_current()
+    local ok, err, level = editor.save_current()
+    if not ok then
+      vim.notify(err or "Save failed", level or vim.log.levels.ERROR)
+      return
+    end
+    vim.notify("NeoNotebook: cell saved", vim.log.levels.INFO)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookCellRunFromEditor", function()
-    editor.run_from_editor()
+    local ok, err, level = editor.run_from_editor()
+    if not ok and err then
+      vim.notify(err, level or vim.log.levels.ERROR)
+    end
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookImportIpynb", function(opts)

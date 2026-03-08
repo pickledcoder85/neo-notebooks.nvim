@@ -144,7 +144,10 @@ function M.new(ctx)
 
     if maps.preview then
       vim.keymap.set("n", maps.preview, function()
-        markdown.preview_cell(0)
+        local ok, err, level = markdown.preview_cell(0)
+        if not ok and err then
+          vim.notify(err, level or vim.log.levels.WARN)
+        end
       end, opts)
     end
 
@@ -371,13 +374,21 @@ function M.new(ctx)
 
     if maps.save_cell then
       vim.keymap.set("n", maps.save_cell, function()
-        editor.save_current()
+        local ok, err, level = editor.save_current()
+        if not ok then
+          vim.notify(err or "Save failed", level or vim.log.levels.ERROR)
+          return
+        end
+        vim.notify("NeoNotebook: cell saved", vim.log.levels.INFO)
       end, opts)
     end
 
     if maps.run_cell then
       vim.keymap.set("n", maps.run_cell, function()
-        editor.run_from_editor()
+        local ok, err, level = editor.run_from_editor()
+        if not ok and err then
+          vim.notify(err, level or vim.log.levels.ERROR)
+        end
       end, opts)
     end
 

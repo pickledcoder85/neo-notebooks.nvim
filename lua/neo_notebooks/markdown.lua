@@ -47,17 +47,16 @@ function M.preview_cell(bufnr, line)
 
   local content, err = cells.get_cell_markdown(bufnr, line)
   if err then
-    vim.notify(err, vim.log.levels.WARN)
-    return
+    return nil, err, vim.log.levels.WARN
   end
 
   if not content or content == "" then
-    vim.notify("Markdown cell is empty", vim.log.levels.INFO)
-    return
+    return nil, "Markdown cell is empty", vim.log.levels.INFO
   end
 
   local lines = vim.split(content, "\n", { plain = true })
   open_markdown_window(lines)
+  return true
 end
 
 return M

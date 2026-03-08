@@ -931,6 +931,9 @@ NeoNotebookSnakeCell
 - `lua/neo_notebooks/actions.lua`
 - `lua/neo_notebooks/entrypoint/commands.lua`
 - `lua/neo_notebooks/entrypoint/keymaps.lua`
+- `lua/neo_notebooks/exec.lua`
+- `lua/neo_notebooks/markdown.lua`
+- `lua/neo_notebooks/editor.lua`
 
 ### Tests run
 
@@ -952,6 +955,10 @@ NeoNotebookSnakeCell
 - `entrypoint/commands.lua` now performs user notifications for `NeoNotebookOutputPrint`, `NeoNotebookOutputCollapseToggle`, and `NeoNotebookCellYank`.
 - `entrypoint/commands.lua` now performs user notifications for `NeoNotebookAutoRenderToggle`, `NeoNotebookCellIndexToggle`, `NeoNotebookCellSplit`, and `NeoNotebookOutputToggle`.
 - `entrypoint/keymaps.lua` now mirrors boundary notifications for mapped split/toggle flows and insert `<CR>` guard warnings.
+- `exec.run_cell`/`enqueue_cell` now return structured `(ok)` or `(nil, err, level)` results for request/session failures instead of notifying directly.
+- `markdown.preview_cell` now returns `(ok)` or `(nil, err, level)`; command/keymap boundaries now own preview warnings/info notifications.
+- `editor.save_current` and `editor.run_from_editor` now return structured results; command/keymap boundaries now own save/run notifications.
+- `entrypoint/commands.lua` run paths now notify on `exec.run_cell` errors from `NeoNotebookCellRun`/`NeoNotebookCellRunAndNext`.
 - Guard/policy warning path migrated for containment keymaps:
   - `actions.decision_keys` no longer notifies directly on blocked decisions.
   - `actions` stores/returns guard reasons through `consume_last_guard_reason`.

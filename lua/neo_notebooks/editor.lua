@@ -89,54 +89,56 @@ function M.save_current()
   local buf = vim.api.nvim_get_current_buf()
   local ok, err = save_editor(buf)
   if not ok then
-    vim.notify(err or "Save failed", vim.log.levels.ERROR)
-    return
+    return nil, err or "Save failed", vim.log.levels.ERROR
   end
-  vim.notify("NeoNotebook: cell saved", vim.log.levels.INFO)
+  return true
 end
 
 function M.run_from_editor()
   local buf = vim.api.nvim_get_current_buf()
   local state = vim.b[buf].neo_notebooks_editor
   if not state then
-    vim.notify("Not a NeoNotebook editor", vim.log.levels.ERROR)
-    return
+    return nil, "Not a NeoNotebook editor", vim.log.levels.ERROR
   end
   local ok, err = save_editor(buf)
   if not ok then
-    vim.notify(err or "Save failed", vim.log.levels.ERROR)
-    return
+    return nil, err or "Save failed", vim.log.levels.ERROR
   end
 
   if state.cell_type ~= "code" then
-    vim.notify("Current cell is markdown", vim.log.levels.WARN)
-    return
+    return nil, "Current cell is markdown", vim.log.levels.WARN
   end
 
   local index = require("neo_notebooks.index")
   local entry = index.get_by_id(state.source_buf, state.cell_id)
   if not entry then
-    vim.notify("Cell not found", vim.log.levels.ERROR)
-    return
+    return nil, "Cell not found", vim.log.levels.ERROR
   end
   state.cell_start = entry.start
   state.cell_finish = entry.finish
   local line = entry.start + 1
   if config.output == "inline" then
-      exec.run_cell(state.source_buf, line, {
-        on_output = function(payload, cell_id)
-          output.show_payload(state.source_buf, {
-            id = cell_id or state.cell_id,
-            start = state.cell_start,
-            finish = state.cell_finish,
-            type = state.cell_type,
-          }, payload)
-        end,
-        cell_id = state.cell_id,
-      })
+    local queued, run_err, run_level = exec.run_cell(state.source_buf, line, {
+      on_output = function(payload, cell_id)
+        output.show_payload(state.source_buf, {
+          id = cell_id or state.cell_id,
+          start = state.cell_start,
+          finish = state.cell_finish,
+          type = state.cell_type,
+        }, payload)
+      end,
+      cell_id = state.cell_id,
+    })
+    if not queued then
+      return nil, run_err or "Cell run failed", run_level or vim.log.levels.ERROR
+    end
   else
-    exec.run_cell(state.source_buf, line)
+    local queued, run_err, run_level = exec.run_cell(state.source_buf, line)
+    if not queued then
+      return nil, run_err or "Cell run failed", run_level or vim.log.levels.ERROR
+    end
   end
+  return true
 end
 
 return M
