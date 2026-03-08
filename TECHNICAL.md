@@ -321,6 +321,9 @@ Current Phase 7 baseline:
   - mixed marker variants (`[md]`, indented `# %%`),
   - malformed header fallback cases (missing closing `# ---`),
   - import error paths (missing file, non-modifiable target buffer).
+  - manual stress fixtures for interactive execution workloads:
+    - `tests/fixtures/perf/manual_exec_stress.ipynb`
+    - `tests/fixtures/perf/manual_exec_soak.ipynb`
 - Test lanes:
   - `tests/core_contract.lua` (required core signal; skips optional kitty backend assertions)
   - `tests/integration.lua` (broad workflow signal; skips optional kitty backend assertions)

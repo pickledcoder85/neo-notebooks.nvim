@@ -299,6 +299,10 @@ nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_ski
 nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_include_network=1" -c "luafile tests/performance.lua" -c qa
 ```
 
+Manual stress fixtures:
+- `tests/fixtures/perf/manual_exec_stress.ipynb` (quick execution stress)
+- `tests/fixtures/perf/manual_exec_soak.ipynb` (heavier 2-3 min soak target with tunable knobs)
+
 ### Automatic first cell
 
 When opening an empty `python` buffer, the plugin inserts a starter markdown cell:
