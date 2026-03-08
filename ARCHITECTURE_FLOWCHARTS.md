@@ -168,6 +168,7 @@ Performance lane + fixture flow:
 | tests/performance.lua       |
 | import -> rebuild -> render |
 | -> export timing budgets    |
+| + batch/stream/fetch exec   |
 +-----------------------------+
                |
                v

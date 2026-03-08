@@ -294,6 +294,9 @@ nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/performance.lu
 
 # Run dispatcher + include performance lane
 nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_skip_optional_kitty=1" -c "let g:neo_notebooks_test_include_performance=1" -c "luafile tests/run.lua" -c qa
+
+# Optional: include real network fetch workload in performance lane
+nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_include_network=1" -c "luafile tests/performance.lua" -c qa
 ```
 
 ### Automatic first cell

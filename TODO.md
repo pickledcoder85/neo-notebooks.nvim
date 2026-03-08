@@ -56,6 +56,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Define baseline metrics (render latency, queue latency) and regression thresholds.
   - Progress update:
     - Added synthetic large fixtures (`tests/fixtures/perf`) and optional `tests/performance.lua` lane with conservative timing budgets for import/index/render/export.
+    - Added execution stress coverage for batch compute, large streamed output, and fetch-style large-data read (`file://` payload), with optional real network fetch gate.
 
 - Priority 3: Reliability contracts for format interop:
   - Expand Jupytext fixture corpus with additional real-world repos.

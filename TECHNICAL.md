@@ -326,6 +326,10 @@ Current Phase 7 baseline:
   - `tests/integration.lua` (broad workflow signal; skips optional kitty backend assertions)
   - `tests/optional_kitty.lua` (kitty/image backend assertions; optional in non-kitty environments)
   - `tests/performance.lua` (optional stress/perf signal over large synthetic fixtures with conservative timing budgets)
+    - includes batch compute workload (`5000` calculations in batches of `100`)
+    - includes high-volume output streaming workload
+    - includes local fetch-style workload (`urllib` + `file://` JSON payload, 5000 rows)
+    - optional real network fetch path is gated by `g:neo_notebooks_test_include_network=1`
   - integration lane includes snake lifecycle/keymap ownership transition assertions.
 
 ## .ipynb import/export
