@@ -1,6 +1,13 @@
 local M = {}
 local is_list = vim.islist or vim.tbl_islist
 
+local function normalize_object(value)
+  if type(value) ~= "table" or is_list(value) then
+    return {}
+  end
+  return value
+end
+
 local function normalize_lines(src)
   if type(src) == "string" then
     return vim.split(src, "\n", { plain = true })
@@ -56,10 +63,10 @@ function M.decode_document(content)
   if not ok or type(doc) ~= "table" or is_list(doc) then
     return nil, "Invalid JSON"
   end
-  if doc.cells ~= nil and type(doc.cells) ~= "table" then
+  if doc.cells ~= nil and (type(doc.cells) ~= "table" or not is_list(doc.cells)) then
     return nil, "Invalid notebook document: cells must be a list"
   end
-  if doc.metadata ~= nil and type(doc.metadata) ~= "table" then
+  if doc.metadata ~= nil and (type(doc.metadata) ~= "table" or is_list(doc.metadata)) then
     doc.metadata = {}
   end
   return doc
@@ -81,9 +88,9 @@ function M.prepare_import_cells(cells_in)
       out[#out + 1] = {
         cell_type = ctype,
         source = normalize_lines(raw.source or {}),
-        metadata = type(raw.metadata) == "table" and raw.metadata or {},
-        attachments = type(raw.attachments) == "table" and raw.attachments or {},
-        outputs = type(raw.outputs) == "table" and raw.outputs or {},
+        metadata = normalize_object(raw.metadata),
+        attachments = normalize_object(raw.attachments),
+        outputs = (type(raw.outputs) == "table" and is_list(raw.outputs)) and raw.outputs or {},
         execution_count = type(raw.execution_count) == "number" and raw.execution_count or nil,
       }
     end

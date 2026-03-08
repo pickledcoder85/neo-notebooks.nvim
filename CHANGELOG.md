@@ -35,6 +35,9 @@ best-effort summary based on existing documentation and recent commits.
   - `metadata.jupytext` is parsed (when present), seeded (when missing), and preserved on `.ipynb` export.
   - Added tests for Jupytext import parsing and metadata round-trip behavior.
   - Added compatibility fixtures sourced from official Jupytext README/docs examples.
+- Interop reliability hardening:
+  - `.ipynb` import now rejects object-shaped `cells` payloads (cells must be a JSON list).
+  - malformed code-cell `outputs` containers are normalized to empty output lists for stable export.
 - Full `.ipynb` metadata + outputs support (preserve metadata, execution_count, outputs; render outputs on import).
 - Improved `.ipynb` MIME interop rendering:
   - Imported `text/html` now renders as readable inline text.

@@ -118,8 +118,10 @@ print("hello")
 - `:NeoNotebookExportIpynb {path}` exports the current buffer to `.ipynb`.
 - Import reliability hardening:
   - malformed `.ipynb` top-level/cells shapes fail with explicit errors,
+  - object-shaped `cells` payloads (map/object instead of list) are rejected,
   - unknown/nonstandard imported cell types normalize to `code`,
-  - string `source` payloads are normalized to stable line arrays.
+  - string `source` payloads are normalized to stable line arrays,
+  - malformed code-cell `outputs` containers are normalized to empty output lists.
 
 ## Configuration
 
@@ -472,6 +474,7 @@ Notes:
 - Existing outputs are rendered on import for code cells.
 - Markdown and code cells are supported; other cell types are treated as code.
 - Import drops a leading blank code cell if it appears before the first markdown cell.
+- Import rejects malformed notebook documents where `cells` is not a JSON list.
 - After `.ipynb` import/open, undo baseline is reset so extra `u` does not revert to raw JSON import state.
 
 ### Jupytext `py:percent` import (v1)

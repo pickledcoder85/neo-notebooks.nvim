@@ -295,6 +295,24 @@ with_buf({ "" }, function(buf)
   local ok_import_cells, err_cells = ipynb.import_ipynb(bad_cells, buf)
   ok(ok_import_cells == nil, "malformed cells ipynb import fails")
   ok(type(err_cells) == "string" and err_cells:find("cells must be a list", 1, true) ~= nil, "malformed cells error message")
+
+  local bad_cells_obj = vim.fn.tempname() .. ".ipynb"
+  local doc_cells_obj = {
+    nbformat = 4,
+    nbformat_minor = 5,
+    metadata = {},
+    cells = {
+      a = {
+        cell_type = "code",
+        source = { "print('bad shape')\n" },
+      },
+    },
+  }
+  local ok_write_cells_obj = pcall(vim.fn.writefile, { vim.fn.json_encode(doc_cells_obj) }, bad_cells_obj)
+  ok(ok_write_cells_obj, "wrote object-shaped cells ipynb")
+  local ok_import_cells_obj, err_cells_obj = ipynb.import_ipynb(bad_cells_obj, buf)
+  ok(ok_import_cells_obj == nil, "object-shaped cells ipynb import fails")
+  ok(type(err_cells_obj) == "string" and err_cells_obj:find("cells must be a list", 1, true) ~= nil, "object-shaped cells error message")
 end)
 
 -- Test: ipynb import normalizes unknown cell types to code and supports string source
@@ -327,6 +345,49 @@ with_buf({ "" }, function(buf)
   ok(ok_export, err_export)
   local exported = vim.fn.json_decode(table.concat(vim.fn.readfile(out), "\n"))
   eq(exported.cells[1].cell_type, "code", "exported cell type normalized to code")
+end)
+
+-- Test: ipynb import normalizes malformed metadata/attachments/outputs shapes
+with_buf({ "" }, function(buf)
+  local tmp = vim.fn.tempname() .. ".ipynb"
+  local doc = {
+    nbformat = 4,
+    nbformat_minor = 5,
+    metadata = { "bad-top-metadata-shape" },
+    cells = {
+      {
+        cell_type = "code",
+        metadata = { "bad-cell-metadata-shape" },
+        source = { "x = 1\n", "x\n" },
+        outputs = { bad = "not-an-output-list" },
+        attachments = { bad = "not-used-for-code" },
+      },
+      {
+        cell_type = "markdown",
+        metadata = { ok = true },
+        source = { "hello\n" },
+        attachments = { "bad-attachment-shape" },
+      },
+    },
+  }
+  local ok_write = pcall(vim.fn.writefile, { vim.fn.json_encode(doc) }, tmp)
+  ok(ok_write, "wrote malformed-shapes ipynb")
+  local ok_import, err = ipynb.import_ipynb(tmp, buf)
+  ok(ok_import, err)
+
+  local out = vim.fn.tempname() .. ".ipynb"
+  local ok_export, err_export = ipynb.export_ipynb(out, buf)
+  ok(ok_export, err_export)
+  local exported = vim.fn.json_decode(table.concat(vim.fn.readfile(out), "\n"))
+
+  eq(type(exported.metadata), "table", "top-level metadata normalized to table")
+  ok(type(exported.metadata.language_info) == "table", "top-level metadata includes language_info")
+  eq(exported.metadata.language_info.name, "python", "top-level language_info defaulted")
+  eq(type(exported.cells[1].metadata), "table", "code cell metadata normalized to table")
+  eq(next(exported.cells[1].metadata), nil, "code cell metadata normalized to empty table")
+  ok((vim.islist or vim.tbl_islist)(exported.cells[1].outputs), "code outputs normalized to list")
+  eq(#exported.cells[1].outputs, 0, "malformed outputs normalized to empty list")
+  ok(exported.cells[2].attachments == nil, "malformed markdown attachments dropped on export")
 end)
 
 -- Test: jupytext py:percent import parses markdown and preserves jupytext metadata on ipynb export
