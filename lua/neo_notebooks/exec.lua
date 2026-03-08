@@ -524,14 +524,13 @@ local function apply_stream_event(session, pending, resp, resolved_cell_id)
   pending.stream_dirty = 0
 
   local merged = {}
+  -- Keep a stable execution placeholder at line 1 while streaming output arrives.
+  merged[#merged + 1] = "cell executing..."
   for _, name in ipairs({ "stdout", "stderr", "traceback" }) do
     local lines = pending.stream_lines[name] or {}
     for _, line in ipairs(lines) do
       merged[#merged + 1] = line
     end
-  end
-  if #merged == 0 then
-    merged = { "cell executing..." }
   end
 
   local cell = resolve_pending_cell(pending, resolved_cell_id)
