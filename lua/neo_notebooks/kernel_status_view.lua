@@ -89,7 +89,6 @@ local function render_state(bufnr)
     close_state(bufnr)
     return false
   end
-  local lines = status_lines(bufnr)
   local snapshot = status_snapshot(bufnr)
   local lines = status_lines(snapshot)
   vim.api.nvim_set_option_value("modifiable", true, { buf = st.buf })
