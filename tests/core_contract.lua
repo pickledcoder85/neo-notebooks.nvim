@@ -15,6 +15,7 @@ local nb = require('neo_notebooks')
 local exec = require('neo_notebooks.exec')
 local session = require('neo_notebooks.session')
 local badge = require('neo_notebooks.kernel_status_badge')
+local viewport_padding = require('neo_notebooks.viewport_padding')
 local fixture_root = vim.fn.getcwd() .. '/tests/fixtures/jupytext'
 
 -- Test: default strict containment mode is soft
@@ -453,6 +454,26 @@ with_buf({
   local after = vim.api.nvim_buf_get_extmarks(buf, badge.ns, { 0, 0 }, { -1, -1 }, { details = true })
   eq(#after, 0, "virtual kernel badge cleared when disabled")
   nb.config.kernel_status_virtual = prev
+end)
+
+-- Test: viewport virtual padding renders when enabled and clears when disabled
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  vim.api.nvim_set_current_buf(buf)
+  vim.b[buf].neo_notebooks_enabled = true
+  local prev = nb.config.viewport_virtual_padding
+  nb.config.viewport_virtual_padding = { top = 2, bottom = 1 }
+  viewport_padding.refresh(buf)
+  local marks = vim.api.nvim_buf_get_extmarks(buf, viewport_padding.ns, { 0, 0 }, { -1, -1 }, { details = true })
+  ok(#marks > 0, "viewport padding extmarks created")
+
+  nb.config.viewport_virtual_padding = { top = 0, bottom = 0 }
+  viewport_padding.refresh(buf)
+  local after = vim.api.nvim_buf_get_extmarks(buf, viewport_padding.ns, { 0, 0 }, { -1, -1 }, { details = true })
+  eq(#after, 0, "viewport padding cleared when disabled")
+  nb.config.viewport_virtual_padding = prev
 end)
 
 print('core_contract tests passed')

@@ -1137,6 +1137,7 @@ NeoNotebookSnakeCell
   - `kernel_restart`, `kernel_interrupt`, `kernel_stop`, `kernel_pause`, `kernel_status`.
 - `<leader>kk` now toggles a persistent kernel status panel (`NeoNotebookKernelStatusToggle`) instead of one-shot notify output.
 - Optional virtual kernel badge now supported via `kernel_status_virtual = true` (default off).
+- Optional viewport virtual padding now supported via `viewport_virtual_padding = { top = 2, bottom = 2 }`.
 - Queue pause behavior now gates dispatch/drain start via session state pause flag (dispatch pause only; no process suspend).
 - Added bounded dispatch-time recovery:
   - if job dies after enqueue but before dispatch, drainer attempts session recovery up to `kernel_recovery_retries` (default `1`).

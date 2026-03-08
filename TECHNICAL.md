@@ -130,6 +130,7 @@ This document summarizes implementation choices and the evolution of core featur
   - `require("neo_notebooks").kernel_status()`
 - Intended use: lualine/custom statusline can render compact text like `kernel:idle`, `kernel:running`, `kernel:error`.
 - Secondary channel: optional virtual status badge in notebook buffer (default disabled, `kernel_status_virtual = false`).
+- Optional viewport virtual padding can render top/bottom breathing room while scrolling (`viewport_virtual_padding = { top = 2, bottom = 2 }`).
 - Canonical status color semantics:
   - green: `idle/ok`
   - yellow: `running`, `interrupting`, `restarting`, `paused`

@@ -416,6 +416,7 @@ render pipeline (same user behavior, cleaner contracts)
 | RENDER LAYER   |   | FORMAT LAYER      |
 | render/output/ |   | ipynb codec +     |
 | spinner/overlay|   | jupytext parser   |
+| badge/padding  |   |                   |
 +----------------+   +-------------------+
               \           /
                \         /

@@ -78,6 +78,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Inline markdown overlay for headings and emphasis/code spans.
   - Fenced code blocks (` ```lang ... ``` `) rendered with markdown-aware highlight groups.
   - Fence markers remain visible for editing context.
+- Added optional viewport virtual padding (`viewport_virtual_padding`) so notebook cells keep top/bottom breathing room while scrolling.
 - Tree-sitter fenced Python token coloring in markdown cells.
 - Optional markdown cell rendering polish (conceal/theme controls for inline markdown overlays).
 - Fix undo (`u`) keeping cursor position within current cell (avoid jump to buffer end).

@@ -138,6 +138,7 @@ require("neo_notebooks").setup({
   auto_insert_first_cell = true,
   overlay_preview = false,
   kernel_status_virtual = false,
+  viewport_virtual_padding = { top = 2, bottom = 2 },
   suppress_completion_in_markdown = true,
   suppress_completion_popup = false,
   auto_insert_on_jump = false,
@@ -214,6 +215,14 @@ require("neo_notebooks").setup({
 })
 ```
 
+Optional viewport virtual padding (to keep notebook cells from visually pinning to the top/bottom viewport edges):
+
+```lua
+require("neo_notebooks").setup({
+  viewport_virtual_padding = { top = 2, bottom = 2 },
+})
+```
+
 ## Notes
 
 - Cells are separated by lines like `# %% [code]` or `# %% [markdown]`.
@@ -222,6 +231,7 @@ require("neo_notebooks").setup({
 - Cell execution is serialized per buffer via an internal FIFO queue (including
   run-all/above/below), so outputs land in predictable order.
 - Notebook buffers set `scrolloff` to keep a few lines visible below the cursor.
+- Notebook buffers can also render virtual viewport padding (`viewport_virtual_padding`) to preserve top/bottom breathing room while scrolling.
 - This is a minimal experimental baseline and intended to be expanded.
 
 ### Cell index cache
