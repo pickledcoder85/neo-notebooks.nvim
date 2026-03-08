@@ -116,6 +116,10 @@ print("hello")
 - `:NeoNotebookImportJupytext {path}` imports a Jupytext `py:percent` file into the current notebook buffer.
 - `:NeoNotebookOpenJupytext {path}` opens a Jupytext `py:percent` file in a new notebook view buffer.
 - `:NeoNotebookExportIpynb {path}` exports the current buffer to `.ipynb`.
+- Import reliability hardening:
+  - malformed `.ipynb` top-level/cells shapes fail with explicit errors,
+  - unknown/nonstandard imported cell types normalize to `code`,
+  - string `source` payloads are normalized to stable line arrays.
 
 ## Configuration
 

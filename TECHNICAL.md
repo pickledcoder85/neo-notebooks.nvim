@@ -49,6 +49,26 @@ This document summarizes implementation choices and the evolution of core featur
   - existing `tqdm` carriage-return replacement behavior remains stable.
   - no queue/session regressions in integration lane.
 
+### Feature worklist: Interop reliability v1
+
+- Phase: `draft -> simplify -> updated -> implement` (active branch: `feature/interop-reliability-v1`).
+- Scope:
+  - enforce deterministic errors for malformed `.ipynb` document shapes.
+  - normalize imported cell payloads so interop remains valid even with nonstandard producers.
+- Files to touch:
+  - `lua/neo_notebooks/formats/ipynb_codec.lua` (decode validation + cell normalization),
+  - `lua/neo_notebooks/formats/ipynb_outputs.lua` (safe malformed-field extraction),
+  - `tests/core_contract.lua` (malformed/error-path and normalization invariants),
+  - docs gate files (`README.md`, `TODO.md`, `TECHNICAL.md`, architecture note if flow changes).
+- Tests:
+  - run `tests/core_contract.lua`,
+  - run `tests/integration.lua`,
+  - run `tests/performance.lua`.
+- Acceptance criteria:
+  - malformed top-level/cells-shape `.ipynb` imports fail with readable errors.
+  - unknown/nonstandard imported cell types fall back to `code`.
+  - string `source` imports as stable lines and exports as valid `.ipynb`.
+
 ## Error/notify policy
 
 - Internal modules should prefer returning `(ok/value)` or `(nil, err)` over direct `vim.notify` side effects.
@@ -352,7 +372,9 @@ Current Phase 7 baseline:
 - Jupytext compatibility fixtures live in `tests/fixtures/jupytext/` and are validated in headless tests.
 - Performance fixtures live in `tests/fixtures/perf/` and are used by a dedicated stress lane.
 - Fixture coverage includes:
+  - malformed `.ipynb` shape fixtures for manual interop checks (`tests/fixtures/interop/*.ipynb`),
   - upstream README/docs examples,
+  - plain `# %%` marker fixture coverage,
   - mixed marker variants (`[md]`, indented `# %%`),
   - malformed header fallback cases (missing closing `# ---`),
   - import error paths (missing file, non-modifiable target buffer).
@@ -373,6 +395,9 @@ Current Phase 7 baseline:
 ## .ipynb import/export
 
 - Import reads `.ipynb` JSON, preserves notebook/cell metadata and outputs, and converts cells to marker format.
+- Import rejects malformed notebook shapes (for example top-level list docs or non-list `cells`) with explicit errors.
+- Import normalizes unknown/nonstandard `cell_type` values to `code` and supports string `source` payloads.
+- Import normalizes malformed metadata/attachments/outputs containers to safe defaults.
 - Import drops a leading blank code cell when followed by markdown (common notebook artifact).
 - Import renders existing code-cell outputs using the typed output pipeline.
 - Export writes a full `.ipynb` with cell sources, metadata, execution counts, and outputs.

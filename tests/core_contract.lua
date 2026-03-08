@@ -274,6 +274,61 @@ with_buf({ "" }, function(buf)
   ok(joined:find("<IPython.core.display.JSON object>", 1, true) == nil, "json plain fallback suppressed")
 end)
 
+-- Test: ipynb import rejects malformed top-level shape and malformed cells field
+with_buf({ "" }, function(buf)
+  local bad_top = vim.fn.tempname() .. ".ipynb"
+  local ok_write_top = pcall(vim.fn.writefile, { vim.fn.json_encode({ "bad" }) }, bad_top)
+  ok(ok_write_top, "wrote malformed top-level ipynb")
+  local ok_import_top, err_top = ipynb.import_ipynb(bad_top, buf)
+  ok(ok_import_top == nil, "malformed top-level ipynb import fails")
+  ok(type(err_top) == "string" and err_top:find("Invalid JSON", 1, true) ~= nil, "malformed top-level error message")
+
+  local bad_cells = vim.fn.tempname() .. ".ipynb"
+  local doc = {
+    nbformat = 4,
+    nbformat_minor = 5,
+    metadata = {},
+    cells = "not-a-list",
+  }
+  local ok_write_cells = pcall(vim.fn.writefile, { vim.fn.json_encode(doc) }, bad_cells)
+  ok(ok_write_cells, "wrote malformed cells ipynb")
+  local ok_import_cells, err_cells = ipynb.import_ipynb(bad_cells, buf)
+  ok(ok_import_cells == nil, "malformed cells ipynb import fails")
+  ok(type(err_cells) == "string" and err_cells:find("cells must be a list", 1, true) ~= nil, "malformed cells error message")
+end)
+
+-- Test: ipynb import normalizes unknown cell types to code and supports string source
+with_buf({ "" }, function(buf)
+  local tmp = vim.fn.tempname() .. ".ipynb"
+  local doc = {
+    nbformat = 4,
+    nbformat_minor = 5,
+    metadata = {},
+    cells = {
+      {
+        cell_type = "rawish",
+        metadata = "bad-metadata",
+        source = "a = 1\nprint(a)\n",
+      },
+    },
+  }
+  local ok_write = pcall(vim.fn.writefile, { vim.fn.json_encode(doc) }, tmp)
+  ok(ok_write, "wrote unknown-type ipynb")
+  local ok_import, err = ipynb.import_ipynb(tmp, buf)
+  ok(ok_import, err)
+
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, 4, false)
+  eq(lines[1], "# %% [code]", "unknown cell type normalized to code marker")
+  eq(lines[2], "a = 1", "string source first line imported")
+  eq(lines[3], "print(a)", "string source second line imported")
+
+  local out = vim.fn.tempname() .. ".ipynb"
+  local ok_export, err_export = ipynb.export_ipynb(out, buf)
+  ok(ok_export, err_export)
+  local exported = vim.fn.json_decode(table.concat(vim.fn.readfile(out), "\n"))
+  eq(exported.cells[1].cell_type, "code", "exported cell type normalized to code")
+end)
+
 -- Test: jupytext py:percent import parses markdown and preserves jupytext metadata on ipynb export
 with_buf({ "" }, function(buf)
   local tmp = vim.fn.tempname() .. ".py"
@@ -409,6 +464,18 @@ with_buf({ "" }, function(buf)
   local state = vim.api.nvim_buf_get_var(buf, "neo_notebooks_ipynb_state")
   ok(state.metadata and state.metadata.jupytext, "default jupytext metadata seeded on malformed header")
   eq(state.metadata.jupytext.text_representation.format_name, "percent", "default format preserved on malformed header")
+end)
+
+-- Test: jupytext fixture supports plain # %% markers as code-cell boundaries
+with_buf({ "" }, function(buf)
+  local path = fixture_root .. "/plain_percent_markers.py"
+  local ok_import, err = ipynb.import_jupytext(path, buf)
+  ok(ok_import, err)
+
+  local idx = index.rebuild(buf)
+  eq(#idx.list, 2, "plain-marker fixture parsed into two cells")
+  eq(idx.list[1].type, "code", "plain marker first cell defaults to code")
+  eq(idx.list[2].type, "code", "plain marker second cell defaults to code")
 end)
 
 -- Test: import_jupytext returns readable errors for missing files and non-modifiable buffers

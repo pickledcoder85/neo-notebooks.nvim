@@ -1,11 +1,19 @@
 local M = {}
+local is_list = vim.islist or vim.tbl_islist
 
 local function text_from_field(value)
   if value == nil then
     return ""
   end
   if type(value) == "table" then
-    return table.concat(value, "")
+    if is_list(value) then
+      return table.concat(value, "")
+    end
+    local ok, encoded = pcall(vim.fn.json_encode, value)
+    if ok and type(encoded) == "string" then
+      return encoded
+    end
+    return ""
   end
   return tostring(value)
 end

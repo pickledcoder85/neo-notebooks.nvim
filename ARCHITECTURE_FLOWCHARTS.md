@@ -17,6 +17,7 @@ Living visual map of current architecture and planned refactor state.
 - Streaming-depth v1: live stream preview now merges by event arrival order (cross-stream), uses a single global preview cap, and supports configurable execution placeholder text.
 - Streaming UX defaults v1 (in progress): recognized non-`tqdm` progress lines are now policy-formatted (default `bar`) in both live preview and final output formatting.
 - Kernel robustness phase 2 (in progress): dead active-request reconciliation now clears stale `active_request` when kernel exits mid-flight and transitions state to `error` before next-request recovery.
+- Interop reliability v1 (in progress): `.ipynb` decode path now validates top-level/cells shapes and normalizes imported cell payloads (unknown type fallback + string-source normalization).
 
 ## Reading Guide
 

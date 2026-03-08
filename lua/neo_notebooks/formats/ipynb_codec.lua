@@ -1,17 +1,36 @@
 local M = {}
+local is_list = vim.islist or vim.tbl_islist
 
 local function normalize_lines(src)
+  if type(src) == "string" then
+    return vim.split(src, "\n", { plain = true })
+  end
+  if type(src) ~= "table" then
+    return {}
+  end
   local out = {}
   for _, line in ipairs(src or {}) do
     if line == nil then
       line = ""
     end
+    line = tostring(line)
     if line:sub(-1) == "\n" then
       line = line:sub(1, -2)
     end
     table.insert(out, line)
   end
   return out
+end
+
+local function normalize_cell_type(cell_type)
+  if type(cell_type) ~= "string" then
+    return "code"
+  end
+  cell_type = cell_type:lower()
+  if cell_type ~= "code" and cell_type ~= "markdown" then
+    return "code"
+  end
+  return cell_type
 end
 
 local function trim_trailing_blank_lines(lines)
@@ -34,8 +53,14 @@ end
 
 function M.decode_document(content)
   local ok, doc = pcall(vim.fn.json_decode, content)
-  if not ok or type(doc) ~= "table" then
+  if not ok or type(doc) ~= "table" or is_list(doc) then
     return nil, "Invalid JSON"
+  end
+  if doc.cells ~= nil and type(doc.cells) ~= "table" then
+    return nil, "Invalid notebook document: cells must be a list"
+  end
+  if doc.metadata ~= nil and type(doc.metadata) ~= "table" then
+    doc.metadata = {}
   end
   return doc
 end
@@ -49,7 +74,20 @@ function M.encode_document(doc)
 end
 
 function M.prepare_import_cells(cells_in)
-  local out = vim.deepcopy(cells_in or {})
+  local out = {}
+  for _, raw in ipairs(cells_in or {}) do
+    if type(raw) == "table" then
+      local ctype = normalize_cell_type(raw.cell_type)
+      out[#out + 1] = {
+        cell_type = ctype,
+        source = normalize_lines(raw.source or {}),
+        metadata = type(raw.metadata) == "table" and raw.metadata or {},
+        attachments = type(raw.attachments) == "table" and raw.attachments or {},
+        outputs = type(raw.outputs) == "table" and raw.outputs or {},
+        execution_count = type(raw.execution_count) == "number" and raw.execution_count or nil,
+      }
+    end
+  end
   if #out >= 2 then
     local first = out[1]
     local second = out[2]
@@ -63,10 +101,9 @@ end
 function M.cells_to_buffer_lines(cells_in)
   local lines = {}
   for _, cell in ipairs(cells_in or {}) do
-    local ctype = cell.cell_type or "code"
+    local ctype = normalize_cell_type(cell.cell_type)
     table.insert(lines, "# %% [" .. ctype .. "]")
-    local src = cell.source or {}
-    for _, line in ipairs(trim_trailing_blank_lines(normalize_lines(src))) do
+    for _, line in ipairs(trim_trailing_blank_lines(normalize_lines(cell.source or {}))) do
       table.insert(lines, line)
     end
     table.insert(lines, "")
@@ -90,9 +127,9 @@ function M.build_export_cells(bufnr, list, idx, state)
     local entry = idx.list[#cells_out + 1]
     local cell_id = entry and entry.id
     local stored = cell_id and state.cells[cell_id] or nil
-    local metadata = stored and stored.metadata or {}
-    local attachments = stored and stored.attachments or {}
-    local outputs = stored and stored.outputs or {}
+    local metadata = (stored and type(stored.metadata) == "table") and stored.metadata or {}
+    local attachments = (stored and type(stored.attachments) == "table") and stored.attachments or {}
+    local outputs = (stored and type(stored.outputs) == "table") and stored.outputs or {}
     local exec_count = stored and stored.execution_count or nil
     local cell_out = {
       cell_type = cell.type,
