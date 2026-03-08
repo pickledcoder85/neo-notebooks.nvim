@@ -440,6 +440,7 @@ with_buf({
   "# %% [code]",
   "x = 1",
 }, function(buf)
+  vim.api.nvim_set_current_buf(buf)
   vim.b[buf].neo_notebooks_enabled = true
   local prev = nb.config.kernel_status_virtual
   nb.config.kernel_status_virtual = true

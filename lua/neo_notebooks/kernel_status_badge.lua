@@ -47,8 +47,17 @@ function M.refresh(bufnr)
   end
   local state = nb.kernel_status(bufnr)
   local label = " kernel:" .. tostring(state) .. " "
+  local win = vim.fn.bufwinid(bufnr)
+  if win == -1 then
+    M.clear(bufnr)
+    return
+  end
+  local top_line = vim.api.nvim_win_call(win, function()
+    return vim.fn.line("w0")
+  end)
+  local row = math.max(0, (top_line or 1) - 1)
   M.clear(bufnr)
-  vim.api.nvim_buf_set_extmark(bufnr, M.ns, 0, 0, {
+  vim.api.nvim_buf_set_extmark(bufnr, M.ns, row, 0, {
     virt_text = { { label, state_hl(state) } },
     virt_text_pos = "right_align",
     hl_mode = "combine",

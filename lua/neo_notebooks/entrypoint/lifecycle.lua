@@ -213,6 +213,12 @@ function M.register(ctx)
     end,
   })
 
+  vim.api.nvim_create_autocmd({ "WinScrolled" }, {
+    callback = function(args)
+      badge.refresh(args.buf)
+    end,
+  })
+
   vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
     pattern = "*.nn",
     callback = function(args)
