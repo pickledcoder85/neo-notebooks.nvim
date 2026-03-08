@@ -1019,7 +1019,18 @@ NeoNotebookSnakeCell
   - `entrypoint/lifecycle.lua`
 - Add clear transition and failure messaging (`interrupting`, `restart complete`, `recovery failed`, etc.).
 
-6. Test contract and regression lanes
+6. Kernel control UX contract (keymap-first)
+- Add a dedicated kernel keymap group under `<leader>k*` with short, mnemonic actions:
+  - `<leader>kr` restart kernel
+  - `<leader>ki` interrupt active execution
+  - `<leader>ks` stop/shutdown kernel session
+  - `<leader>kp` pause/unpause dispatch queue
+  - `<leader>kk` show kernel state/details
+- Keep command aliases for scriptability, but default user workflow should be keymap-driven.
+- Clarify `pause` semantics explicitly: pause means "hold queue dispatch" (not OS-level process suspend).
+- Ensure keymaps are buffer-local notebook maps and appear in help output.
+
+7. Test contract and regression lanes
 - Add integration tests for:
   - `idle -> running -> idle` base flow,
   - interrupt transition paths,
@@ -1028,7 +1039,7 @@ NeoNotebookSnakeCell
   - dead-session recovery failure -> `error` state.
 - Re-run required lanes after each slice.
 
-7. Documentation closure
+8. Documentation closure
 - Keep `ARCHITECTURE_FLOWCHARTS.md`, `TECHNICAL.md`, and `TODO.md` synchronized per slice.
 - Mark phase complete only after transition tests and manual checklist are satisfied.
 
@@ -1039,9 +1050,12 @@ NeoNotebookSnakeCell
 - `lua/neo_notebooks/session.lua`
 - `lua/neo_notebooks/entrypoint/commands.lua`
 - `lua/neo_notebooks/entrypoint/keymaps.lua`
+- `lua/neo_notebooks/help.lua`
+- `lua/neo_notebooks/init.lua` (default keymap config surface)
 - `lua/neo_notebooks/entrypoint/lifecycle.lua`
 - `tests/integration.lua`
 - `tests/core_contract.lua` (if state invariants fit better here)
+- `README.md` (kernel keymap docs)
 - `CODEBASE_REVIEW.md`
 - `ARCHITECTURE_FLOWCHARTS.md`
 - `TECHNICAL.md`
@@ -1063,6 +1077,8 @@ NeoNotebookSnakeCell
 - No ambiguous/stuck execution state after interrupt/restart/failure scenarios.
 - Dead-session auto-recovery is bounded, deterministic, and test-covered.
 - Boundary notifications accurately reflect state transitions/failures.
+- Kernel controls are available via documented `<leader>k*` keymaps and behave deterministically.
+- Queue pause/unpause semantics are explicit, tested, and do not imply process suspend.
 - Required lanes are green; optional kitty lane behavior remains isolated.
 
 ### Manual validation checklist
@@ -1071,6 +1087,7 @@ NeoNotebookSnakeCell
 - Restart while queue is non-empty: queue behavior is deterministic and documented.
 - Simulate session death (or force job stop), then run cell: auto-recovery behavior matches policy.
 - Confirm no persistent false "running/busy" state in notebook UX after failures.
+- Verify `<leader>k*` controls (`kr/ki/ks/kp/kk`) are buffer-local, discoverable, and match documented behavior.
 
 ### Rollback plan
 

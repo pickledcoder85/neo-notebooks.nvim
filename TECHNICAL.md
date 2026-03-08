@@ -100,6 +100,18 @@ This document summarizes implementation choices and the evolution of core featur
   has changed and `interrupt_on_rerun` is enabled, the active request is interrupted
   and the new run starts immediately.
 
+## Planned kernel controls (Phase 7)
+
+- Kernel/session control UX is planned as keymap-first, with command aliases retained.
+- Proposed default controls under `<leader>k*`:
+  - `<leader>kr`: restart kernel session
+  - `<leader>ki`: interrupt active execution
+  - `<leader>ks`: stop/shutdown current kernel session
+  - `<leader>kp`: pause/unpause run-queue dispatch
+  - `<leader>kk`: show current kernel/session state
+- Important semantics:
+  - `pause` means dispatch pause (hold dequeue/start of new requests), not OS-level process suspend.
+
 ## Output handling
 
 - Output defaults to inline `virt_lines` under the cell.

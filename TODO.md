@@ -33,10 +33,14 @@ This file tracks project scope and the order of work. Items can be moved as prio
     - Explicit execution state machine (`idle`, `running`, `interrupting`, `restarting`, `error`) with documented transitions.
     - Deterministic restart/interrupt UX (clear success/failure status and next action guidance).
     - Automatic stale-session recovery policy (retry vs restart) with bounded retries.
+    - Keymap-first kernel controls and state visibility:
+      - `<leader>kr` restart, `<leader>ki` interrupt, `<leader>ks` stop, `<leader>kp` pause/unpause dispatch, `<leader>kk` show kernel state.
+      - keep command aliases, but optimize daily workflow around short keymaps.
   - Acceptance criteria:
     - No stuck "busy" UI state after interrupt/restart/failure scenarios.
     - Reproducible behavior for queued runs across restart/interrupt boundaries.
     - Integration tests for state transitions and recovery flows.
+    - Queue pause semantics are explicit (dispatch pause, not process suspend) and tested.
 
 - Priority 2: Performance/scalability hardening:
   - Profile render/index/scheduler hot paths on large notebooks.

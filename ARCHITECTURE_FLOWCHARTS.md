@@ -325,6 +325,10 @@ Target:
       |   (enqueue/dispatch/interrupt/restart/resp)
       v
 boundary notifications + status UX
+      ^
+      |
+<leader>k* kernel controls
+(kr/ki/ks/kp/kk via keymaps)
 ```
 
 ---
