@@ -372,6 +372,7 @@ Current Phase 7 baseline:
 - Jupytext compatibility fixtures live in `tests/fixtures/jupytext/` and are validated in headless tests.
 - Performance fixtures live in `tests/fixtures/perf/` and are used by a dedicated stress lane.
 - Fixture coverage includes:
+  - malformed `.ipynb` shape fixtures for manual interop checks (`tests/fixtures/interop/*.ipynb`),
   - upstream README/docs examples,
   - plain `# %%` marker fixture coverage,
   - mixed marker variants (`[md]`, indented `# %%`),
