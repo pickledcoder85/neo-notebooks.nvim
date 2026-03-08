@@ -242,6 +242,22 @@ Run tests in headless Neovim:
 nvim --headless -u NONE -c \"lua dofile('tests/run.lua')\"
 ```
 
+Lane-specific runs:
+
+```
+# Required core lane
+nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/core_contract.lua" -c qa
+
+# Required integration lane
+nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/integration.lua" -c qa
+
+# Compatibility dispatcher (required lanes, skips optional kitty lane)
+nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_skip_optional_kitty=1" -c "luafile tests/run.lua" -c qa
+
+# Optional kitty/image backend lane (expected failure signal on non-kitty setups)
+nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/optional_kitty.lua" -c qa
+```
+
 ### Automatic first cell
 
 When opening an empty `python` buffer, the plugin inserts a starter markdown cell:

@@ -647,7 +647,7 @@ NeoNotebookSnakeCell
 ## Phase Worklist - Phase 2: Test Topology Split and Confidence Lanes
 
 - Phase: 2 - test lane split
-- Status: in_progress
+- Status: completed
 - Related sweep findings:
   - Sweep 1: finding 10
   - Sweep 2: finding 10
@@ -750,8 +750,12 @@ NeoNotebookSnakeCell
   - default notebook snake keymap registration contract,
   - snake keymap ownership transition contract (`default -> locked -> restored`),
   - snake temporary cell lifecycle contract (insert on start, delete on stop).
-- Remaining for full Phase 2 closure:
-  - optionally add README test-lane invocation snippet.
+- Added README lane invocation snippet for required/optional lane execution.
+- Re-validated lane commands for closure:
+  - `core_contract` pass,
+  - `integration` pass,
+  - `run.lua` pass with optional kitty lane skipped,
+  - `optional_kitty` expected failure signal on non-kitty environment.
 
 ## Phase Worklist - Phase 3: Entrypoint Decomposition
 
