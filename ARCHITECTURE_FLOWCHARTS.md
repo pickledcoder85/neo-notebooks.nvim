@@ -11,6 +11,9 @@ Living visual map of current architecture and planned refactor state.
 - Phase 5 (Format Layer Split): complete (Jupytext parser + output codec + ipynb codec + buffer adapter split).
 - Phase 6 (Error/Notify Policy): complete (boundary-owned notify flows for commands/keymaps/lifecycle; internal notify paths reduced to explicit debug-gated diagnostics).
 - Phase 7 (Kernel/Session Robustness): in progress (state owner + transitions + kernel controls + queue-pause dispatch gating + bounded dispatch-time recovery + optional virtual badge landed; deeper recovery tests and final status-surface polish pending).
+- Phase 8 (Performance/Scalability Lane): in progress (synthetic large fixtures + optional performance lane with timing budgets landed; threshold tuning and regression policy tightening pending).
+- Streaming execution output protocol (incremental stdout/stderr with carriage-return line replacement) landed for long-running cell UX.
+- Streaming path now includes render-pressure controls (preview cap + throttled refresh cadence) to protect UI responsiveness.
 
 ## Reading Guide
 
@@ -146,11 +149,35 @@ Current:
 
 Target:
 ```text
-+---------------------+   +-------------------+   +----------------------+
-| tests/core_contract |   | tests/integration |   | tests/optional_kitty |
-+---------------------+   +-------------------+   +----------------------+
-          |                         |                          |
-          +----------- independent confidence lanes -----------+
++---------------------+   +-------------------+   +----------------------+   +-------------------+
+| tests/core_contract |   | tests/integration |   | tests/optional_kitty |   | tests/performance |
++---------------------+   +-------------------+   +----------------------+   +-------------------+
+          |                         |                          |                         |
+          +-------------------------+--------------------------+-------------------------+
+                                            independent confidence lanes
+```
+
+Performance lane + fixture flow:
+```text
++-----------------------------+
+| tests/fixtures/perf/*       |
+| large_percent.py            |
+| large_notebook.ipynb        |
++-----------------------------+
+               |
+               v
++-----------------------------+
+| tests/performance.lua       |
+| import -> rebuild -> render |
+| -> export timing budgets    |
+| + batch/stream/fetch exec   |
++-----------------------------+
+               |
+               v
++-----------------------------+
+| regression signal           |
+| (latency budget checks)     |
++-----------------------------+
 ```
 
 ---

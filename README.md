@@ -85,6 +85,12 @@ print("hello")
 - `:NeoNotebookOutputToggle` toggles output mode between inline and floating.
 - While a cell is executing, a spinner animates on the first inline output row.
 - While a cell runs, an inline placeholder output shows `cell executing...`.
+- Streaming stdout/stderr is now rendered incrementally while a cell runs (including batch-progress text).
+- Carriage-return progress updates (for example `tqdm`) are handled as in-place line replacement during execution.
+- Streaming safety caps are configurable:
+  - `stream_preview_max_lines` (default `400`)
+  - `stream_render_interval_ms` (default `80`)
+  - `stream_render_min_delta` (default `50`)
 - After execution, inline output includes a right-aligned timing line (e.g. `[8.56ms]`).
 - Moving cells preserves outputs by stable cell ID.
 - `:NeoNotebookCellSelect` selects the current cell body.
@@ -288,7 +294,20 @@ nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_ski
 
 # Optional kitty/image backend lane (expected failure signal on non-kitty setups)
 nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/optional_kitty.lua" -c qa
+
+# Optional performance/scalability lane (large synthetic fixtures + timing budgets)
+nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/performance.lua" -c qa
+
+# Run dispatcher + include performance lane
+nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_skip_optional_kitty=1" -c "let g:neo_notebooks_test_include_performance=1" -c "luafile tests/run.lua" -c qa
+
+# Optional: include real network fetch workload in performance lane
+nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_include_network=1" -c "luafile tests/performance.lua" -c qa
 ```
+
+Manual stress fixtures:
+- `tests/fixtures/perf/manual_exec_stress.ipynb` (quick execution stress)
+- `tests/fixtures/perf/manual_exec_soak.ipynb` (heavier 2-3 min soak target with tunable knobs)
 
 ### Automatic first cell
 

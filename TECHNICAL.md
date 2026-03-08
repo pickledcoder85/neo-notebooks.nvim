@@ -155,6 +155,12 @@ Current Phase 7 baseline:
 - Typed outputs are supported (text + image/png), with custom kitty graphics rendering in a dedicated image pane. When running inside tmux, the pane is created automatically and targeted via its TTY.
 - While a cell is executing, a spinner is rendered on the first inline output row.
 - While a cell runs, the output area shows a placeholder line.
+- Execution now supports incremental stream events from the Python worker; stdout/stderr lines are rendered live during execution.
+- Stream protocol supports carriage-return replacement semantics so `tqdm`-style progress updates replace the active line instead of only appending.
+- Stream rendering includes pressure controls to avoid UI lockups on huge output bursts:
+  - `stream_preview_max_lines` (cap retained live preview lines),
+  - `stream_render_interval_ms` (minimum render interval),
+  - `stream_render_min_delta` (minimum new stream events before forced render).
 - After execution, the inline output prepends a right-aligned timing line.
 - Execution duration is measured around the request/response boundary and stored per cell ID.
 - Spinner frames request immediate renders to avoid dropped updates.
@@ -315,15 +321,24 @@ Current Phase 7 baseline:
 
 - Headless tests live in `tests/run.lua`.
 - Jupytext compatibility fixtures live in `tests/fixtures/jupytext/` and are validated in headless tests.
+- Performance fixtures live in `tests/fixtures/perf/` and are used by a dedicated stress lane.
 - Fixture coverage includes:
   - upstream README/docs examples,
   - mixed marker variants (`[md]`, indented `# %%`),
   - malformed header fallback cases (missing closing `# ---`),
   - import error paths (missing file, non-modifiable target buffer).
+  - manual stress fixtures for interactive execution workloads:
+    - `tests/fixtures/perf/manual_exec_stress.ipynb`
+    - `tests/fixtures/perf/manual_exec_soak.ipynb`
 - Test lanes:
   - `tests/core_contract.lua` (required core signal; skips optional kitty backend assertions)
   - `tests/integration.lua` (broad workflow signal; skips optional kitty backend assertions)
   - `tests/optional_kitty.lua` (kitty/image backend assertions; optional in non-kitty environments)
+  - `tests/performance.lua` (optional stress/perf signal over large synthetic fixtures with conservative timing budgets)
+    - includes batch compute workload (`5000` calculations in batches of `100`)
+    - includes high-volume output streaming workload
+    - includes local fetch-style workload (`urllib` + `file://` JSON payload, 5000 rows)
+    - optional real network fetch path is gated by `g:neo_notebooks_test_include_network=1`
   - integration lane includes snake lifecycle/keymap ownership transition assertions.
 
 ## .ipynb import/export
