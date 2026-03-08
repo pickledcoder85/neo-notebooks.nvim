@@ -365,20 +365,7 @@ function M.new(ctx)
 
     if maps.kernel_status then
       vim.keymap.set("n", maps.kernel_status, function()
-        local state = exec.get_session_state(0)
-        local name = state and state.state or "stopped"
-        if state and state.paused then
-          name = "paused"
-        elseif name == "idle" then
-          name = "ok"
-        end
-        local queue_len = state and state.queue_len or 0
-        local active = state and state.active_request and "yes" or "no"
-        local alive = state and state.alive and "yes" or "no"
-        vim.notify(
-          string.format("NeoNotebook: kernel=%s queue=%d active=%s alive=%s", name, queue_len, active, alive),
-          vim.log.levels.INFO
-        )
+        vim.cmd("NeoNotebookKernelStatusToggle")
       end, opts)
     end
 

@@ -374,6 +374,13 @@ function M.register(ctx)
     vim.notify(kernel_status_text(0), vim.log.levels.INFO)
   end, {})
 
+  vim.api.nvim_create_user_command("NeoNotebookKernelStatusToggle", function()
+    local panel = require("neo_notebooks.kernel_status_view")
+    local opened = panel.toggle(0)
+    local label = opened and "opened" or "closed"
+    vim.notify("NeoNotebook: kernel status panel " .. label, vim.log.levels.INFO)
+  end, {})
+
   vim.api.nvim_create_user_command("NeoNotebookOutputToggle", function()
     local mode = actions.toggle_output_mode()
     vim.notify("NeoNotebook: output mode = " .. tostring(mode), vim.log.levels.INFO)

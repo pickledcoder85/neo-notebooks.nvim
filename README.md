@@ -79,7 +79,8 @@ print("hello")
 - `:NeoNotebookKernelInterrupt` sends an interrupt to active execution.
 - `:NeoNotebookKernelStop` stops/shuts down the current kernel session.
 - `:NeoNotebookKernelPauseToggle` pauses/resumes queue dispatch (does not suspend the process).
-- `:NeoNotebookKernelStatus` shows kernel state details.
+- `:NeoNotebookKernelStatus` shows kernel state details (one-shot).
+- `:NeoNotebookKernelStatusToggle` toggles a persistent kernel status panel.
 - `:NeoNotebookOutputToggle` toggles output mode between inline and floating.
 - While a cell is executing, a spinner animates on the first inline output row.
 - While a cell runs, an inline placeholder output shows `cell executing...`.
@@ -382,7 +383,7 @@ When the pane is collapsed with `<leader>pc`, new images are saved to disk and n
 - `<leader>ki` kernel interrupt
 - `<leader>ks` kernel stop
 - `<leader>kp` kernel pause/resume queue dispatch
-- `<leader>kk` kernel status
+- `<leader>kk` toggle persistent kernel status panel
 - `<leader>vs` select current cell body
 - `<leader>ns` show cell stats
 - `<leader>rk` run all code cells above

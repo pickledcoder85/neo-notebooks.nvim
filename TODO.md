@@ -34,7 +34,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
     - Deterministic restart/interrupt UX (clear success/failure status and next action guidance).
     - Automatic stale-session recovery policy (retry vs restart) with bounded retries.
     - Keymap-first kernel controls and state visibility:
-      - `<leader>kr` restart, `<leader>ki` interrupt, `<leader>ks` stop, `<leader>kp` pause/unpause dispatch, `<leader>kk` show kernel state.
+      - `<leader>kr` restart, `<leader>ki` interrupt, `<leader>ks` stop, `<leader>kp` pause/unpause dispatch, `<leader>kk` toggle persistent kernel status panel.
       - keep command aliases, but optimize daily workflow around short keymaps.
     - Status visibility for users:
       - lightweight `kernel_status()` API for statusline/lualine integration.

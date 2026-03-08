@@ -111,13 +111,14 @@ This document summarizes implementation choices and the evolution of core featur
   - `<leader>ki`: interrupt active execution
   - `<leader>ks`: stop/shutdown current kernel session
   - `<leader>kp`: pause/unpause run-queue dispatch
-  - `<leader>kk`: show current kernel/session state
+  - `<leader>kk`: toggle persistent kernel status panel
 - Command aliases now available:
   - `:NeoNotebookKernelRestart`
   - `:NeoNotebookKernelInterrupt`
   - `:NeoNotebookKernelStop`
   - `:NeoNotebookKernelPauseToggle`
   - `:NeoNotebookKernelStatus`
+  - `:NeoNotebookKernelStatusToggle`
 - Important semantics:
   - `pause` means dispatch pause (hold dequeue/start of new requests), not OS-level process suspend.
 
@@ -135,6 +136,7 @@ This document summarizes implementation choices and the evolution of core featur
 Current Phase 7 baseline:
 - `kernel_status()` is now available and returns normalized strings (`ok`, `paused`, or raw state names).
 - Kernel control keymaps/commands and dispatch pause gating are implemented.
+- Persistent kernel status panel toggle is implemented via `<leader>kk` / `:NeoNotebookKernelStatusToggle`.
 - Optional virtual status badge is planned next slices.
 
 ## Output handling
