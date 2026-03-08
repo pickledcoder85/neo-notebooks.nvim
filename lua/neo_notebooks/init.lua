@@ -22,7 +22,7 @@ M.config = {
   image_pane_preserve_aspect = true,
   image_pane_cell_ratio = 2.0,
   image_pane_statusline = true,
-  kernel_status_virtual = false,
+  kernel_status_virtual = true,
   viewport_virtual_padding = { top = 2, bottom = 2 },
   image_fallback = "placeholder",
   mpl_backend = "Agg",

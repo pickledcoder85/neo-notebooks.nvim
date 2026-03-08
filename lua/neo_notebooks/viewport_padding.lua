@@ -80,11 +80,19 @@ function M.refresh(bufnr)
   M.clear(bufnr)
 
   if top_pad > 0 then
-    vim.api.nvim_buf_set_extmark(bufnr, M.ns, top_row, 0, {
-      virt_lines = blank_virt_lines(top_pad),
-      virt_lines_above = true,
-      priority = 150,
-    })
+    if top_row > 0 then
+      -- Anchor to the line just above the viewport so spacer rows render at the top edge.
+      vim.api.nvim_buf_set_extmark(bufnr, M.ns, top_row - 1, 0, {
+        virt_lines = blank_virt_lines(top_pad),
+        priority = 150,
+      })
+    else
+      vim.api.nvim_buf_set_extmark(bufnr, M.ns, top_row, 0, {
+        virt_lines = blank_virt_lines(top_pad),
+        virt_lines_above = true,
+        priority = 150,
+      })
+    end
   end
   if bottom_pad > 0 then
     vim.api.nvim_buf_set_extmark(bufnr, M.ns, bot_row, 0, {

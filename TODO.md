@@ -38,7 +38,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
       - keep command aliases, but optimize daily workflow around short keymaps.
     - Status visibility for users:
       - lightweight `kernel_status()` API for statusline/lualine integration.
-      - optional virtual status badge (default off) for users without statusline integration.
+      - virtual status badge (default on, configurable off) for users without statusline integration.
       - canonical state colors: green=ok/idle, yellow=active transitional states, red=error/stopped.
   - Acceptance criteria:
     - No stuck "busy" UI state after interrupt/restart/failure scenarios.

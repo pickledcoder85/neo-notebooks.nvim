@@ -1136,7 +1136,7 @@ NeoNotebookSnakeCell
 - Added keymap-first kernel controls (config-driven):
   - `kernel_restart`, `kernel_interrupt`, `kernel_stop`, `kernel_pause`, `kernel_status`.
 - `<leader>kk` now toggles a persistent kernel status panel (`NeoNotebookKernelStatusToggle`) instead of one-shot notify output.
-- Optional virtual kernel badge now supported via `kernel_status_virtual = true` (default off).
+- Virtual kernel badge now supported and enabled by default (`kernel_status_virtual = true`, set false to disable).
 - Optional viewport virtual padding now supported via `viewport_virtual_padding = { top = 2, bottom = 2 }`.
 - Queue pause behavior now gates dispatch/drain start via session state pause flag (dispatch pause only; no process suspend).
 - Added bounded dispatch-time recovery:

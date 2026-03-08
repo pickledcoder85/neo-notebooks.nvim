@@ -137,7 +137,7 @@ require("neo_notebooks").setup({
   require_markers = false,
   auto_insert_first_cell = true,
   overlay_preview = false,
-  kernel_status_virtual = false,
+  kernel_status_virtual = true,
   viewport_virtual_padding = { top = 2, bottom = 2 },
   suppress_completion_in_markdown = true,
   suppress_completion_popup = false,
@@ -207,11 +207,11 @@ require("neo_notebooks").setup({
 })
 ```
 
-Optional virtual kernel status badge:
+Disable virtual kernel status badge:
 
 ```lua
 require("neo_notebooks").setup({
-  kernel_status_virtual = true,
+  kernel_status_virtual = false,
 })
 ```
 
