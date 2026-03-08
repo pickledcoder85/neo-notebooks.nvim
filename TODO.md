@@ -20,7 +20,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Phase 4 (completed): mutation/render contract consolidation (shared mutation helper + named modes + migrated high-traffic call sites).
   - Phase 5 (completed): format layer split (Jupytext parser + output codec + ipynb codec + notebook adapter split).
   - Phase 6 (completed): error/notify policy (boundary-owned notifications + debug-gated internal notify paths).
-  - Phase 7 (in progress): kernel/session state machine + recovery policy planning (docs gate complete before implementation).
+  - Phase 7 (in progress): kernel/session state machine + recovery policy (docs gate complete; initial state-owner + status API slice landed).
 
 ## Next
 

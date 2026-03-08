@@ -1111,3 +1111,22 @@ NeoNotebookSnakeCell
   - restore prior `exec/session` behavior,
   - remove state-transition tests,
   - restore docs phase status.
+
+### Phase 7 Progress Notes (Current Iteration)
+
+- Added `lua/neo_notebooks/session_state.lua` as lightweight per-buffer session state owner:
+  - state names (`idle`, `running`, `interrupting`, `restarting`, `error`, `stopped`),
+  - transition helper with validation support,
+  - paused flag support for upcoming queue-pause work.
+- Wired passive state transitions in execution/session paths (no queue-control behavior change yet):
+  - `exec.ensure_session` -> `idle` or `error`,
+  - `exec.dispatch_request` -> `running`,
+  - `exec.handle_response` completion/interrupted -> `idle`,
+  - `exec.stop_session` -> `stopped`,
+  - `session.restart` -> `restarting` then `idle`.
+- Added initial status API surface:
+  - `exec.get_session_state(bufnr)`,
+  - `require("neo_notebooks").kernel_status(bufnr)` normalized status string for statusline/lualine consumers.
+- Validation:
+  - required lanes green (`core_contract`, `integration`, `run.lua` with optional kitty skipped),
+  - optional kitty lane preserves expected failure signal in non-kitty environments.

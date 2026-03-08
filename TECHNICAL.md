@@ -80,6 +80,9 @@ This document summarizes implementation choices and the evolution of core featur
   - Manages a persistent Python process per buffer.
   - Executes cell code and collects output.
   - Dispatches output to inline or floating renderers.
+- `lua/neo_notebooks/session_state.lua`
+  - Owns lightweight per-buffer kernel/session state snapshots and transition helpers.
+  - Used as the Phase 7 foundation for explicit runtime state tracking.
 - `lua/neo_notebooks/markdown.lua`
   - Opens a markdown preview window for markdown cells.
   - Uses a scratch buffer with `filetype=markdown` for syntax highlighting.
@@ -122,6 +125,10 @@ This document summarizes implementation choices and the evolution of core featur
   - green: `idle/ok`
   - yellow: `running`, `interrupting`, `restarting`, `paused`
   - red: `error`, `stopped`
+
+Current Phase 7 baseline:
+- `kernel_status()` is now available and returns normalized strings (`ok`, `paused`, or raw state names).
+- Full keymap controls and optional virtual status badge are planned next slices.
 
 ## Output handling
 

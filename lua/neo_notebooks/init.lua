@@ -151,4 +151,23 @@ function M.blink_cmp_auto_show(ctx)
   return not M.is_notebook_buf(bufnr)
 end
 
+function M.kernel_status(bufnr)
+  bufnr = bufnr or 0
+  local ok_exec, exec = pcall(require, "neo_notebooks.exec")
+  if not ok_exec or not exec or type(exec.get_session_state) ~= "function" then
+    return "stopped"
+  end
+  local state = exec.get_session_state(bufnr)
+  if not state or not state.state then
+    return "stopped"
+  end
+  if state.paused then
+    return "paused"
+  end
+  if state.state == "idle" then
+    return "ok"
+  end
+  return state.state
+end
+
 return M

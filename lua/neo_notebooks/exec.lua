@@ -2,6 +2,7 @@ local cells = require("neo_notebooks.cells")
 local config = require("neo_notebooks").config
 local spinner = require("neo_notebooks.spinner")
 local output = require("neo_notebooks.output")
+local session_state = require("neo_notebooks.session_state")
 
 local M = {}
 
@@ -429,6 +430,7 @@ local function handle_response(session, resp)
     if session.active_request_id == id then
       session.active_request_id = nil
     end
+    session_state.transition(pending.bufnr, "idle", { reason = "interrupted" })
     if session.drain_queue then
       session.drain_queue()
     end
@@ -480,6 +482,7 @@ local function handle_response(session, resp)
   if session.active_request_id == id then
     session.active_request_id = nil
   end
+  session_state.transition(pending.bufnr, "idle", { reason = "response_complete" })
   if session.drain_queue then
     session.drain_queue()
   end
@@ -489,6 +492,7 @@ local function ensure_session(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local session = sessions[bufnr]
   if session and is_job_alive(session.job) then
+    session_state.transition(bufnr, "idle", { reason = "session_reused", force = true })
     return session
   end
 
@@ -550,10 +554,12 @@ local function ensure_session(bufnr)
   })
 
   if session.job <= 0 then
+    session_state.transition(bufnr, "error", { reason = "session_start_failed", force = true })
     return nil, "Failed to start Python session"
   end
 
   sessions[bufnr] = session
+  session_state.transition(bufnr, "idle", { reason = "session_started", force = true })
   return session
 end
 
@@ -561,6 +567,7 @@ function M.stop_session(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local session = sessions[bufnr]
   if not session then
+    session_state.transition(bufnr, "stopped", { reason = "session_missing_stop", force = true })
     return
   end
   spinner.stop_all(bufnr)
@@ -568,6 +575,7 @@ function M.stop_session(bufnr)
     vim.fn.jobstop(session.job)
   end
   sessions[bufnr] = nil
+  session_state.transition(bufnr, "stopped", { reason = "session_stopped", force = true })
 end
 
 local function build_request(bufnr, line, opts)
@@ -620,6 +628,7 @@ local function dispatch_request(session, req)
     session.pending[id].gen = gen
   end
   session.active_request_id = id
+  session_state.transition(req.bufnr, "running", { reason = "request_dispatched" })
   if req.cell_id then
     spinner.start(req.bufnr, req.cell_id, req.line)
   end
@@ -720,6 +729,11 @@ end
 function M.clear_all_hashes(bufnr)
   bufnr = resolve_bufnr(bufnr)
   set_hash_store(bufnr, {})
+end
+
+function M.get_session_state(bufnr)
+  bufnr = resolve_bufnr(bufnr)
+  return session_state.get(bufnr)
 end
 
 function M._get_hash_store_for_test(bufnr)
