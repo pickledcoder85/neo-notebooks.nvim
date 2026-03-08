@@ -1,6 +1,7 @@
 local M = {}
 
 local state_by_buf = {}
+local ns = vim.api.nvim_create_namespace("neo_notebooks_kernel_status")
 
 local function resolve_bufnr(bufnr)
   bufnr = bufnr or 0
@@ -10,7 +11,7 @@ local function resolve_bufnr(bufnr)
   return bufnr
 end
 
-local function status_lines(bufnr)
+local function status_snapshot(bufnr)
   local exec = require("neo_notebooks.exec")
   local state = exec.get_session_state(bufnr)
   local name = state and state.state or "stopped"
@@ -23,14 +24,36 @@ local function status_lines(bufnr)
   local active = state and state.active_request and "yes" or "no"
   local alive = state and state.alive and "yes" or "no"
   return {
+    name = name,
+    queue_len = queue_len,
+    active = active,
+    alive = alive,
+  }
+end
+
+local function status_lines(snapshot)
+  return {
     "NeoNotebook Kernel",
-    string.format("state:  %s", name),
-    string.format("queue:  %d", queue_len),
-    string.format("active: %s", active),
-    string.format("alive:  %s", alive),
+    string.format("state:  %s", snapshot.name),
+    string.format("queue:  %d", snapshot.queue_len),
+    string.format("active: %s", snapshot.active),
+    string.format("alive:  %s", snapshot.alive),
     "",
     "<leader>kk toggle",
   }
+end
+
+local function state_hl(name)
+  if name == "ok" then
+    return "String"
+  end
+  if name == "running" or name == "interrupting" or name == "restarting" or name == "paused" then
+    return "WarningMsg"
+  end
+  if name == "error" or name == "stopped" then
+    return "ErrorMsg"
+  end
+  return "Identifier"
 end
 
 local function panel_col(width)
@@ -67,8 +90,17 @@ local function render_state(bufnr)
     return false
   end
   local lines = status_lines(bufnr)
+  local snapshot = status_snapshot(bufnr)
+  local lines = status_lines(snapshot)
   vim.api.nvim_set_option_value("modifiable", true, { buf = st.buf })
   vim.api.nvim_buf_set_lines(st.buf, 0, -1, false, lines)
+  vim.api.nvim_buf_clear_namespace(st.buf, ns, 0, -1)
+  vim.api.nvim_buf_add_highlight(st.buf, ns, "Title", 0, 0, -1)
+  vim.api.nvim_buf_add_highlight(st.buf, ns, state_hl(snapshot.name), 1, 0, -1)
+  vim.api.nvim_buf_add_highlight(st.buf, ns, "Identifier", 2, 0, -1)
+  vim.api.nvim_buf_add_highlight(st.buf, ns, snapshot.active == "yes" and "String" or "Comment", 3, 0, -1)
+  vim.api.nvim_buf_add_highlight(st.buf, ns, snapshot.alive == "yes" and "String" or "Comment", 4, 0, -1)
+  vim.api.nvim_buf_add_highlight(st.buf, ns, "Comment", 6, 0, -1)
   vim.api.nvim_set_option_value("modifiable", false, { buf = st.buf })
   if st.win and vim.api.nvim_win_is_valid(st.win) then
     local cfg = vim.api.nvim_win_get_config(st.win)
@@ -103,6 +135,7 @@ function M.open(bufnr)
     focusable = false,
     noautocmd = true,
   })
+  vim.api.nvim_set_option_value("winhl", "Normal:NormalFloat,FloatBorder:FloatBorder", { win = win })
 
   state_by_buf[bufnr] = {
     buf = buf,
