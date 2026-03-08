@@ -315,6 +315,12 @@ nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/optional_kitty
 # Optional performance/scalability lane (large synthetic fixtures + timing budgets)
 nvim --headless -u NONE -c "set shadafile=NONE" -c "luafile tests/performance.lua" -c qa
 
+# Optional strict budget profile (useful for local regression detection)
+nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_perf_budget_profile='strict'" -c "luafile tests/performance.lua" -c qa
+
+# Optional budget scaling (for slower/faster environments)
+nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_perf_budget_scale=1.50" -c "luafile tests/performance.lua" -c qa
+
 # Run dispatcher + include performance lane
 nvim --headless -u NONE -c "set shadafile=NONE" -c "let g:neo_notebooks_test_skip_optional_kitty=1" -c "let g:neo_notebooks_test_include_performance=1" -c "luafile tests/run.lua" -c qa
 

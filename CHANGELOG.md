@@ -26,6 +26,7 @@ best-effort summary based on existing documentation and recent commits.
   - Added manual stress/soak fixtures (`manual_exec_stress.*`, `manual_exec_soak.*`).
   - Added execution stress workloads for batch compute, large stream output, and local fetch paths.
   - Added optional performance lane with timing budgets and synthetic large fixtures.
+  - Added performance budget policy controls: `conservative|strict` profile plus optional numeric scaling (`g:neo_notebooks_perf_budget_scale`).
 
 - Added initial Jupytext `py:percent` interoperability:
   - `:NeoNotebookImportJupytext {path}` imports Jupytext percent files into notebook cells.

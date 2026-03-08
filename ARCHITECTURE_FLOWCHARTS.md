@@ -11,7 +11,7 @@ Living visual map of current architecture and planned refactor state.
 - Phase 5 (Format Layer Split): complete (Jupytext parser + output codec + ipynb codec + buffer adapter split).
 - Phase 6 (Error/Notify Policy): complete (boundary-owned notify flows for commands/keymaps/lifecycle; internal notify paths reduced to explicit debug-gated diagnostics).
 - Phase 7 (Kernel/Session Robustness): complete (state owner + transitions + kernel controls + queue-pause dispatch gating + bounded dispatch-time recovery + optional virtual badge + dead-active-request reconciliation).
-- Phase 8 (Performance/Scalability Lane): in progress (synthetic large fixtures + optional performance lane with timing budgets landed; threshold tuning and regression policy tightening pending).
+- Phase 8 (Performance/Scalability Lane): complete (synthetic large fixtures + optional performance lane + profile-based threshold policy and budget scaling controls landed).
 - Streaming execution output protocol (incremental stdout/stderr with carriage-return line replacement) landed for long-running cell UX.
 - Streaming path now includes render-pressure controls (preview cap + throttled refresh cadence) to protect UI responsiveness.
 - Streaming-depth v1: live stream preview now merges by event arrival order (cross-stream), uses a single global preview cap, and supports configurable execution placeholder text.
