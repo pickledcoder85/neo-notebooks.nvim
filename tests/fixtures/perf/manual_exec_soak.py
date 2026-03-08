@@ -47,7 +47,7 @@ BATCHES = TARGET_TOTAL_ITERS // BATCH_SIZE
 MIX = 131
 MOD = 1_000_003
 USE_TQDM = True
-NON_TQDM_PROGRESS_STYLE = "pct"  # pct | ratio | bar
+NON_TQDM_PROGRESS_STYLE = "bar"  # pct | ratio | bar
 
 print("CONFIG", {
     "BATCHES": BATCHES,
