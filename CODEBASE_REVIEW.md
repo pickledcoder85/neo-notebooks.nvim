@@ -1111,3 +1111,46 @@ NeoNotebookSnakeCell
   - restore prior `exec/session` behavior,
   - remove state-transition tests,
   - restore docs phase status.
+
+### Phase 7 Progress Notes (Current Iteration)
+
+- Added `lua/neo_notebooks/session_state.lua` as lightweight per-buffer session state owner:
+  - state names (`idle`, `running`, `interrupting`, `restarting`, `error`, `stopped`),
+  - transition helper with validation support,
+  - paused flag support for upcoming queue-pause work.
+- Wired passive state transitions in execution/session paths (no queue-control behavior change yet):
+  - `exec.ensure_session` -> `idle` or `error`,
+  - `exec.dispatch_request` -> `running`,
+  - `exec.handle_response` completion/interrupted -> `idle`,
+  - `exec.stop_session` -> `stopped`,
+  - `session.restart` -> `restarting` then `idle`.
+- Added initial status API surface:
+  - `exec.get_session_state(bufnr)`,
+  - `require("neo_notebooks").kernel_status(bufnr)` normalized status string for statusline/lualine consumers.
+- Added kernel control command surface:
+  - `NeoNotebookKernelRestart`,
+  - `NeoNotebookKernelInterrupt`,
+  - `NeoNotebookKernelStop`,
+  - `NeoNotebookKernelPauseToggle`,
+  - `NeoNotebookKernelStatus`.
+- Added keymap-first kernel controls (config-driven):
+  - `kernel_restart`, `kernel_interrupt`, `kernel_stop`, `kernel_pause`, `kernel_status`.
+- `<leader>kk` now toggles a persistent kernel status panel (`NeoNotebookKernelStatusToggle`) instead of one-shot notify output.
+- Virtual kernel badge now supported and enabled by default (`kernel_status_virtual = true`, set false to disable).
+- Optional viewport virtual padding now supported via `viewport_virtual_padding = { top = 2, bottom = 2 }`.
+- Queue pause behavior now gates dispatch/drain start via session state pause flag (dispatch pause only; no process suspend).
+- Added bounded dispatch-time recovery:
+  - if job dies after enqueue but before dispatch, drainer attempts session recovery up to `kernel_recovery_retries` (default `1`).
+  - on recovery failure, session enters `error` state with reason for status surfaces.
+- Added regression coverage:
+  - integration lane asserts default `<leader>k*` kernel keymaps are registered,
+  - core lane asserts queue pause/resume toggles session paused state.
+- Added start-failure hardening:
+  - `ensure_session` now catches `jobstart` errors and returns structured failure instead of throwing.
+- Fixed pause-state consistency:
+  - restart/stop paths now explicitly clear paused flag,
+  - added regression tests for pause reset on restart/stop.
+- Hardened restart async clamp callback against invalid/deleted buffers.
+- Validation:
+  - required lanes green (`core_contract`, `integration`, `run.lua` with optional kitty skipped),
+  - optional kitty lane preserves expected failure signal in non-kitty environments.

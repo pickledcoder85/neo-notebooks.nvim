@@ -10,7 +10,7 @@ Living visual map of current architecture and planned refactor state.
 - Phase 4 (Mutation/Render Contract): complete (shared mutation helper + named mutation modes + migrated high-traffic call sites).
 - Phase 5 (Format Layer Split): complete (Jupytext parser + output codec + ipynb codec + buffer adapter split).
 - Phase 6 (Error/Notify Policy): complete (boundary-owned notify flows for commands/keymaps/lifecycle; internal notify paths reduced to explicit debug-gated diagnostics).
-- Phase 7 (Kernel/Session Robustness): in progress (state-machine + bounded recovery plan documented; implementation pending).
+- Phase 7 (Kernel/Session Robustness): in progress (state owner + transitions + kernel controls + queue-pause dispatch gating + bounded dispatch-time recovery + optional virtual badge landed; deeper recovery tests and final status-surface polish pending).
 
 ## Reading Guide
 
@@ -416,6 +416,7 @@ render pipeline (same user behavior, cleaner contracts)
 | RENDER LAYER   |   | FORMAT LAYER      |
 | render/output/ |   | ipynb codec +     |
 | spinner/overlay|   | jupytext parser   |
+| badge/padding  |   |                   |
 +----------------+   +-------------------+
               \           /
                \         /

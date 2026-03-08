@@ -1,0 +1,59 @@
+local M = {}
+
+M.ns = vim.api.nvim_create_namespace("neo_notebooks_kernel_status_badge")
+
+local function resolve_bufnr(bufnr)
+  bufnr = bufnr or 0
+  if bufnr == 0 then
+    return vim.api.nvim_get_current_buf()
+  end
+  return bufnr
+end
+
+local function state_hl(name)
+  return require("neo_notebooks.kernel_status").highlight(name)
+end
+
+function M.clear(bufnr)
+  bufnr = resolve_bufnr(bufnr)
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return
+  end
+  vim.api.nvim_buf_clear_namespace(bufnr, M.ns, 0, -1)
+end
+
+function M.refresh(bufnr)
+  bufnr = resolve_bufnr(bufnr)
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return
+  end
+  local nb = require("neo_notebooks")
+  if not nb.config.kernel_status_virtual then
+    M.clear(bufnr)
+    return
+  end
+  if not nb.is_notebook_buf(bufnr) then
+    M.clear(bufnr)
+    return
+  end
+  local state = nb.kernel_status(bufnr)
+  local label = " kernel:" .. tostring(state) .. " "
+  local win = vim.fn.bufwinid(bufnr)
+  if win == -1 then
+    M.clear(bufnr)
+    return
+  end
+  local top_line = vim.api.nvim_win_call(win, function()
+    return vim.fn.line("w0")
+  end)
+  local row = math.max(0, (top_line or 1) - 1)
+  M.clear(bufnr)
+  vim.api.nvim_buf_set_extmark(bufnr, M.ns, row, 0, {
+    virt_text = { { label, state_hl(state) } },
+    virt_text_pos = "right_align",
+    hl_mode = "combine",
+    priority = 220,
+  })
+end
+
+return M

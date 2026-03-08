@@ -12,6 +12,12 @@ local render = require('neo_notebooks.render')
 local index_mod = require('neo_notebooks.index')
 local ipynb = require('neo_notebooks.ipynb')
 local nb = require('neo_notebooks')
+local exec = require('neo_notebooks.exec')
+local session = require('neo_notebooks.session')
+local badge = require('neo_notebooks.kernel_status_badge')
+local viewport_padding = require('neo_notebooks.viewport_padding')
+local session_state = require('neo_notebooks.session_state')
+local kernel_status = require('neo_notebooks.kernel_status')
 local fixture_root = vim.fn.getcwd() .. '/tests/fixtures/jupytext'
 
 -- Test: default strict containment mode is soft
@@ -371,6 +377,134 @@ with_buf({ "" }, function(buf)
   eq(idx.list[1].type, "markdown", "docs fixture first markdown")
   eq(idx.list[2].type, "markdown", "docs fixture title marker markdown")
   eq(idx.list[3].type, "code", "docs fixture third code")
+end)
+
+-- Test: kernel queue pause/resume toggles paused session state
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  local ok_pause = exec.pause_queue(buf)
+  ok(ok_pause, "pause queue succeeds")
+  local paused = exec.get_session_state(buf)
+  ok(paused.paused == true, "session state paused=true")
+
+  local paused_flag = exec.toggle_pause_queue(buf)
+  eq(paused_flag, false, "toggle from paused returns false (resumed)")
+  local resumed = exec.get_session_state(buf)
+  ok(resumed.paused == false, "session state paused=false after resume")
+end)
+
+-- Test: restart clears paused flag
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  exec.pause_queue(buf)
+  local before = exec.get_session_state(buf)
+  ok(before.paused == true, "paused before restart")
+  session.restart(buf)
+  local after = exec.get_session_state(buf)
+  ok(after.paused == false, "restart clears paused flag")
+  eq(after.state, "idle", "restart returns state to idle")
+end)
+
+-- Test: stop clears paused flag and sets stopped state
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  exec.pause_queue(buf)
+  local before = exec.get_session_state(buf)
+  ok(before.paused == true, "paused before stop")
+  exec.stop_session(buf)
+  local after = exec.get_session_state(buf)
+  ok(after.paused == false, "stop clears paused flag")
+  eq(after.state, "stopped", "stop sets state stopped")
+  eq(nb.kernel_status(buf), "stopped", "kernel_status reports stopped after stop")
+end)
+
+-- Test: failed session start sets error state
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  local prev = nb.config.python_cmd
+  nb.config.python_cmd = "/path/that/does/not/exist/python"
+  local ok_run = exec.run_cell(buf, 1)
+  ok(not ok_run, "run fails when python command is invalid")
+  local state = exec.get_session_state(buf)
+  eq(state.state, "error", "session state becomes error on start failure")
+  nb.config.python_cmd = prev
+end)
+
+-- Test: default session state is stopped before first run
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  session_state.clear(buf)
+  local state = exec.get_session_state(buf)
+  eq(state.state, "stopped", "default session state is stopped")
+  eq(nb.kernel_status(buf), "stopped", "kernel_status maps default to stopped")
+end)
+
+-- Test: direct stopped->running transition is rejected
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  session_state.reset(buf, { state = "stopped" })
+  local ok_transition, err = session_state.transition(buf, "running")
+  ok(ok_transition == nil, "invalid transition should fail")
+  ok(type(err) == "string" and err:find("invalid session transition", 1, true) ~= nil, "invalid transition error text")
+  local after = session_state.get(buf)
+  eq(after.state, "stopped", "state remains stopped after invalid transition")
+end)
+
+-- Test: canonical kernel status mapping is stable
+ok(kernel_status.normalize_name({ state = "idle", paused = false }) == "ok", "idle maps to ok")
+ok(kernel_status.normalize_name({ state = "running", paused = true }) == "paused", "paused overrides running")
+ok(kernel_status.normalize_name({ state = "stopped", paused = false }) == "stopped", "stopped remains stopped")
+
+-- Test: virtual kernel badge renders when enabled and clears when disabled
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  vim.api.nvim_set_current_buf(buf)
+  vim.b[buf].neo_notebooks_enabled = true
+  local prev = nb.config.kernel_status_virtual
+  nb.config.kernel_status_virtual = true
+  badge.refresh(buf)
+  local marks = vim.api.nvim_buf_get_extmarks(buf, badge.ns, { 0, 0 }, { -1, -1 }, { details = true })
+  ok(#marks > 0, "virtual kernel badge extmark created")
+
+  nb.config.kernel_status_virtual = false
+  badge.refresh(buf)
+  local after = vim.api.nvim_buf_get_extmarks(buf, badge.ns, { 0, 0 }, { -1, -1 }, { details = true })
+  eq(#after, 0, "virtual kernel badge cleared when disabled")
+  nb.config.kernel_status_virtual = prev
+end)
+
+-- Test: viewport virtual padding renders when enabled and clears when disabled
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  vim.api.nvim_set_current_buf(buf)
+  vim.b[buf].neo_notebooks_enabled = true
+  local prev = nb.config.viewport_virtual_padding
+  nb.config.viewport_virtual_padding = { top = 2, bottom = 1 }
+  viewport_padding.refresh(buf)
+  local marks = vim.api.nvim_buf_get_extmarks(buf, viewport_padding.ns, { 0, 0 }, { -1, -1 }, { details = true })
+  ok(#marks > 0, "viewport padding extmarks created")
+
+  nb.config.viewport_virtual_padding = { top = 0, bottom = 0 }
+  viewport_padding.refresh(buf)
+  local after = vim.api.nvim_buf_get_extmarks(buf, viewport_padding.ns, { 0, 0 }, { -1, -1 }, { details = true })
+  eq(#after, 0, "viewport padding cleared when disabled")
+  nb.config.viewport_virtual_padding = prev
 end)
 
 print('core_contract tests passed')

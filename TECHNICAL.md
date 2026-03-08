@@ -80,6 +80,9 @@ This document summarizes implementation choices and the evolution of core featur
   - Manages a persistent Python process per buffer.
   - Executes cell code and collects output.
   - Dispatches output to inline or floating renderers.
+- `lua/neo_notebooks/session_state.lua`
+  - Owns lightweight per-buffer kernel/session state snapshots and transition helpers.
+  - Used as the Phase 7 foundation for explicit runtime state tracking.
 - `lua/neo_notebooks/markdown.lua`
   - Opens a markdown preview window for markdown cells.
   - Uses a scratch buffer with `filetype=markdown` for syntax highlighting.
@@ -100,7 +103,7 @@ This document summarizes implementation choices and the evolution of core featur
   has changed and `interrupt_on_rerun` is enabled, the active request is interrupted
   and the new run starts immediately.
 
-## Planned kernel controls (Phase 7)
+## Kernel controls (Phase 7 in progress)
 
 - Kernel/session control UX is planned as keymap-first, with command aliases retained.
 - Proposed default controls under `<leader>k*`:
@@ -108,20 +111,40 @@ This document summarizes implementation choices and the evolution of core featur
   - `<leader>ki`: interrupt active execution
   - `<leader>ks`: stop/shutdown current kernel session
   - `<leader>kp`: pause/unpause run-queue dispatch
-  - `<leader>kk`: show current kernel/session state
+  - `<leader>kk`: toggle persistent kernel status panel
+- Command aliases now available:
+  - `:NeoNotebookKernelRestart`
+  - `:NeoNotebookKernelInterrupt`
+  - `:NeoNotebookKernelStop`
+  - `:NeoNotebookKernelPauseToggle`
+  - `:NeoNotebookKernelStatus`
+  - `:NeoNotebookKernelStatusToggle`
+  - `:NeoNotebookKernelBadgeToggle`
 - Important semantics:
   - `pause` means dispatch pause (hold dequeue/start of new requests), not OS-level process suspend.
+  - `kernel_recovery_retries` (default `1`) controls bounded dispatch-time auto-recovery attempts.
 
 ## Planned kernel status visibility (Phase 7)
 
 - Primary channel: statusline integration via lightweight API:
   - `require("neo_notebooks").kernel_status()`
 - Intended use: lualine/custom statusline can render compact text like `kernel:idle`, `kernel:running`, `kernel:error`.
-- Secondary channel: optional virtual status badge in notebook buffer (default disabled).
+- Secondary channel: virtual status badge in notebook buffer (enabled by default, set `kernel_status_virtual = false` to disable).
+- Optional viewport virtual padding can render top/bottom breathing room while scrolling (`viewport_virtual_padding = { top = 2, bottom = 2 }`).
 - Canonical status color semantics:
   - green: `idle/ok`
   - yellow: `running`, `interrupting`, `restarting`, `paused`
   - red: `error`, `stopped`
+
+Current Phase 7 baseline:
+- `kernel_status()` is now available and returns normalized strings (`ok`, `paused`, or raw state names).
+- Session state defaults to `stopped` before first run; transitions now enforce a stricter state machine contract (no direct `stopped -> running` bypass).
+- Kernel status mapping/format/highlight semantics are centralized in `kernel_status.lua` so badge, panel, notify output, and statusline use one canonical source.
+- Kernel control keymaps/commands and dispatch pause gating are implemented.
+- Persistent kernel status panel toggle is implemented via `<leader>kk` / `:NeoNotebookKernelStatusToggle`.
+- Optional virtual status badge is implemented via `kernel_status_virtual = true`.
+- Bounded dispatch-time auto-recovery is implemented for dead sessions (`kernel_recovery_retries`).
+- Integration coverage now includes queue pause/resume dispatch boundary and interrupt/restart recovery boundary flows.
 
 ## Output handling
 

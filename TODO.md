@@ -20,7 +20,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Phase 4 (completed): mutation/render contract consolidation (shared mutation helper + named modes + migrated high-traffic call sites).
   - Phase 5 (completed): format layer split (Jupytext parser + output codec + ipynb codec + notebook adapter split).
   - Phase 6 (completed): error/notify policy (boundary-owned notifications + debug-gated internal notify paths).
-  - Phase 7 (in progress): kernel/session state machine + recovery policy planning (docs gate complete before implementation).
+  - Phase 7 (in progress): kernel/session state machine + recovery policy (docs gate complete; state-owner, status API, kernel controls, persistent panel, optional virtual badge, queue-pause dispatch gating, and bounded dispatch-time auto-recovery landed).
 
 ## Next
 
@@ -30,21 +30,23 @@ This file tracks project scope and the order of work. Items can be moved as prio
     - Stale/failed Python job recovery can require manual retries or restart commands.
     - Run-queue behavior is robust but not yet backed by an explicit state-machine contract.
   - Deliverables:
-    - Explicit execution state machine (`idle`, `running`, `interrupting`, `restarting`, `error`) with documented transitions.
+    - Explicit execution state machine (`stopped`, `idle`, `running`, `interrupting`, `restarting`, `error`) with documented transitions.
     - Deterministic restart/interrupt UX (clear success/failure status and next action guidance).
     - Automatic stale-session recovery policy (retry vs restart) with bounded retries.
     - Keymap-first kernel controls and state visibility:
-      - `<leader>kr` restart, `<leader>ki` interrupt, `<leader>ks` stop, `<leader>kp` pause/unpause dispatch, `<leader>kk` show kernel state.
+      - `<leader>kr` restart, `<leader>ki` interrupt, `<leader>ks` stop, `<leader>kp` pause/unpause dispatch, `<leader>kk` toggle persistent kernel status panel.
       - keep command aliases, but optimize daily workflow around short keymaps.
     - Status visibility for users:
       - lightweight `kernel_status()` API for statusline/lualine integration.
-      - optional virtual status badge (default off) for users without statusline integration.
+      - virtual status badge (default on, configurable off) for users without statusline integration.
       - canonical state colors: green=ok/idle, yellow=active transitional states, red=error/stopped.
   - Acceptance criteria:
     - No stuck "busy" UI state after interrupt/restart/failure scenarios.
     - Reproducible behavior for queued runs across restart/interrupt boundaries.
     - Integration tests for state transitions and recovery flows.
     - Queue pause semantics are explicit (dispatch pause, not process suspend) and tested.
+  - Progress update:
+    - Added integration tests for queue pause/resume boundary, interrupt->restart recovery, and restart queue/active cleanup invariants.
 
 - Priority 2: Performance/scalability hardening:
   - Profile render/index/scheduler hot paths on large notebooks.
@@ -68,6 +70,9 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Later
 
+- UI parking lot (non-blocking polish bugs):
+  - Viewport virtual top padding can render inconsistently with large cells during certain navigation paths (notably `<C-n>` jumps when viewport lands mid-cell). Bottom padding is stable; top padding needs a more reliable viewport-anchor strategy.
+
 ## Lowest priority
 
 - Kernel-backed execution (minimal Jupyter client with text/plain only), with optional kitty image output.
@@ -78,6 +83,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Inline markdown overlay for headings and emphasis/code spans.
   - Fenced code blocks (` ```lang ... ``` `) rendered with markdown-aware highlight groups.
   - Fence markers remain visible for editing context.
+- Added optional viewport virtual padding (`viewport_virtual_padding`) so notebook cells keep top/bottom breathing room while scrolling.
 - Tree-sitter fenced Python token coloring in markdown cells.
 - Optional markdown cell rendering polish (conceal/theme controls for inline markdown overlays).
 - Fix undo (`u`) keeping cursor position within current cell (avoid jump to buffer end).

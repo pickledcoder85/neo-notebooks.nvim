@@ -20,6 +20,7 @@ function M.register(ctx)
   local index = ctx.index
   local scheduler = ctx.scheduler
   local snake = ctx.snake
+  local badge = require("neo_notebooks.kernel_status_badge")
 
   local set_python_filetype = ctx.set_python_filetype
   local should_enable = ctx.should_enable
@@ -94,6 +95,10 @@ function M.register(ctx)
       summary.first_err or "unknown error"
     )
     vim.notify(message, summary.first_level or vim.log.levels.WARN)
+  end
+
+  local function kernel_status_text(bufnr)
+    return require("neo_notebooks.kernel_status").format_notify(bufnr)
   end
 
   vim.api.nvim_create_user_command("NeoNotebookRender", function()
@@ -327,6 +332,56 @@ function M.register(ctx)
     if ok then
       vim.notify("NeoNotebook: Python session restarted", vim.log.levels.INFO)
     end
+  end, {})
+
+  vim.api.nvim_create_user_command("NeoNotebookKernelRestart", function()
+    local ok = session.restart(0)
+    if ok then
+      vim.notify("NeoNotebook: kernel restarted", vim.log.levels.INFO)
+      badge.refresh(0)
+    end
+  end, {})
+
+  vim.api.nvim_create_user_command("NeoNotebookKernelInterrupt", function()
+    local ok, err, level = exec.interrupt(0)
+    if not ok and err then
+      vim.notify(err, level or vim.log.levels.WARN)
+      badge.refresh(0)
+      return
+    end
+    vim.notify("NeoNotebook: interrupt requested", vim.log.levels.INFO)
+    badge.refresh(0)
+  end, {})
+
+  vim.api.nvim_create_user_command("NeoNotebookKernelStop", function()
+    exec.stop_session(0)
+    vim.notify("NeoNotebook: kernel stopped", vim.log.levels.INFO)
+    badge.refresh(0)
+  end, {})
+
+  vim.api.nvim_create_user_command("NeoNotebookKernelPauseToggle", function()
+    local paused = exec.toggle_pause_queue(0)
+    local label = paused and "paused" or "resumed"
+    vim.notify("NeoNotebook: kernel queue " .. label, vim.log.levels.INFO)
+    badge.refresh(0)
+  end, {})
+
+  vim.api.nvim_create_user_command("NeoNotebookKernelStatus", function()
+    vim.notify(kernel_status_text(0), vim.log.levels.INFO)
+  end, {})
+
+  vim.api.nvim_create_user_command("NeoNotebookKernelStatusToggle", function()
+    local panel = require("neo_notebooks.kernel_status_view")
+    local opened = panel.toggle(0)
+    local label = opened and "opened" or "closed"
+    vim.notify("NeoNotebook: kernel status panel " .. label, vim.log.levels.INFO)
+  end, {})
+
+  vim.api.nvim_create_user_command("NeoNotebookKernelBadgeToggle", function()
+    nb.config.kernel_status_virtual = not nb.config.kernel_status_virtual
+    badge.refresh(0)
+    local label = nb.config.kernel_status_virtual and "enabled" or "disabled"
+    vim.notify("NeoNotebook: kernel status badge " .. label, vim.log.levels.INFO)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookOutputToggle", function()

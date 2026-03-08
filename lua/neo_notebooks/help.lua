@@ -46,6 +46,13 @@ function M.show()
     "  :NeoNotebookCellRun        run current cell",
     "  :NeoNotebookCellRunAndNext run and create new cell",
     "  :NeoNotebookRunAll         run all code cells",
+    "  :NeoNotebookKernelRestart  restart kernel",
+    "  :NeoNotebookKernelInterrupt interrupt active execution",
+    "  :NeoNotebookKernelStop     stop kernel session",
+    "  :NeoNotebookKernelPauseToggle pause/resume run queue",
+    "  :NeoNotebookKernelStatus   show kernel status (one-shot)",
+    "  :NeoNotebookKernelStatusToggle toggle persistent status panel",
+    "  :NeoNotebookKernelBadgeToggle toggle virtual status badge",
     "  :NeoNotebookRunAbove       run cells above",
     "  :NeoNotebookRunBelow       run cells below",
     "  :NeoNotebookMarkdownPreview preview markdown",
@@ -90,6 +97,11 @@ function M.show()
   add("move down", maps.move_down)
   add("run all", maps.run_all)
   add("restart", maps.restart)
+  add("kernel restart", maps.kernel_restart)
+  add("kernel interrupt", maps.kernel_interrupt)
+  add("kernel stop", maps.kernel_stop)
+  add("kernel pause toggle", maps.kernel_pause)
+  add("kernel status", maps.kernel_status)
   add("toggle output", maps.toggle_output)
   add("toggle output collapse", maps.toggle_output_collapse)
   add("select cell", maps.select_cell)

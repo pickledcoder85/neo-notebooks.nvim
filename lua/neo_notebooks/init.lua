@@ -22,6 +22,8 @@ M.config = {
   image_pane_preserve_aspect = true,
   image_pane_cell_ratio = 2.0,
   image_pane_statusline = true,
+  kernel_status_virtual = true,
+  viewport_virtual_padding = { top = 2, bottom = 2 },
   image_fallback = "placeholder",
   mpl_backend = "Agg",
   filetypes = { "neo_notebook", "ipynb" },
@@ -49,6 +51,7 @@ M.config = {
   notebook_scrolloff = 5,
   interrupt_on_rerun = true,
   skip_unchanged_rerun = true,
+  kernel_recovery_retries = 1,
   keymaps = {
     new_code = "<leader><leader>ac",
     new_markdown = "<leader><leader>am",
@@ -79,6 +82,11 @@ M.config = {
     move_bottom = "<leader>mgg",
     run_all = "<leader>ra",
     restart = "<leader>rs",
+    kernel_restart = "<leader>kr",
+    kernel_interrupt = "<leader>ki",
+    kernel_stop = "<leader>ks",
+    kernel_pause = "<leader>kp",
+    kernel_status = "<leader>kk",
     select_cell = "<leader>vs",
     stats = "<leader>ns",
     run_above = "<leader>rk",
@@ -149,6 +157,11 @@ end
 function M.blink_cmp_auto_show(ctx)
   local bufnr = (ctx and ctx.bufnr) or 0
   return not M.is_notebook_buf(bufnr)
+end
+
+function M.kernel_status(bufnr)
+  local status = require("neo_notebooks.kernel_status")
+  return status.snapshot(bufnr).name
 end
 
 return M

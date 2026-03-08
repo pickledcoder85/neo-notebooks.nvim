@@ -75,6 +75,13 @@ print("hello")
 - `:NeoNotebookCellMoveDown` moves the current cell down.
 - `:NeoNotebookRunAll` runs all code cells.
 - `:NeoNotebookRestart` restarts the Python session and clears outputs.
+- `:NeoNotebookKernelRestart` restarts the kernel session.
+- `:NeoNotebookKernelInterrupt` sends an interrupt to active execution.
+- `:NeoNotebookKernelStop` stops/shuts down the current kernel session.
+- `:NeoNotebookKernelPauseToggle` pauses/resumes queue dispatch (does not suspend the process).
+- `:NeoNotebookKernelStatus` shows kernel state details (one-shot).
+- `:NeoNotebookKernelStatusToggle` toggles a persistent kernel status panel.
+- `:NeoNotebookKernelBadgeToggle` toggles the inline virtual kernel status badge.
 - `:NeoNotebookOutputToggle` toggles output mode between inline and floating.
 - While a cell is executing, a spinner animates on the first inline output row.
 - While a cell runs, an inline placeholder output shows `cell executing...`.
@@ -130,6 +137,8 @@ require("neo_notebooks").setup({
   require_markers = false,
   auto_insert_first_cell = true,
   overlay_preview = false,
+  kernel_status_virtual = true,
+  viewport_virtual_padding = { top = 2, bottom = 2 },
   suppress_completion_in_markdown = true,
   suppress_completion_popup = false,
   auto_insert_on_jump = false,
@@ -150,6 +159,7 @@ require("neo_notebooks").setup({
   notebook_scrolloff = 5,
   interrupt_on_rerun = true,
   skip_unchanged_rerun = true,
+  kernel_recovery_retries = 1,
   keymaps = {
     new_code = "]c",
     new_markdown = "]m",
@@ -175,6 +185,11 @@ require("neo_notebooks").setup({
     move_bottom = "<leader>mgg",
     run_all = "<leader>ra",
     restart = "<leader>rs",
+    kernel_restart = "<leader>kr",
+    kernel_interrupt = "<leader>ki",
+    kernel_stop = "<leader>ks",
+    kernel_pause = "<leader>kp",
+    kernel_status = "<leader>kk",
     toggle_output = "<leader>tt",
     toggle_output_collapse = "<leader>of",
     select_cell = "<leader>vs",
@@ -192,6 +207,22 @@ require("neo_notebooks").setup({
 })
 ```
 
+Disable virtual kernel status badge:
+
+```lua
+require("neo_notebooks").setup({
+  kernel_status_virtual = false,
+})
+```
+
+Optional viewport virtual padding (to keep notebook cells from visually pinning to the top/bottom viewport edges):
+
+```lua
+require("neo_notebooks").setup({
+  viewport_virtual_padding = { top = 2, bottom = 2 },
+})
+```
+
 ## Notes
 
 - Cells are separated by lines like `# %% [code]` or `# %% [markdown]`.
@@ -200,6 +231,7 @@ require("neo_notebooks").setup({
 - Cell execution is serialized per buffer via an internal FIFO queue (including
   run-all/above/below), so outputs land in predictable order.
 - Notebook buffers set `scrolloff` to keep a few lines visible below the cursor.
+- Notebook buffers can also render virtual viewport padding (`viewport_virtual_padding`) to preserve top/bottom breathing room while scrolling.
 - This is a minimal experimental baseline and intended to be expanded.
 
 ### Cell index cache
@@ -368,6 +400,11 @@ Note: `<M-...>` means the Meta key (typically `Alt` on most keyboards).
 When the pane is collapsed with `<leader>pc`, new images are saved to disk and not auto-rendered until the pane is reopened (use `<leader>pt` or `:NeoNotebookImagePaneTest` to reopen).
 - `<leader>ra` run all code cells
 - `<leader>rs` restart python session
+- `<leader>kr` kernel restart
+- `<leader>ki` kernel interrupt
+- `<leader>ks` kernel stop
+- `<leader>kp` kernel pause/resume queue dispatch
+- `<leader>kk` toggle persistent kernel status panel
 - `<leader>vs` select current cell body
 - `<leader>ns` show cell stats
 - `<leader>rk` run all code cells above
