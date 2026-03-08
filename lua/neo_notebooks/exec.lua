@@ -524,13 +524,22 @@ local function format_payload(resp)
 end
 
 local function resolve_pending_cell(pending, resolved_cell_id)
+  if not pending or not pending.bufnr or not vim.api.nvim_buf_is_valid(pending.bufnr) then
+    return nil
+  end
   local index_mod = require("neo_notebooks.index")
   local cell = nil
   if resolved_cell_id then
-    cell = index_mod.get_by_id(pending.bufnr, resolved_cell_id)
+    local ok_by_id, by_id = pcall(index_mod.get_by_id, pending.bufnr, resolved_cell_id)
+    if ok_by_id then
+      cell = by_id
+    end
   end
   if not cell and pending.line then
-    cell = index_mod.find_cell(pending.bufnr, pending.line)
+    local ok_find, found = pcall(index_mod.find_cell, pending.bufnr, pending.line)
+    if ok_find then
+      cell = found
+    end
   end
   return cell
 end
@@ -674,6 +683,13 @@ local function handle_response(session, resp)
   local id = resp.id
   local pending = session.pending[id]
   if not pending then
+    return
+  end
+  if not pending.bufnr or not vim.api.nvim_buf_is_valid(pending.bufnr) then
+    session.pending[id] = nil
+    if session.active_request_id == id then
+      session.active_request_id = nil
+    end
     return
   end
   local trace = resp.trace or ""

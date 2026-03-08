@@ -4,6 +4,24 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Now
 
+- Interop reliability v1 (active feature branch: `feature/interop-reliability-v1`):
+  - Goal: harden malformed-input handling and tighten `.ipynb`/Jupytext normalization invariants.
+  - Implementation plan (updated):
+    - Reject malformed `.ipynb` top-level/cells shapes with readable import errors.
+    - Normalize imported cell payloads:
+      - unknown `cell_type` -> `code` fallback,
+      - string `source` -> normalized lines,
+      - non-table metadata/attachments/outputs -> safe defaults.
+    - Harden output field decoding for malformed table payloads in stream/display paths.
+  - Tests to add/update:
+    - Add core-contract coverage for malformed `.ipynb` top-level and invalid `cells` field.
+    - Add core-contract coverage for unknown cell types + string-source normalization and export invariant.
+    - Re-run `tests/core_contract.lua`, `tests/integration.lua`, `tests/performance.lua`.
+  - Acceptance criteria:
+    - Malformed `.ipynb` shape returns deterministic import errors (no silent partial import).
+    - Unknown/nonstandard cell types import as code fallback and export as valid nbformat code cells.
+    - String-source notebooks import with line-stable cell bodies.
+
 - Kernel/session robustness phase 2 (active feature branch: `feature/kernel-robustness-phase2-v1`):
   - Goal: eliminate stale "busy" behavior when kernel process exits during an active request.
   - Implementation plan (updated):
@@ -107,6 +125,10 @@ This file tracks project scope and the order of work. Items can be moved as prio
   - Expand Jupytext fixture corpus with additional real-world repos.
   - Add malformed-input/error-path fixtures for `.ipynb` and Jupytext.
   - Tighten round-trip invariants for metadata/outputs across NeoNotebooks and IDEs.
+  - Progress update:
+    - Added malformed `.ipynb` shape validation (top-level and `cells` field) with explicit errors.
+    - Added import normalization for unknown cell types, string `source`, and malformed metadata/attachments/outputs.
+    - Added core-contract tests for malformed-shape rejection and normalization/export invariants.
 
 - Priority 4: UI/Neovim integration polish:
   - Close cursor/alignment edge cases under resize/split/tab transitions.
