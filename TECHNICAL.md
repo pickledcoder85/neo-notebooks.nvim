@@ -143,6 +143,7 @@ Current Phase 7 baseline:
 - Persistent kernel status panel toggle is implemented via `<leader>kk` / `:NeoNotebookKernelStatusToggle`.
 - Optional virtual status badge is implemented via `kernel_status_virtual = true`.
 - Bounded dispatch-time auto-recovery is implemented for dead sessions (`kernel_recovery_retries`).
+- Integration coverage now includes queue pause/resume dispatch boundary and interrupt/restart recovery boundary flows.
 
 ## Output handling
 

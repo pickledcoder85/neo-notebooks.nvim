@@ -14,6 +14,7 @@ local ipynb = require('neo_notebooks.ipynb')
 local exec = require('neo_notebooks.exec')
 local nb = require('neo_notebooks')
 local snake = require('neo_notebooks.snake')
+local session = require('neo_notebooks.session')
 
 vim.cmd('runtime plugin/neo_notebooks.lua')
 
@@ -32,6 +33,13 @@ local function has_buf_map(buf, mode, lhs)
   end
   local expanded = lhs:gsub("<leader>", vim.g.mapleader or "\\")
   return find_buf_map(buf, mode, expanded) ~= nil
+end
+
+local function wait_for(predicate, timeout_ms, step_ms)
+  timeout_ms = timeout_ms or 2000
+  step_ms = step_ms or 20
+  local ok_wait = vim.wait(timeout_ms, predicate, step_ms)
+  return ok_wait == true
 end
 
 -- Test: move cell up preserves id mapping
@@ -132,6 +140,85 @@ with_buf({
   ok(has_buf_map(buf, "n", "<leader>ks"), "default kernel stop keymap registered")
   ok(has_buf_map(buf, "n", "<leader>kp"), "default kernel pause keymap registered")
   ok(has_buf_map(buf, "n", "<leader>kk"), "default kernel status keymap registered")
+end)
+
+-- Test: paused queue blocks dispatch until resume
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  vim.b[buf].neo_notebooks_enabled = true
+  exec.pause_queue(buf)
+  local ok_run, err = exec.run_cell(buf, 1)
+  ok(ok_run, err)
+  local paused = exec.get_session_state(buf)
+  ok(paused.paused == true, "queue paused flag set")
+  ok(paused.active_request == false, "no active request while paused")
+  ok(paused.queue_len >= 1, "request queued while paused")
+
+  exec.resume_queue(buf)
+  local drained = wait_for(function()
+    local st = exec.get_session_state(buf)
+    return st.active_request == false and st.queue_len == 0 and st.state == "idle"
+  end, 3000, 20)
+  ok(drained, "queue drains to idle after resume")
+end)
+
+-- Test: interrupt transitions to interrupting and restart recovers to idle
+with_buf({
+  "# %% [code]",
+  "import time",
+  "time.sleep(1.0)",
+  "print('done')",
+}, function(buf)
+  vim.b[buf].neo_notebooks_enabled = true
+  local ok_run, err = exec.run_cell(buf, 1)
+  ok(ok_run, err)
+
+  local reached_running = wait_for(function()
+    return exec.get_session_state(buf).state == "running"
+  end, 1500, 20)
+  ok(reached_running, "state reaches running before interrupt")
+
+  local ok_interrupt, interrupt_err = exec.interrupt(buf)
+  ok(ok_interrupt, interrupt_err)
+  eq(exec.get_session_state(buf).state, "interrupting", "state set to interrupting")
+  local ok_restart = session.restart(buf)
+  ok(ok_restart, "restart succeeds after interrupt")
+  local after = exec.get_session_state(buf)
+  eq(after.state, "idle", "restart recovers state to idle after interrupt")
+  ok(after.active_request == false, "no active request after interrupt+restart")
+  eq(after.queue_len, 0, "no queued requests after interrupt+restart")
+end)
+
+-- Test: restart clears active request and queued requests
+with_buf({
+  "# %% [code]",
+  "import time",
+  "time.sleep(1.0)",
+  "print('first')",
+  "# %% [code]",
+  "print('second')",
+}, function(buf)
+  vim.b[buf].neo_notebooks_enabled = true
+  index.rebuild(buf)
+  local ok_first, err_first = exec.run_cell(buf, 1)
+  ok(ok_first, err_first)
+  local ok_second, err_second = exec.run_cell(buf, 5)
+  ok(ok_second, err_second)
+
+  local reached_running = wait_for(function()
+    return exec.get_session_state(buf).state == "running"
+  end, 1500, 20)
+  ok(reached_running, "state reaches running before restart")
+
+  local ok_restart = session.restart(buf)
+  ok(ok_restart, "restart returns success")
+  local after = exec.get_session_state(buf)
+  eq(after.state, "idle", "state returns to idle after restart")
+  ok(after.active_request == false, "restart clears active request")
+  eq(after.queue_len, 0, "restart clears queue")
+  ok(after.paused == false, "restart clears paused flag")
 end)
 
 -- Test: snake mode keymaps lock and restore on exit

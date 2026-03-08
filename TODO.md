@@ -45,6 +45,8 @@ This file tracks project scope and the order of work. Items can be moved as prio
     - Reproducible behavior for queued runs across restart/interrupt boundaries.
     - Integration tests for state transitions and recovery flows.
     - Queue pause semantics are explicit (dispatch pause, not process suspend) and tested.
+  - Progress update:
+    - Added integration tests for queue pause/resume boundary, interrupt->restart recovery, and restart queue/active cleanup invariants.
 
 - Priority 2: Performance/scalability hardening:
   - Profile render/index/scheduler hot paths on large notebooks.
