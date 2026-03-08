@@ -15,7 +15,12 @@ function M.show(bufnr)
     end
   end
 
-  vim.notify(string.format("NeoNotebook: %d cells (%d code, %d markdown)", #list, code, markdown), vim.log.levels.INFO)
+  return {
+    total = #list,
+    code = code,
+    markdown = markdown,
+    message = string.format("NeoNotebook: %d cells (%d code, %d markdown)", #list, code, markdown),
+  }
 end
 
 return M

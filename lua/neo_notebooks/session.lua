@@ -19,7 +19,7 @@ function M.restart(bufnr)
       end
     end
   end)
-  vim.notify("NeoNotebook: Python session restarted", vim.log.levels.INFO)
+  return true
 end
 
 return M

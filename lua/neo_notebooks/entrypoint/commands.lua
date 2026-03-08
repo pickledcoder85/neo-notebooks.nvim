@@ -306,7 +306,10 @@ function M.register(ctx)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookRestart", function()
-    session.restart(0)
+    local ok = session.restart(0)
+    if ok then
+      vim.notify("NeoNotebook: Python session restarted", vim.log.levels.INFO)
+    end
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookOutputToggle", function()
@@ -319,7 +322,10 @@ function M.register(ctx)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookStats", function()
-    stats.show(0)
+    local result = stats.show(0)
+    if result and result.message then
+      vim.notify(result.message, vim.log.levels.INFO)
+    end
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookRunAbove", function()

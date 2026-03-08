@@ -9,7 +9,7 @@ Living visual map of current architecture and planned refactor state.
 - Phase 3 (Entrypoint Decomposition): complete (keymap/lifecycle/command extraction + bootstrap wiring landed).
 - Phase 4 (Mutation/Render Contract): complete (shared mutation helper + named mutation modes + migrated high-traffic call sites).
 - Phase 5 (Format Layer Split): complete (Jupytext parser + output codec + ipynb codec + buffer adapter split).
-- Phase 6 (Error/Notify Policy): in progress (command + keymap boundary notify migration expanded across split/toggle/guard, preview/editor, and run-request error flows).
+- Phase 6 (Error/Notify Policy): in progress (command + keymap boundary notify migration expanded across split/toggle/guard, preview/editor, run-request errors, and restart/stats flows).
 
 ## Reading Guide
 

@@ -306,7 +306,10 @@ function M.new(ctx)
 
     if maps.restart then
       vim.keymap.set("n", maps.restart, function()
-        session.restart(0)
+        local ok = session.restart(0)
+        if ok then
+          vim.notify("NeoNotebook: Python session restarted", vim.log.levels.INFO)
+        end
       end, opts)
     end
 
@@ -331,7 +334,10 @@ function M.new(ctx)
 
     if maps.stats then
       vim.keymap.set("n", maps.stats, function()
-        stats.show(0)
+        local result = stats.show(0)
+        if result and result.message then
+          vim.notify(result.message, vim.log.levels.INFO)
+        end
       end, opts)
     end
 
