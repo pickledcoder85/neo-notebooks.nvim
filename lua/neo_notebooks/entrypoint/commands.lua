@@ -170,11 +170,13 @@ function M.register(ctx)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookAutoRenderToggle", function()
-    actions.toggle_auto_render()
+    local enabled = actions.toggle_auto_render()
+    vim.notify(string.format("NeoNotebook: auto_render = %s", tostring(enabled)), vim.log.levels.INFO)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookCellIndexToggle", function()
-    actions.toggle_cell_index()
+    local show = actions.toggle_cell_index()
+    vim.notify(string.format("NeoNotebook: show_cell_index = %s", tostring(show)), vim.log.levels.INFO)
     render_if_enabled(0)
   end, {})
 
@@ -195,7 +197,10 @@ function M.register(ctx)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookCellSplit", function()
-    actions.split_cell(0)
+    local ok, err = actions.split_cell(0)
+    if not ok and err then
+      vim.notify(err, vim.log.levels.WARN)
+    end
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookCellFold", function()
@@ -296,7 +301,8 @@ function M.register(ctx)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookOutputToggle", function()
-    actions.toggle_output_mode()
+    local mode = actions.toggle_output_mode()
+    vim.notify("NeoNotebook: output mode = " .. tostring(mode), vim.log.levels.INFO)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookCellSelect", function()

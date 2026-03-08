@@ -215,8 +215,7 @@ function M.split_cell(bufnr, line)
     end
   end
   if line <= cell.start then
-    vim.notify("Place cursor inside the cell body to split", vim.log.levels.WARN)
-    return
+    return nil, "Place cursor inside the cell body to split"
   end
 
   local marker = "# %% [" .. cell.type .. "]"
@@ -226,6 +225,7 @@ function M.split_cell(bufnr, line)
   end
   vim.api.nvim_win_set_cursor(0, { line + 2, 0 })
   vim.cmd("startinsert")
+  return true
 end
 
 function M.clear_output(bufnr, line)
@@ -456,10 +456,10 @@ function M.toggle_output_mode()
   local nb = require("neo_notebooks")
   if nb.config.output == "inline" then
     nb.config.output = "float"
-    vim.notify("NeoNotebook: output mode = float", vim.log.levels.INFO)
+    return "float"
   else
     nb.config.output = "inline"
-    vim.notify("NeoNotebook: output mode = inline", vim.log.levels.INFO)
+    return "inline"
   end
 end
 
@@ -477,13 +477,13 @@ end
 function M.toggle_auto_render()
   local nb = require("neo_notebooks")
   nb.config.auto_render = not nb.config.auto_render
-  vim.notify(string.format("NeoNotebook: auto_render = %s", tostring(nb.config.auto_render)), vim.log.levels.INFO)
+  return nb.config.auto_render
 end
 
 function M.toggle_cell_index()
   local nb = require("neo_notebooks")
   nb.config.show_cell_index = not nb.config.show_cell_index
-  vim.notify(string.format("NeoNotebook: show_cell_index = %s", tostring(nb.config.show_cell_index)), vim.log.levels.INFO)
+  return nb.config.show_cell_index
 end
 
 function M.open_line_below(bufnr)
@@ -535,14 +535,13 @@ function M.handle_enter_insert(bufnr)
   bufnr = bufnr or 0
   local decision = policy.decide(bufnr, "insert_cr")
   if decision.action == "block" then
-    if decision.reason and decision.reason ~= "" then
-      vim.notify(decision.reason, vim.log.levels.WARN)
-    end
-    return
+    set_last_guard_reason(bufnr, decision.reason)
+    return nil, decision.reason
   end
   if decision.action == "redirect" and decision.target == "open_line_below" then
     M.open_line_below(bufnr)
-    return
+    set_last_guard_reason(bufnr, nil)
+    return true
   end
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<CR>", true, false, true), "n", true)
   vim.schedule(function()
@@ -568,6 +567,8 @@ function M.handle_enter_insert(bufnr)
     vim.api.nvim_win_set_cursor(0, { state.line + 1, col })
     mark_pending_virtual_indent(bufnr, state.line, pad)
   end)
+  set_last_guard_reason(bufnr, nil)
+  return true
 end
 
 function M.handle_enter_normal(bufnr)

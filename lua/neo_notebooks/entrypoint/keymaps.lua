@@ -181,7 +181,10 @@ function M.new(ctx)
 
     if maps.split_cell then
       vim.keymap.set("n", maps.split_cell, function()
-        actions.split_cell(0)
+        local ok, err = actions.split_cell(0)
+        if not ok and err then
+          vim.notify(err, vim.log.levels.WARN)
+        end
       end, opts)
     end
 
@@ -306,7 +309,8 @@ function M.new(ctx)
 
     if maps.toggle_output then
       vim.keymap.set("n", maps.toggle_output, function()
-        actions.toggle_output_mode()
+        local mode = actions.toggle_output_mode()
+        vim.notify("NeoNotebook: output mode = " .. tostring(mode), vim.log.levels.INFO)
       end, opts)
     end
 
@@ -342,7 +346,8 @@ function M.new(ctx)
 
     if maps.toggle_auto_render then
       vim.keymap.set("n", maps.toggle_auto_render, function()
-        actions.toggle_auto_render()
+        local enabled = actions.toggle_auto_render()
+        vim.notify(string.format("NeoNotebook: auto_render = %s", tostring(enabled)), vim.log.levels.INFO)
       end, opts)
     end
 
@@ -410,7 +415,10 @@ function M.new(ctx)
         actions.handle_enter_normal(bufnr)
       end, opts)
       vim.keymap.set("i", "<CR>", function()
-        actions.handle_enter_insert(bufnr)
+        local ok, err = actions.handle_enter_insert(bufnr)
+        if not ok and err and err ~= "" then
+          vim.notify(err, vim.log.levels.WARN)
+        end
       end, { silent = true, buffer = bufnr })
       vim.keymap.set("i", "<BS>", function()
         return guard_expr(bufnr, function()
