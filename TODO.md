@@ -4,6 +4,22 @@ This file tracks project scope and the order of work. Items can be moved as prio
 
 ## Now
 
+- Kernel/session robustness phase 2 (active feature branch: `feature/kernel-robustness-phase2-v1`):
+  - Goal: eliminate stale "busy" behavior when kernel process exits during an active request.
+  - Implementation plan (updated):
+    - Reconcile dead active requests in `lua/neo_notebooks/exec.lua` by clearing `active_request_id`, stopping spinner, and transitioning to `error` with explicit reason.
+    - Ensure reconciliation runs in both queue-drain path and `get_session_state()` so status surfaces cannot stay stale indefinitely.
+    - Preserve recovery ergonomics: next request can start a fresh session and continue normally.
+  - Tests to add/update:
+    - Add integration coverage for forced kernel death during active run, asserting:
+      - state transitions to non-busy `error`,
+      - subsequent request runs successfully and returns to `idle`.
+    - Re-run `tests/core_contract.lua`, `tests/integration.lua`, `tests/performance.lua`.
+  - Acceptance criteria:
+    - No stuck `running/interrupting` state after kernel exits mid-request.
+    - Status panel/badge/statusline reflect reconciled state.
+    - Follow-up execution recovers without manual process cleanup.
+
 - Streaming UX defaults v1 (active feature branch: `feature/streaming-ux-defaults-v1`):
   - Goal: establish one polished default non-`tqdm` streaming progress UX in core runtime (no user config needed for common case), with optional escape-hatch config for advanced users.
   - Implementation plan (updated):
@@ -74,6 +90,8 @@ This file tracks project scope and the order of work. Items can be moved as prio
     - Queue pause semantics are explicit (dispatch pause, not process suspend) and tested.
   - Progress update:
     - Added integration tests for queue pause/resume boundary, interrupt->restart recovery, and restart queue/active cleanup invariants.
+    - Phase 2: added dead-active-request reconciliation for mid-flight kernel exits so state does not remain stuck busy.
+    - Added integration test covering forced kernel death during active run followed by successful next-request recovery.
 
 - Priority 2: Performance/scalability hardening:
   - Profile render/index/scheduler hot paths on large notebooks.
