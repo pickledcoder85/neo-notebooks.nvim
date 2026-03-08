@@ -329,6 +329,10 @@ boundary notifications + status UX
       |
 <leader>k* kernel controls
 (kr/ki/ks/kp/kk via keymaps)
+
+status surfaces:
+  - statusline API (lualine/custom): kernel_status()
+  - optional virtual badge (default off)
 ```
 
 ---

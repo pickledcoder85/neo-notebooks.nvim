@@ -112,6 +112,17 @@ This document summarizes implementation choices and the evolution of core featur
 - Important semantics:
   - `pause` means dispatch pause (hold dequeue/start of new requests), not OS-level process suspend.
 
+## Planned kernel status visibility (Phase 7)
+
+- Primary channel: statusline integration via lightweight API:
+  - `require("neo_notebooks").kernel_status()`
+- Intended use: lualine/custom statusline can render compact text like `kernel:idle`, `kernel:running`, `kernel:error`.
+- Secondary channel: optional virtual status badge in notebook buffer (default disabled).
+- Canonical status color semantics:
+  - green: `idle/ok`
+  - yellow: `running`, `interrupting`, `restarting`, `paused`
+  - red: `error`, `stopped`
+
 ## Output handling
 
 - Output defaults to inline `virt_lines` under the cell.

@@ -36,6 +36,10 @@ This file tracks project scope and the order of work. Items can be moved as prio
     - Keymap-first kernel controls and state visibility:
       - `<leader>kr` restart, `<leader>ki` interrupt, `<leader>ks` stop, `<leader>kp` pause/unpause dispatch, `<leader>kk` show kernel state.
       - keep command aliases, but optimize daily workflow around short keymaps.
+    - Status visibility for users:
+      - lightweight `kernel_status()` API for statusline/lualine integration.
+      - optional virtual status badge (default off) for users without statusline integration.
+      - canonical state colors: green=ok/idle, yellow=active transitional states, red=error/stopped.
   - Acceptance criteria:
     - No stuck "busy" UI state after interrupt/restart/failure scenarios.
     - Reproducible behavior for queued runs across restart/interrupt boundaries.

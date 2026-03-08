@@ -1030,7 +1030,17 @@ NeoNotebookSnakeCell
 - Clarify `pause` semantics explicitly: pause means "hold queue dispatch" (not OS-level process suspend).
 - Ensure keymaps are buffer-local notebook maps and appear in help output.
 
-7. Test contract and regression lanes
+7. Kernel state visibility UX contract
+- Provide a lightweight status API for statusline integrations:
+  - `require("neo_notebooks").kernel_status()` returns normalized state info for the current buffer.
+- Add docs/examples for lualine/statusline component wiring.
+- Add optional in-buffer virtual status badge (default `off`) for users without statusline integration.
+- Canonical color/status mapping:
+  - green: `idle/ok`
+  - yellow: `running`, `interrupting`, `restarting`, `paused`
+  - red: `error`, `stopped`
+
+8. Test contract and regression lanes
 - Add integration tests for:
   - `idle -> running -> idle` base flow,
   - interrupt transition paths,
@@ -1039,7 +1049,7 @@ NeoNotebookSnakeCell
   - dead-session recovery failure -> `error` state.
 - Re-run required lanes after each slice.
 
-8. Documentation closure
+9. Documentation closure
 - Keep `ARCHITECTURE_FLOWCHARTS.md`, `TECHNICAL.md`, and `TODO.md` synchronized per slice.
 - Mark phase complete only after transition tests and manual checklist are satisfied.
 
@@ -1052,10 +1062,12 @@ NeoNotebookSnakeCell
 - `lua/neo_notebooks/entrypoint/keymaps.lua`
 - `lua/neo_notebooks/help.lua`
 - `lua/neo_notebooks/init.lua` (default keymap config surface)
+- `lua/neo_notebooks/render.lua` (optional virtual status badge rendering path)
 - `lua/neo_notebooks/entrypoint/lifecycle.lua`
 - `tests/integration.lua`
 - `tests/core_contract.lua` (if state invariants fit better here)
 - `README.md` (kernel keymap docs)
+- `README.md` (statusline/lualine kernel status integration docs)
 - `CODEBASE_REVIEW.md`
 - `ARCHITECTURE_FLOWCHARTS.md`
 - `TECHNICAL.md`
@@ -1079,6 +1091,8 @@ NeoNotebookSnakeCell
 - Boundary notifications accurately reflect state transitions/failures.
 - Kernel controls are available via documented `<leader>k*` keymaps and behave deterministically.
 - Queue pause/unpause semantics are explicit, tested, and do not imply process suspend.
+- `kernel_status()` API is stable/documented and consumable from lualine/statusline.
+- Optional virtual status badge is configurable and default-off.
 - Required lanes are green; optional kitty lane behavior remains isolated.
 
 ### Manual validation checklist
@@ -1088,6 +1102,7 @@ NeoNotebookSnakeCell
 - Simulate session death (or force job stop), then run cell: auto-recovery behavior matches policy.
 - Confirm no persistent false "running/busy" state in notebook UX after failures.
 - Verify `<leader>k*` controls (`kr/ki/ks/kp/kk`) are buffer-local, discoverable, and match documented behavior.
+- Verify statusline/lualine component reflects transitions correctly; virtual status badge (if enabled) matches same state/colors.
 
 ### Rollback plan
 
