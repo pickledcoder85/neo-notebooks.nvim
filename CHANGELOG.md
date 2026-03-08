@@ -5,6 +5,28 @@ best-effort summary based on existing documentation and recent commits.
 
 ## Unreleased
 
+- Kernel/session robustness:
+  - Added dead active-request reconciliation when kernel exits mid-flight.
+  - Stale busy state is now cleared (`kernel:error`) and next-run recovery path is preserved.
+  - Added integration coverage for forced kernel death during active execution + successful follow-up recovery.
+- Streaming output depth:
+  - Added incremental stream event sequencing and arrival-order live preview merging.
+  - Added global live preview cap and render-pressure throttling.
+  - Added configurable execution placeholder text (`stream_placeholder_text`).
+  - Improved carriage-return handling for progress updates and stream sanitization.
+- Streaming UX defaults:
+  - Added default non-`tqdm` progress formatting policy (`bar`) for recognized `*_PROGRESS` lines.
+  - Added style overrides: `bar`, `pct`, `ratio`, `raw`.
+  - Added `stream_progress_bar_width` config.
+  - Added integration tests for default bar-style progress rendering.
+- UI/theme polish:
+  - Output text now links to colorscheme-aware highlight groups (no hardcoded purple default).
+  - Spinner/output defaults now better respect user theme palettes.
+- Performance/scalability:
+  - Added manual stress/soak fixtures (`manual_exec_stress.*`, `manual_exec_soak.*`).
+  - Added execution stress workloads for batch compute, large stream output, and local fetch paths.
+  - Added optional performance lane with timing budgets and synthetic large fixtures.
+
 - Added initial Jupytext `py:percent` interoperability:
   - `:NeoNotebookImportJupytext {path}` imports Jupytext percent files into notebook cells.
   - `:NeoNotebookOpenJupytext {path}` opens a Jupytext percent file in a new notebook-view buffer.
