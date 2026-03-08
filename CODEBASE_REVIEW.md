@@ -936,6 +936,8 @@ NeoNotebookSnakeCell
 - `lua/neo_notebooks/editor.lua`
 - `lua/neo_notebooks/session.lua`
 - `lua/neo_notebooks/stats.lua`
+- `lua/neo_notebooks/run_all.lua`
+- `lua/neo_notebooks/run_subset.lua`
 
 ### Tests run
 
@@ -963,6 +965,8 @@ NeoNotebookSnakeCell
 - `entrypoint/commands.lua` run paths now notify on `exec.run_cell` errors from `NeoNotebookCellRun`/`NeoNotebookCellRunAndNext`.
 - `session.restart` now returns success; command/keymap boundaries now own restart info notification.
 - `stats.show` now returns structured stats/message; command/keymap boundaries now own stats info notification.
+- `run_all.run_all`, `run_subset.run_above`, and `run_subset.run_below` now return summary objects including `(attempted, queued, failed, first_err, first_level)` from `exec.run_cell` request outcomes.
+- `entrypoint/commands.lua` and `entrypoint/keymaps.lua` now surface consistent aggregated notifications for run-all / run-above / run-below summary failures.
 - Debug-only notify paths in `output.lua`/`image_pane.lua`/`exec.lua` were reviewed and remain gated by `vim.g.neo_notebooks_debug_output`.
 - Guard/policy warning path migrated for containment keymaps:
   - `actions.decision_keys` no longer notifies directly on blocked decisions.

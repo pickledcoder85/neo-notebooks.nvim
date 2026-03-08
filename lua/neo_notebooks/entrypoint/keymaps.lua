@@ -26,6 +26,22 @@ function M.new(ctx)
     end
   end
 
+  local function notify_run_summary(summary)
+    if not summary or summary.failed == nil then
+      return
+    end
+    if summary.failed <= 0 then
+      return
+    end
+    local message = string.format(
+      "NeoNotebook: %d/%d run request(s) skipped or failed (%s)",
+      summary.failed,
+      summary.attempted or summary.failed,
+      summary.first_err or "unknown error"
+    )
+    vim.notify(message, summary.first_level or vim.log.levels.WARN)
+  end
+
   local function guard_expr(bufnr, fn)
     local keys = fn()
     if keys == "" then
@@ -300,7 +316,8 @@ function M.new(ctx)
 
     if maps.run_all then
       vim.keymap.set("n", maps.run_all, function()
-        run_all.run_all(0)
+        local summary = run_all.run_all(0)
+        notify_run_summary(summary)
       end, opts)
     end
 
@@ -343,13 +360,15 @@ function M.new(ctx)
 
     if maps.run_above then
       vim.keymap.set("n", maps.run_above, function()
-        run_subset.run_above(0)
+        local summary = run_subset.run_above(0)
+        notify_run_summary(summary)
       end, opts)
     end
 
     if maps.run_below then
       vim.keymap.set("n", maps.run_below, function()
-        run_subset.run_below(0)
+        local summary = run_subset.run_below(0)
+        notify_run_summary(summary)
       end, opts)
     end
 

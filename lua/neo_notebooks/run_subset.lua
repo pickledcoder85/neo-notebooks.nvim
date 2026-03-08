@@ -15,7 +15,7 @@ local function run_cell(bufnr, cell)
     cell.finish = entry.finish
   end
   if config.output == "inline" then
-    exec.run_cell(bufnr, line, {
+    return exec.run_cell(bufnr, line, {
       on_output = function(payload, cell_id, duration_ms)
         output.show_payload(bufnr, {
           id = cell_id or cell.id,
@@ -26,8 +26,30 @@ local function run_cell(bufnr, cell)
       end,
       cell_id = cell.id,
     })
-  else
-    exec.run_cell(bufnr, line)
+  end
+  return exec.run_cell(bufnr, line)
+end
+
+local function init_summary()
+  return {
+    attempted = 0,
+    queued = 0,
+    failed = 0,
+    first_err = nil,
+    first_level = nil,
+  }
+end
+
+local function record_result(summary, ok, err, level)
+  summary.attempted = summary.attempted + 1
+  if ok then
+    summary.queued = summary.queued + 1
+    return
+  end
+  summary.failed = summary.failed + 1
+  if not summary.first_err then
+    summary.first_err = err or "Cell run failed"
+    summary.first_level = level or vim.log.levels.WARN
   end
 end
 
@@ -37,14 +59,17 @@ function M.run_above(bufnr, line)
     bufnr = vim.api.nvim_get_current_buf()
   end
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+  local summary = init_summary()
   local current = cells.get_cell_at_line(bufnr, line)
   local upper_bound = current and current.start or line
   local list = cells.get_cells(bufnr)
   for _, cell in ipairs(list) do
     if cell.type == "code" and cell.finish < upper_bound then
-      run_cell(bufnr, cell)
+      local ok, err, level = run_cell(bufnr, cell)
+      record_result(summary, ok, err, level)
     end
   end
+  return summary
 end
 
 function M.run_below(bufnr, line)
@@ -53,14 +78,17 @@ function M.run_below(bufnr, line)
     bufnr = vim.api.nvim_get_current_buf()
   end
   line = line or vim.api.nvim_win_get_cursor(0)[1] - 1
+  local summary = init_summary()
   local current = cells.get_cell_at_line(bufnr, line)
   local current_start = current and current.start or line
   local list = cells.get_cells(bufnr)
   for _, cell in ipairs(list) do
     if cell.type == "code" and cell.start >= current_start then
-      run_cell(bufnr, cell)
+      local ok, err, level = run_cell(bufnr, cell)
+      record_result(summary, ok, err, level)
     end
   end
+  return summary
 end
 
 return M

@@ -80,6 +80,22 @@ function M.register(ctx)
     end
   end
 
+  local function notify_run_summary(summary)
+    if not summary or summary.failed == nil then
+      return
+    end
+    if summary.failed <= 0 then
+      return
+    end
+    local message = string.format(
+      "NeoNotebook: %d/%d run request(s) skipped or failed (%s)",
+      summary.failed,
+      summary.attempted or summary.failed,
+      summary.first_err or "unknown error"
+    )
+    vim.notify(message, summary.first_level or vim.log.levels.WARN)
+  end
+
   vim.api.nvim_create_user_command("NeoNotebookRender", function()
     render.render(0)
   end, {})
@@ -302,7 +318,8 @@ function M.register(ctx)
 
   vim.api.nvim_create_user_command("NeoNotebookRunAll", function()
     actions.consume_pending_virtual_indent(0)
-    run_all.run_all(vim.api.nvim_get_current_buf())
+    local summary = run_all.run_all(vim.api.nvim_get_current_buf())
+    notify_run_summary(summary)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookRestart", function()
@@ -330,12 +347,14 @@ function M.register(ctx)
 
   vim.api.nvim_create_user_command("NeoNotebookRunAbove", function()
     actions.consume_pending_virtual_indent(0)
-    run_subset.run_above(vim.api.nvim_get_current_buf())
+    local summary = run_subset.run_above(vim.api.nvim_get_current_buf())
+    notify_run_summary(summary)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookRunBelow", function()
     actions.consume_pending_virtual_indent(0)
-    run_subset.run_below(vim.api.nvim_get_current_buf())
+    local summary = run_subset.run_below(vim.api.nvim_get_current_buf())
+    notify_run_summary(summary)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookHelp", function()

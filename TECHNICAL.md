@@ -31,7 +31,7 @@ This document summarizes implementation choices and the evolution of core featur
 
 - Internal modules should prefer returning `(ok/value)` or `(nil, err)` over direct `vim.notify` side effects.
 - Command boundaries (entrypoint command handlers) are the preferred owner of user-facing notifications.
-- Current migration status: expanded for output print/collapse, cell yank, split/toggle actions, markdown preview/editor actions, run-cell request failures, restart/stats actions, insert-guard `<CR>` warnings, and containment guard-warning flows (command/keymap boundaries own notifications). Debug-only notify paths remain gated by `vim.g.neo_notebooks_debug_output`.
+- Current migration status: expanded for output print/collapse, cell yank, split/toggle actions, markdown preview/editor actions, run-cell request failures (including run-all/subset aggregated summaries), restart/stats actions, insert-guard `<CR>` warnings, and containment guard-warning flows (command/keymap boundaries own notifications). Debug-only notify paths remain gated by `vim.g.neo_notebooks_debug_output`.
 - Never merge and delete a feature branch until manual testing has been completed
   and explicitly approved. After implementing a revised feature plan, provide a
   manual test checklist for approval before merging/deleting the branch.
