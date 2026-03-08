@@ -128,7 +128,7 @@ This document summarizes implementation choices and the evolution of core featur
 - Primary channel: statusline integration via lightweight API:
   - `require("neo_notebooks").kernel_status()`
 - Intended use: lualine/custom statusline can render compact text like `kernel:idle`, `kernel:running`, `kernel:error`.
-- Secondary channel: optional virtual status badge in notebook buffer (default disabled).
+- Secondary channel: optional virtual status badge in notebook buffer (default disabled, `kernel_status_virtual = false`).
 - Canonical status color semantics:
   - green: `idle/ok`
   - yellow: `running`, `interrupting`, `restarting`, `paused`
@@ -138,8 +138,8 @@ Current Phase 7 baseline:
 - `kernel_status()` is now available and returns normalized strings (`ok`, `paused`, or raw state names).
 - Kernel control keymaps/commands and dispatch pause gating are implemented.
 - Persistent kernel status panel toggle is implemented via `<leader>kk` / `:NeoNotebookKernelStatusToggle`.
+- Optional virtual status badge is implemented via `kernel_status_virtual = true`.
 - Bounded dispatch-time auto-recovery is implemented for dead sessions (`kernel_recovery_retries`).
-- Optional virtual status badge is planned next slices.
 
 ## Output handling
 

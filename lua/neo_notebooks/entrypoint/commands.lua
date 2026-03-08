@@ -20,6 +20,7 @@ function M.register(ctx)
   local index = ctx.index
   local scheduler = ctx.scheduler
   local snake = ctx.snake
+  local badge = require("neo_notebooks.kernel_status_badge")
 
   local set_python_filetype = ctx.set_python_filetype
   local should_enable = ctx.should_enable
@@ -351,6 +352,7 @@ function M.register(ctx)
     local ok = session.restart(0)
     if ok then
       vim.notify("NeoNotebook: kernel restarted", vim.log.levels.INFO)
+      badge.refresh(0)
     end
   end, {})
 
@@ -358,20 +360,24 @@ function M.register(ctx)
     local ok, err, level = exec.interrupt(0)
     if not ok and err then
       vim.notify(err, level or vim.log.levels.WARN)
+      badge.refresh(0)
       return
     end
     vim.notify("NeoNotebook: interrupt requested", vim.log.levels.INFO)
+    badge.refresh(0)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookKernelStop", function()
     exec.stop_session(0)
     vim.notify("NeoNotebook: kernel stopped", vim.log.levels.INFO)
+    badge.refresh(0)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookKernelPauseToggle", function()
     local paused = exec.toggle_pause_queue(0)
     local label = paused and "paused" or "resumed"
     vim.notify("NeoNotebook: kernel queue " .. label, vim.log.levels.INFO)
+    badge.refresh(0)
   end, {})
 
   vim.api.nvim_create_user_command("NeoNotebookKernelStatus", function()

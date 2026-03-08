@@ -14,6 +14,7 @@ local ipynb = require('neo_notebooks.ipynb')
 local nb = require('neo_notebooks')
 local exec = require('neo_notebooks.exec')
 local session = require('neo_notebooks.session')
+local badge = require('neo_notebooks.kernel_status_badge')
 local fixture_root = vim.fn.getcwd() .. '/tests/fixtures/jupytext'
 
 -- Test: default strict containment mode is soft
@@ -432,6 +433,25 @@ with_buf({
   local state = exec.get_session_state(buf)
   eq(state.state, "error", "session state becomes error on start failure")
   nb.config.python_cmd = prev
+end)
+
+-- Test: virtual kernel badge renders when enabled and clears when disabled
+with_buf({
+  "# %% [code]",
+  "x = 1",
+}, function(buf)
+  vim.b[buf].neo_notebooks_enabled = true
+  local prev = nb.config.kernel_status_virtual
+  nb.config.kernel_status_virtual = true
+  badge.refresh(buf)
+  local marks = vim.api.nvim_buf_get_extmarks(buf, badge.ns, { 0, 0 }, { -1, -1 }, { details = true })
+  ok(#marks > 0, "virtual kernel badge extmark created")
+
+  nb.config.kernel_status_virtual = false
+  badge.refresh(buf)
+  local after = vim.api.nvim_buf_get_extmarks(buf, badge.ns, { 0, 0 }, { -1, -1 }, { details = true })
+  eq(#after, 0, "virtual kernel badge cleared when disabled")
+  nb.config.kernel_status_virtual = prev
 end)
 
 print('core_contract tests passed')

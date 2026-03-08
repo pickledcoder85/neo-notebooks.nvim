@@ -11,6 +11,7 @@ function M.register(ctx)
   local index = ctx.index
   local scheduler = ctx.scheduler
   local exec = ctx.exec
+  local badge = require("neo_notebooks.kernel_status_badge")
 
   local should_enable = ctx.should_enable
   local set_default_keymaps = ctx.set_default_keymaps
@@ -26,6 +27,7 @@ function M.register(ctx)
   vim.api.nvim_create_autocmd({ "BufEnter" }, {
     callback = function(args)
       render_if_enabled(args.buf)
+      badge.refresh(args.buf)
     end,
   })
 
@@ -99,6 +101,7 @@ function M.register(ctx)
       end
       render.clear(args.buf)
       output.clear(args.buf)
+      badge.clear(args.buf)
     end,
   })
 
@@ -107,6 +110,7 @@ function M.register(ctx)
       overlay.on_cursor_moved(args.buf)
       update_completion(args.buf)
       update_textwidth(args.buf)
+      badge.refresh(args.buf)
     end,
   })
 
@@ -162,6 +166,7 @@ function M.register(ctx)
         if nb.config.auto_render then
           scheduler.request_render(args.buf, { immediate = true })
         end
+        badge.refresh(args.buf)
         if nb.config.notebook_scrolloff and nb.config.notebook_scrolloff > 0 then
           vim.api.nvim_set_option_value("scrolloff", nb.config.notebook_scrolloff, { win = 0 })
         end
@@ -204,6 +209,7 @@ function M.register(ctx)
       if should_enable(args.buf) and nb.config.auto_render then
         scheduler.request_render(args.buf, { immediate = true })
       end
+      badge.refresh(args.buf)
     end,
   })
 
@@ -243,6 +249,7 @@ function M.register(ctx)
   vim.api.nvim_create_autocmd({ "BufLeave", "BufWipeout" }, {
     callback = function(args)
       overlay.disable(args.buf)
+      badge.clear(args.buf)
     end,
   })
 
@@ -251,6 +258,7 @@ function M.register(ctx)
       scheduler.cancel(args.buf)
       exec.stop_session(args.buf)
       output.clear_all(args.buf)
+      badge.clear(args.buf)
     end,
   })
 end

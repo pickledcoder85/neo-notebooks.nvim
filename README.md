@@ -136,6 +136,7 @@ require("neo_notebooks").setup({
   require_markers = false,
   auto_insert_first_cell = true,
   overlay_preview = false,
+  kernel_status_virtual = false,
   suppress_completion_in_markdown = true,
   suppress_completion_popup = false,
   auto_insert_on_jump = false,
@@ -201,6 +202,14 @@ require("neo_notebooks").setup({
     run_cell = "<leader>er",
     snake_game = "<leader>sg",
   },
+})
+```
+
+Optional virtual kernel status badge:
+
+```lua
+require("neo_notebooks").setup({
+  kernel_status_virtual = true,
 })
 ```
 
