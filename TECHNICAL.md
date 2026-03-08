@@ -119,6 +119,7 @@ This document summarizes implementation choices and the evolution of core featur
   - `:NeoNotebookKernelPauseToggle`
   - `:NeoNotebookKernelStatus`
   - `:NeoNotebookKernelStatusToggle`
+  - `:NeoNotebookKernelBadgeToggle`
 - Important semantics:
   - `pause` means dispatch pause (hold dequeue/start of new requests), not OS-level process suspend.
   - `kernel_recovery_retries` (default `1`) controls bounded dispatch-time auto-recovery attempts.

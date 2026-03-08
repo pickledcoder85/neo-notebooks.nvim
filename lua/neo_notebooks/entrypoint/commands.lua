@@ -391,6 +391,13 @@ function M.register(ctx)
     vim.notify("NeoNotebook: kernel status panel " .. label, vim.log.levels.INFO)
   end, {})
 
+  vim.api.nvim_create_user_command("NeoNotebookKernelBadgeToggle", function()
+    nb.config.kernel_status_virtual = not nb.config.kernel_status_virtual
+    badge.refresh(0)
+    local label = nb.config.kernel_status_virtual and "enabled" or "disabled"
+    vim.notify("NeoNotebook: kernel status badge " .. label, vim.log.levels.INFO)
+  end, {})
+
   vim.api.nvim_create_user_command("NeoNotebookOutputToggle", function()
     local mode = actions.toggle_output_mode()
     vim.notify("NeoNotebook: output mode = " .. tostring(mode), vim.log.levels.INFO)

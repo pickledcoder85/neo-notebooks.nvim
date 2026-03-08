@@ -81,6 +81,7 @@ print("hello")
 - `:NeoNotebookKernelPauseToggle` pauses/resumes queue dispatch (does not suspend the process).
 - `:NeoNotebookKernelStatus` shows kernel state details (one-shot).
 - `:NeoNotebookKernelStatusToggle` toggles a persistent kernel status panel.
+- `:NeoNotebookKernelBadgeToggle` toggles the inline virtual kernel status badge.
 - `:NeoNotebookOutputToggle` toggles output mode between inline and floating.
 - While a cell is executing, a spinner animates on the first inline output row.
 - While a cell runs, an inline placeholder output shows `cell executing...`.

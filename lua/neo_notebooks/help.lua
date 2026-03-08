@@ -52,6 +52,7 @@ function M.show()
     "  :NeoNotebookKernelPauseToggle pause/resume run queue",
     "  :NeoNotebookKernelStatus   show kernel status (one-shot)",
     "  :NeoNotebookKernelStatusToggle toggle persistent status panel",
+    "  :NeoNotebookKernelBadgeToggle toggle virtual status badge",
     "  :NeoNotebookRunAbove       run cells above",
     "  :NeoNotebookRunBelow       run cells below",
     "  :NeoNotebookMarkdownPreview preview markdown",
