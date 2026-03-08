@@ -27,6 +27,28 @@ This document summarizes implementation choices and the evolution of core featur
   - keep `ARCHITECTURE_FLOWCHARTS.md` updated with current/target diagrams and phase progress;
   - keep `CODEBASE_REVIEW.md` phase status and checklists in sync with implemented changes.
 
+### Feature worklist: Streaming UX defaults v1
+
+- Phase: `draft -> simplify -> updated -> implement` (active branch: `feature/streaming-ux-defaults-v1`).
+- Scope:
+  - define one core default non-`tqdm` progress rendering style for streaming output.
+  - preserve raw output compatibility for non-progress lines and opt-out users.
+- Files to touch:
+  - `lua/neo_notebooks/exec.lua` (stream/final-output progress-line formatter),
+  - `lua/neo_notebooks/init.lua` (default config knobs),
+  - `tests/integration.lua` (default-style regression coverage),
+  - `README.md`, `TODO.md`, `TECHNICAL.md` (docs gate),
+  - `ARCHITECTURE_FLOWCHARTS.md` if flow contract changes.
+- Tests:
+  - run `tests/core_contract.lua`,
+  - run `tests/integration.lua`,
+  - run `tests/performance.lua`.
+- Acceptance criteria:
+  - recognized `*_PROGRESS <pct>% (<done>/<total>)` lines render in bar style by default.
+  - supported overrides are `bar`, `pct`, `ratio`, and `raw`.
+  - existing `tqdm` carriage-return replacement behavior remains stable.
+  - no queue/session regressions in integration lane.
+
 ## Error/notify policy
 
 - Internal modules should prefer returning `(ok/value)` or `(nil, err)` over direct `vim.notify` side effects.
@@ -158,11 +180,14 @@ Current Phase 7 baseline:
 - Execution now supports incremental stream events from the Python worker; stdout/stderr lines are rendered live during execution.
 - Stream protocol supports carriage-return replacement semantics so `tqdm`-style progress updates replace the active line instead of only appending.
 - Live stream preview keeps event arrival order across stdout/stderr/traceback and applies a single global preview cap.
+- Recognized non-`tqdm` progress lines (`*_PROGRESS <pct>% (<done>/<total>)`) are formatted by policy with default `bar` style.
 - Stream rendering includes pressure controls to avoid UI lockups on huge output bursts:
   - `stream_preview_max_lines` (cap retained live preview lines),
   - `stream_render_interval_ms` (minimum render interval),
   - `stream_render_min_delta` (minimum new stream events before forced render),
-  - `stream_placeholder_text` (line shown while the cell is actively executing).
+  - `stream_placeholder_text` (line shown while the cell is actively executing),
+  - `stream_progress_style` (`bar|pct|ratio|raw`),
+  - `stream_progress_bar_width` (bar width for `bar` style).
 - After execution, the inline output prepends a right-aligned timing line.
 - Execution duration is measured around the request/response boundary and stored per cell ID.
 - Spinner frames request immediate renders to avoid dropped updates.

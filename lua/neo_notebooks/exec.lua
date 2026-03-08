@@ -430,10 +430,64 @@ local function format_output(resp)
   local err = resp.err or ""
   local trace = resp.trace or ""
 
+  local function get_progress_style()
+    local style = tostring((config and config.stream_progress_style) or "bar")
+    if style ~= "bar" and style ~= "pct" and style ~= "ratio" and style ~= "raw" then
+      return "bar"
+    end
+    return style
+  end
+
+  local function get_progress_bar_width()
+    local width = tonumber(config and config.stream_progress_bar_width) or 20
+    width = math.floor(width)
+    if width < 5 then
+      width = 5
+    elseif width > 60 then
+      width = 60
+    end
+    return width
+  end
+
+  local function maybe_format_progress_line(line)
+    if type(line) ~= "string" or line == "" then
+      return line
+    end
+    local prefix, pct, done, total = line:match("^(.-_PROGRESS)%s+(%d+)%%%s*%((%d+)%s*/%s*(%d+)%)$")
+    if not prefix then
+      return line
+    end
+    local style = get_progress_style()
+    if style == "raw" then
+      return line
+    end
+    if style == "ratio" then
+      return string.format("%s %s/%s", prefix, done, total)
+    end
+    if style == "pct" then
+      return string.format("%s %s%% (%s/%s)", prefix, pct, done, total)
+    end
+    local width = get_progress_bar_width()
+    local pct_num = tonumber(pct) or 0
+    if pct_num < 0 then
+      pct_num = 0
+    elseif pct_num > 100 then
+      pct_num = 100
+    end
+    local filled = math.floor((pct_num / 100) * width)
+    if filled < 0 then
+      filled = 0
+    elseif filled > width then
+      filled = width
+    end
+    local bar = string.rep("#", filled) .. string.rep(".", width - filled)
+    return string.format("%s [%s] %s%% (%s/%s)", prefix, bar, pct, done, total)
+  end
+
   if out ~= "" then
     for line in out:gmatch("([^\n]*)\n?") do
       if line ~= "" then
-        table.insert(output, line)
+        table.insert(output, maybe_format_progress_line(line))
       end
     end
   end
@@ -441,7 +495,7 @@ local function format_output(resp)
   if err ~= "" then
     for line in err:gmatch("([^\n]*)\n?") do
       if line ~= "" then
-        table.insert(output, line)
+        table.insert(output, maybe_format_progress_line(line))
       end
     end
   end
@@ -523,6 +577,34 @@ local function upsert_stream_event(pending, stream, text, replace, preview_max)
   trim_stream_preview(pending, preview_max)
 end
 
+local function format_stream_progress_line(text)
+  if type(text) ~= "string" or text == "" then
+    return text
+  end
+  local style = tostring((config and config.stream_progress_style) or "bar")
+  if style ~= "bar" and style ~= "pct" and style ~= "ratio" and style ~= "raw" then
+    style = "bar"
+  end
+  local prefix, pct, done, total = text:match("^(.-_PROGRESS)%s+(%d+)%%%s*%((%d+)%s*/%s*(%d+)%)$")
+  if not prefix or style == "raw" then
+    return text
+  end
+  if style == "ratio" then
+    return string.format("%s %s/%s", prefix, done, total)
+  end
+  if style == "pct" then
+    return string.format("%s %s%% (%s/%s)", prefix, pct, done, total)
+  end
+  local width = tonumber(config and config.stream_progress_bar_width) or 20
+  width = math.max(5, math.min(60, math.floor(width)))
+  local pct_num = tonumber(pct) or 0
+  pct_num = math.max(0, math.min(100, pct_num))
+  local filled = math.floor((pct_num / 100) * width)
+  filled = math.max(0, math.min(width, filled))
+  local bar = string.rep("#", filled) .. string.rep(".", width - filled)
+  return string.format("%s [%s] %s%% (%s/%s)", prefix, bar, pct, done, total)
+end
+
 local function merged_stream_preview_lines(pending, placeholder)
   local merged = { placeholder }
   for _, item in ipairs(pending.stream_events or {}) do
@@ -551,7 +633,8 @@ local function apply_stream_event(session, pending, resp, resolved_cell_id)
 
   for _, chunk in ipairs(chunks) do
     if chunk ~= "" then
-      upsert_stream_event(pending, stream, chunk, resp.replace == true, preview_max)
+      local pretty = format_stream_progress_line(chunk)
+      upsert_stream_event(pending, stream, pretty, resp.replace == true, preview_max)
     end
   end
 

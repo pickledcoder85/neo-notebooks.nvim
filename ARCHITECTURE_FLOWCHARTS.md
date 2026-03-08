@@ -15,6 +15,7 @@ Living visual map of current architecture and planned refactor state.
 - Streaming execution output protocol (incremental stdout/stderr with carriage-return line replacement) landed for long-running cell UX.
 - Streaming path now includes render-pressure controls (preview cap + throttled refresh cadence) to protect UI responsiveness.
 - Streaming-depth v1: live stream preview now merges by event arrival order (cross-stream), uses a single global preview cap, and supports configurable execution placeholder text.
+- Streaming UX defaults v1 (in progress): recognized non-`tqdm` progress lines are now policy-formatted (default `bar`) in both live preview and final output formatting.
 
 ## Reading Guide
 
@@ -192,6 +193,7 @@ Streaming event flow (current):
 +-----------------------------+
 | exec.apply_stream_event     |
 | append/replace event list   |
+| apply progress style policy |
 | trim global preview cap     |
 +-----------------------------+
                |
