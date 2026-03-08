@@ -27,6 +27,46 @@ local function assert_budget(label, elapsed_ms, max_ms)
   ok(elapsed_ms <= max_ms, string.format('%s budget exceeded: %.2fms > %dms', label, elapsed_ms, max_ms))
 end
 
+local function resolve_budget_profile()
+  local profile = tostring(vim.g.neo_notebooks_perf_budget_profile or 'conservative')
+  if profile ~= 'conservative' and profile ~= 'strict' then
+    profile = 'conservative'
+  end
+  local scale = tonumber(vim.g.neo_notebooks_perf_budget_scale) or 1.0
+  if scale <= 0 then
+    scale = 1.0
+  end
+
+  -- conservative: broad machine variance support
+  local conservative = {
+    import_jupytext = 4500,
+    rebuild_index = 2500,
+    render = 3500,
+    export_ipynb = 4500,
+    import_ipynb = 4500,
+    batch_compute = 8000,
+    large_output = 10000,
+    local_fetch = 8000,
+  }
+  -- strict: catches regressions early on faster local/dev machines
+  local strict = {
+    import_jupytext = 1200,
+    rebuild_index = 1000,
+    render = 1400,
+    export_ipynb = 1500,
+    import_ipynb = 1500,
+    batch_compute = 3000,
+    large_output = 4000,
+    local_fetch = 3000,
+  }
+  local base = profile == 'strict' and strict or conservative
+  local budget = {}
+  for k, v in pairs(base) do
+    budget[k] = math.max(1, math.floor((v * scale) + 0.5))
+  end
+  return budget, profile, scale
+end
+
 local function wait_for(predicate, timeout_ms, step_ms)
   timeout_ms = timeout_ms or 8000
   step_ms = step_ms or 20
@@ -71,18 +111,8 @@ local function run_exec_cell_and_wait(buf, cell_lines, opts)
 end
 
 with_buf({ "" }, function(buf)
-  -- Budget values are intentionally conservative to avoid CI flakiness while still
-  -- catching major regressions.
-  local budget = {
-    import_jupytext = 4500,
-    rebuild_index = 2500,
-    render = 3500,
-    export_ipynb = 4500,
-    import_ipynb = 4500,
-    batch_compute = 8000,
-    large_output = 10000,
-    local_fetch = 8000,
-  }
+  local budget, profile, scale = resolve_budget_profile()
+  print(string.format('performance budget profile=%s scale=%.2f', profile, scale))
 
   local large_percent = fixture_root .. '/large_percent.py'
   local large_ipynb = fixture_root .. '/large_notebook.ipynb'

@@ -386,6 +386,9 @@ Current Phase 7 baseline:
   - `tests/integration.lua` (broad workflow signal; skips optional kitty backend assertions)
   - `tests/optional_kitty.lua` (kitty/image backend assertions; optional in non-kitty environments)
   - `tests/performance.lua` (optional stress/perf signal over large synthetic fixtures with conservative timing budgets)
+    - budget profile controls:
+      - `g:neo_notebooks_perf_budget_profile` = `conservative|strict` (default `conservative`)
+      - `g:neo_notebooks_perf_budget_scale` = numeric multiplier (default `1.0`)
     - includes batch compute workload (`5000` calculations in batches of `100`)
     - includes high-volume output streaming workload
     - includes local fetch-style workload (`urllib` + `file://` JSON payload, 5000 rows)

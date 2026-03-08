@@ -31,6 +31,7 @@ This file tracks project scope and the order of work. Items can be moved as prio
     - Added execution stress coverage for batch compute, large streamed output, and fetch-style large-data read (`file://` payload), with optional real network fetch gate.
     - Streaming-depth v1: live stream preview now uses event-order merging with a global preview cap, plus carriage-return sanitization and placeholder configurability.
     - Manual soak fixture now supports non-`tqdm` progress styles (`pct`, `ratio`, `bar`) for UX testing of default streaming behavior.
+    - Added profile-based threshold policy for performance lane (`conservative|strict`) plus optional budget scaling knob for environment variability.
 
 - Priority 2: Reliability contracts for format interop follow-through:
   - Expand Jupytext fixture corpus with additional real-world repos.
